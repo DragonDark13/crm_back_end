@@ -1,7 +1,7 @@
 from peewee import Model, CharField, FloatField, IntegerField, SqliteDatabase
 
 # Ініціалізуємо базу даних
-from models import StockHistory, PurchaseHistory, SaleHistory
+from models import StockHistory, PurchaseHistory, SaleHistory, ProductCategory, Category
 
 db = SqliteDatabase('shop_crm.db')
 
@@ -19,8 +19,8 @@ class Product(Model):
 
 # Створюємо таблицю в базі даних
 db.connect()
-db.drop_tables([Product, StockHistory, PurchaseHistory, SaleHistory])
-db.create_tables([Product, StockHistory, PurchaseHistory, SaleHistory])
+db.drop_tables([Product, StockHistory, PurchaseHistory, SaleHistory, ProductCategory, Category])
+db.create_tables([Product, StockHistory, PurchaseHistory, SaleHistory, ProductCategory, Category])
 
 # Приклад додавання товарів
 products = [
@@ -34,3 +34,9 @@ products = [
 
 for product in products:
     Product.create(**product)
+
+# Створення початкових категорій у базі даних
+categories = ['Сувеніри', 'Гаррі Поттер', 'Володар Перснів']
+
+for category_name in categories:
+    Category.get_or_create(name=category_name)

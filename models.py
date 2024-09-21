@@ -41,3 +41,17 @@ class SaleHistory(BaseModel):
     total_price = DecimalField(max_digits=12, decimal_places=2)
     sale_date = DateTimeField(default=datetime.now)
 
+
+class Category(BaseModel):
+    name = CharField(unique=True)
+
+    class Meta:
+        db_table = 'categories'
+
+
+class ProductCategory(BaseModel):
+    product = ForeignKeyField(Product, backref='categories')
+    category = ForeignKeyField(Category, backref='products')
+
+    class Meta:
+        db_table = 'product_categories'
