@@ -1,4 +1,4 @@
-from peewee import Model, CharField, IntegerField, DateTimeField, ForeignKeyField
+from peewee import Model, CharField, IntegerField, DateTimeField, ForeignKeyField, FloatField, DateField, DecimalField
 from playhouse.sqlite_ext import SqliteDatabase
 from datetime import datetime
 
@@ -23,3 +23,21 @@ class StockHistory(BaseModel):
     change_amount = IntegerField()
     change_type = CharField(choices=[('add', 'Add'), ('subtract', 'Subtract')])
     timestamp = DateTimeField(default=datetime.now)
+
+
+class PurchaseHistory(BaseModel):
+    product = ForeignKeyField(Product, backref='purchases')
+    price_per_item = FloatField()
+    total_price = FloatField()
+    supplier = CharField()
+    purchase_date = DateField()
+
+
+class SaleHistory(BaseModel):
+    product = ForeignKeyField(Product, backref='sales')
+    customer = CharField()
+    quantity_sold = IntegerField()
+    price_per_item = DecimalField(max_digits=10, decimal_places=2)
+    total_price = DecimalField(max_digits=12, decimal_places=2)
+    sale_date = DateTimeField(default=datetime.now)
+

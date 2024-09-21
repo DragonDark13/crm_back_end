@@ -1,7 +1,7 @@
 from peewee import Model, CharField, FloatField, IntegerField, SqliteDatabase
 
 # Ініціалізуємо базу даних
-from models import StockHistory
+from models import StockHistory, PurchaseHistory, SaleHistory
 
 db = SqliteDatabase('shop_crm.db')
 
@@ -19,8 +19,8 @@ class Product(Model):
 
 # Створюємо таблицю в базі даних
 db.connect()
-db.drop_tables([Product, StockHistory])
-db.create_tables([Product, StockHistory])
+db.drop_tables([Product, StockHistory, PurchaseHistory, SaleHistory])
+db.create_tables([Product, StockHistory, PurchaseHistory, SaleHistory])
 
 # Приклад додавання товарів
 products = [
