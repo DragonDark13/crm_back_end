@@ -17,9 +17,19 @@ db = SqliteDatabase('shop_crm.db')
 
 @app.route('/api/products', methods=['GET'])
 def get_products():
-    """Отримати всі товари"""
+    """Отримати всі товари разом з категоріями"""
     products = Product.select()
-    product_list = [model_to_dict(product) for product in products]
+    product_list = []
+
+    for product in products:
+        # Перетворюємо продукт в словник і додаємо категорії
+        product_dict = model_to_dict(product, exclude=[ProductCategory])
+
+        # Отримуємо категорії продукту
+        product_dict['category_ids'] = [pc.category.id for pc in product.categories]
+
+        product_list.append(product_dict)
+
     return jsonify(product_list), 200
 
 
