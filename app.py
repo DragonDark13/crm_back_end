@@ -183,11 +183,24 @@ def update_product(product_id):
 
 @app.route('/api/product/<int:product_id>', methods=['DELETE'])
 def delete_product(product_id):
-    """Видалити товар"""
+    """Видалити товар та всі пов'язані записи"""
     try:
         product = Product.get(Product.id == product_id)
+
+        ProductCategory.delete().where(ProductCategory.product == product).execute()
+        # Видалення всіх пов'язаних продажів
+        SaleHistory.delete().where(SaleHistory.product == product).execute()
+
+        # Видалення всіх пов'язаних покупок
+        PurchaseHistory.delete().where(PurchaseHistory.product == product).execute()
+
+        # Видалення всіх записів змін запасів
+        StockHistory.delete().where(StockHistory.product == product).execute()
+
+        # Видалення самого товару
         product.delete_instance()
-        return jsonify({'message': 'Product deleted successfully'}), 200
+
+        return jsonify({'message': 'Product and related records deleted successfully'}), 200
     except Product.DoesNotExist:
         return jsonify({'error': 'Product not found'}), 404
 

@@ -1,3 +1,5 @@
+from tkinter import CASCADE
+
 from peewee import Model, CharField, IntegerField, DateTimeField, ForeignKeyField, FloatField, DateField, DecimalField
 from playhouse.sqlite_ext import SqliteDatabase
 from datetime import datetime
@@ -19,14 +21,14 @@ class Product(BaseModel):
 
 
 class StockHistory(BaseModel):
-    product = ForeignKeyField(Product, backref='stock_history')
+    product = ForeignKeyField(Product, backref='stock_history', on_delete=CASCADE)
     change_amount = IntegerField()
     change_type = CharField(choices=[('add', 'Add'), ('subtract', 'Subtract')])
     timestamp = DateTimeField(default=datetime.now)
 
 
 class PurchaseHistory(BaseModel):
-    product = ForeignKeyField(Product, backref='purchases')
+    product = ForeignKeyField(Product, backref='purchases', on_delete=CASCADE)
     price_per_item = FloatField()
     total_price = FloatField()
     supplier = CharField()
@@ -35,7 +37,7 @@ class PurchaseHistory(BaseModel):
 
 
 class SaleHistory(BaseModel):
-    product = ForeignKeyField(Product, backref='sales')
+    product = ForeignKeyField(Product, backref='sales', on_delete=CASCADE)
     customer = CharField()
     quantity_sold = IntegerField()
     price_per_item = DecimalField(max_digits=10, decimal_places=2)
@@ -51,7 +53,7 @@ class Category(BaseModel):
 
 
 class ProductCategory(BaseModel):
-    product = ForeignKeyField(Product, backref='categories')
+    product = ForeignKeyField(Product, backref='categories',on_delete=CASCADE)
     category = ForeignKeyField(Category, backref='products')
 
     class Meta:
