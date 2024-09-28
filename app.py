@@ -35,16 +35,57 @@ def get_products():
 
 @app.route('/api/product', methods=['POST'])
 def create_product():
-    """Створити новий товар"""
+    """Створити новий товар з валідацією"""
     data = request.get_json()
+
+    # Перевірка наявності обов'язкових полів
+    required_fields = ['name', 'supplier', 'quantity', 'price_per_item']
+    missing_fields = [field for field in required_fields if field not in data]
+    if missing_fields:
+        return jsonify({'error': f"Missing required fields: {', '.join(missing_fields)}"}), 400
+
+    # Валідація полів
+    errors = {}
+
+    # Перевірка, що поля 'name' та 'supplier' не пусті
+    if not data['name'].strip():
+        errors['name'] = "Name is required."
+    if not data['supplier'].strip():
+        errors['supplier'] = "Supplier is required."
+
+    # Перевірка, що 'quantity' та 'price_per_item' є числами більше або рівними 0
+    try:
+        quantity = float(data['quantity'])
+        if quantity < 0:
+            errors['quantity'] = "Quantity must be greater than or equal to 0."
+    except ValueError:
+        errors['quantity'] = "Quantity must be a valid number."
+
+    try:
+        price_per_item = float(data['price_per_item'])
+        if price_per_item < 0:
+            errors['price_per_item'] = "Price per item must be greater than or equal to 0."
+    except ValueError:
+        errors['price_per_item'] = "Price per item must be a valid number."
+
+    # Обчислення та перевірка total_price
+    expected_total_price = quantity * price_per_item
+    total_price = data.get('total_price', expected_total_price)
+
+    if total_price != expected_total_price:
+        errors['total_price'] = f"Total price should be {expected_total_price}, but received {total_price}."
+
+    # Якщо є помилки валідації, повертаємо їх
+    if errors:
+        return jsonify({'errors': errors}), 400
 
     # Створюємо товар
     product = Product.create(
         name=data['name'],
         supplier=data['supplier'],
-        quantity=data['quantity'],
-        total_price=data['total_price'],
-        price_per_item=data['price_per_item']
+        quantity=quantity,
+        total_price=expected_total_price,
+        price_per_item=price_per_item
     )
 
     # Додаємо категорії до товару, якщо передано category_ids
@@ -70,17 +111,56 @@ def get_product(product_id):
 
 @app.route('/api/product/<int:product_id>', methods=['PUT'])
 def update_product(product_id):
-    """Оновити товар"""
+    """Оновити товар з валідацією"""
     data = request.get_json()
+
+    # Перевірка обов'язкових полів
+    required_fields = ['quantity', 'price_per_item', 'total_price']
+    missing_fields = [field for field in required_fields if field not in data]
+    if missing_fields:
+        return jsonify({'error': f"Missing required fields: {', '.join(missing_fields)}"}), 400
+
+    errors = {}
+
+    # Валідація полів
     try:
+        quantity = float(data['quantity'])
+        if quantity < 0:
+            errors['quantity'] = "Quantity must be greater than or equal to 0."
+    except ValueError:
+        errors['quantity'] = "Quantity must be a valid number."
+
+    try:
+        price_per_item = float(data['price_per_item'])
+        if price_per_item < 0:
+            errors['price_per_item'] = "Price per item must be greater than or equal to 0."
+    except ValueError:
+        errors['price_per_item'] = "Price per item must be a valid number."
+
+    expected_total_price = quantity * price_per_item
+    total_price = data.get('total_price', expected_total_price)
+
+    if total_price != expected_total_price:
+        errors['total_price'] = f"Total price should be {expected_total_price}, but received {total_price}."
+
+    # Якщо є помилки валідації, повертаємо їх
+    if errors:
+        return jsonify({'errors': errors}), 400
+
+    try:
+        # Перевіряємо, чи існує продукт
         product = Product.get(Product.id == product_id)
+
+        # Розрахунок зміни кількості
         change_amount = data['quantity'] - product.quantity
-        product.quantity = data['quantity']
-        product.total_price = data['total_price']
-        product.price_per_item = data['price_per_item']
+
+        # Оновлення полів продукту
+        product.quantity = quantity
+        product.total_price = expected_total_price
+        product.price_per_item = price_per_item
         product.save()
 
-        # Додаємо запис в історію
+        # Запис змін в історію
         if change_amount != 0:
             change_type = 'add' if change_amount > 0 else 'subtract'
             StockHistory.create(
@@ -89,6 +169,7 @@ def update_product(product_id):
                 change_type=change_type
             )
         return jsonify(model_to_dict(product)), 200
+
     except Product.DoesNotExist:
         return jsonify({'error': 'Product not found'}), 404
 
@@ -147,18 +228,35 @@ def purchase_product(product_id):
 
     # Валідація даних
     try:
+        # Валідація кількості
+        quantity = data['quantity']
+        if quantity <= 0:
+            return jsonify({'error': 'Quantity must be greater than 0'}), 400
+
+        # Валідація ціни та інших полів
         price_per_item = data['price_per_item']
         total_price = data['total_price']
         supplier = data['supplier']
         purchase_date = data.get('purchase_date')  # Можна вказати значення за замовчуванням
 
-        # Створення нового запису в історії
+        # Перевірка на від'ємні значення ціни
+        if price_per_item <= 0 or total_price <= 0:
+            return jsonify({'error': 'Price must be greater than 0'}), 400
+
+        # Оновлення кількості товару в таблиці Product
+        product.quantity += quantity
+        product.total_price += total_price
+        product.save()
+        product.price_per_item = product.total_price / product.quantity
+        product.save()
+        # Створення нового запису в історії покупок
         PurchaseHistory.create(
             product=product,
             price_per_item=price_per_item,
             total_price=total_price,
             supplier=supplier,
-            purchase_date=purchase_date
+            purchase_date=purchase_date,
+            quantity=quantity
         )
     except KeyError as e:
         return jsonify({'error': f'Missing field: {str(e)}'}), 400
@@ -171,16 +269,41 @@ def purchase_product(product_id):
 def record_sale(product_id):
     """Записати продаж товару і додати в історію продажів"""
     try:
+        # Перевірка, чи існує продукт
         product = Product.get(Product.id == product_id)
         data = request.get_json()
 
-        # Створення нового запису продажу
+        # Валідація даних
+        required_fields = ['customer', 'quantity', 'price_per_item', 'total_price']
+        for field in required_fields:
+            if field not in data:
+                return jsonify({'error': f'Missing field: {field}'}), 400
+
+        quantity_sold = data['quantity']
+        if quantity_sold <= 0:
+            return jsonify({'error': 'Quantity must be greater than 0'}), 400
+
+        price_per_item = data['price_per_item']
+        total_price = data['total_price']
+        if price_per_item <= 0 or total_price <= 0:
+            return jsonify({'error': 'Price per item and total price must be greater than 0'}), 400
+
+        # Перевірка, чи є достатня кількість товару на складі
+        if product.quantity < quantity_sold:
+            return jsonify({'error': 'Not enough quantity in stock'}), 400
+
+        # Оновлення кількості товару
+        product.quantity -= quantity_sold
+        product.total_price = product.quantity * product.price_per_item
+        product.save()
+
+        # Створення нового запису продажу в історії
         SaleHistory.create(
             product=product,
             customer=data['customer'],
-            quantity_sold=data['quantity'],
-            price_per_item=data['price_per_item'],
-            total_price=data['total_price'],
+            quantity_sold=quantity_sold,
+            price_per_item=price_per_item,
+            total_price=total_price,
             sale_date=data.get('sale_date', datetime.now())  # Якщо немає дати, використати поточну
         )
 
@@ -188,6 +311,9 @@ def record_sale(product_id):
 
     except Product.DoesNotExist:
         return jsonify({'error': 'Product not found'}), 404
+
+    except KeyError as e:
+        return jsonify({'error': f'Missing field: {str(e)}'}), 400
 
 
 @app.route('/api/categories', methods=['GET'])
