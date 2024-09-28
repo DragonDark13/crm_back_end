@@ -88,6 +88,13 @@ def create_product():
         price_per_item=price_per_item
     )
 
+    # Записуємо подію створення товару до історії запасів
+    StockHistory.create(
+        product=product,
+        change_amount=quantity,
+        change_type='create'  # Тип операції "додавання" при створенні товару
+    )
+
     # Додаємо категорії до товару, якщо передано category_ids
     if 'category_ids' in data:
         category_ids = data['category_ids']
@@ -193,7 +200,13 @@ def get_product_history(product_id):
 
         # Отримання історії змін запасів
         stock_history = StockHistory.select().where(StockHistory.product == product)
-        stock_history_list = [model_to_dict(record) for record in stock_history]
+        stock_history_list = [
+            {
+                **model_to_dict(record),
+                'timestamp': record.timestamp.strftime('%Y-%m-%d %H:%M:%S')  # Або інший бажаний формат
+            }
+            for record in stock_history
+        ]
 
         # Отримання історії покупок
         purchase_history = PurchaseHistory.select().where(PurchaseHistory.product == product)
@@ -201,7 +214,14 @@ def get_product_history(product_id):
 
         # Отримання історії продажів
         sale_history = SaleHistory.select().where(SaleHistory.product == product)
-        sale_history_list = [model_to_dict(sale) for sale in sale_history]
+        sale_history_list = [
+            {
+                **model_to_dict(sale),
+                'price_per_item': float(sale.price_per_item),  # Конвертація в число
+                'total_price': float(sale.total_price)  # Конвертація в число
+            }
+            for sale in sale_history
+        ]
 
         # Об'єднуємо всі списки в один об'єкт
         combined_history = {
@@ -256,7 +276,7 @@ def purchase_product(product_id):
             total_price=total_price,
             supplier=supplier,
             purchase_date=purchase_date,
-            quantity=quantity
+            quantity_purchase=quantity
         )
     except KeyError as e:
         return jsonify({'error': f'Missing field: {str(e)}'}), 400

@@ -31,6 +31,7 @@ class PurchaseHistory(BaseModel):
     total_price = FloatField()
     supplier = CharField()
     purchase_date = DateField()
+    quantity_purchase = FloatField()
 
 
 class SaleHistory(BaseModel):
