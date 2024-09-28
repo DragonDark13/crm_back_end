@@ -4,7 +4,7 @@ from flask import Flask, jsonify, request
 from peewee import SqliteDatabase
 from playhouse.shortcuts import model_to_dict
 from models import Product, StockHistory, PurchaseHistory, SaleHistory, \
-    Category, ProductCategory  # Імпортуємо модель Product з файлу models.py
+    Category, ProductCategory, Supplier  # Імпортуємо модель Product з файлу models.py
 
 from flask_cors import CORS
 
@@ -39,7 +39,7 @@ def create_product():
     data = request.get_json()
 
     # Перевірка наявності обов'язкових полів
-    required_fields = ['name', 'supplier', 'quantity', 'price_per_item']
+    required_fields = ['name', 'supplier_id', 'quantity', 'price_per_item']
     missing_fields = [field for field in required_fields if field not in data]
     if missing_fields:
         return jsonify({'error': f"Missing required fields: {', '.join(missing_fields)}"}), 400
@@ -400,6 +400,32 @@ def get_product_categories(product_id):
         return jsonify(categories), 200
     except Product.DoesNotExist:
         return jsonify({'error': 'Product not found'}), 404
+
+
+@app.route('/api/supplier', methods=['POST'])
+def create_supplier():
+    """Додати нового постачальника"""
+    data = request.get_json()
+
+    # Перевірка наявності обов'язкового поля
+    if 'name' not in data:
+        return jsonify({'error': 'Name is required'}), 400
+
+    supplier, created = Supplier.get_or_create(name=data['name'], defaults={'contact_info': data.get('contact_info')})
+
+    if created:
+        return jsonify({'message': 'Supplier created successfully', 'supplier_id': supplier.id}), 201
+    else:
+        return jsonify({'error': 'Supplier already exists'}), 409
+
+
+@app.route('/api/suppliers', methods=['GET'])
+def get_suppliers():
+    """Отримати список усіх постачальників"""
+    suppliers = Supplier.select()
+    suppliers_list = [model_to_dict(supplier) for supplier in suppliers]
+
+    return jsonify(suppliers_list), 200
 
 
 if __name__ == '__main__':

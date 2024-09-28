@@ -12,9 +12,18 @@ class BaseModel(Model):
         database = db
 
 
+class Supplier(BaseModel):
+    name = CharField(unique=True)
+    contact_info = CharField(null=True)  # Додаткова інформація про контакт (можна адаптувати за потребою)
+
+    class Meta:
+        table_name = 'suppliers'
+
+
 class Product(BaseModel):
     name = CharField()
-    supplier = CharField()
+    supplier = ForeignKeyField(Supplier, backref='products')  # Зв'язок з постачальником
+
     quantity = IntegerField()
     total_price = IntegerField()
     price_per_item = IntegerField()
@@ -53,7 +62,7 @@ class Category(BaseModel):
 
 
 class ProductCategory(BaseModel):
-    product = ForeignKeyField(Product, backref='categories',on_delete=CASCADE)
+    product = ForeignKeyField(Product, backref='categories', on_delete=CASCADE)
     category = ForeignKeyField(Category, backref='products')
 
     class Meta:
