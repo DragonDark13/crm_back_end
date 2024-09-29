@@ -22,8 +22,7 @@ class Supplier(BaseModel):
 
 class Product(BaseModel):
     name = CharField()
-    supplier = ForeignKeyField(Supplier, backref='products')  # Зв'язок з постачальником
-
+    supplier = ForeignKeyField(Supplier, null=True, backref='products')  # Додаємо null=True
     quantity = IntegerField()
     total_price = IntegerField()
     price_per_item = IntegerField()

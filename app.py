@@ -28,6 +28,16 @@ def get_products():
         # Отримуємо категорії продукту
         product_dict['category_ids'] = [pc.category.id for pc in product.categories]
 
+        # Додаємо постачальника продукту (якщо він є)
+        if product.supplier:
+            product_dict['supplier'] = {
+                'id': product.supplier.id,
+                'name': product.supplier.name,
+                'contact_info': product.supplier.contact_info
+            }
+        else:
+            product_dict['supplier'] = None  # Якщо постачальника немає
+
         product_list.append(product_dict)
 
     return jsonify(product_list), 200
@@ -50,8 +60,6 @@ def create_product():
     # Перевірка, що поля 'name' та 'supplier' не пусті
     if not data['name'].strip():
         errors['name'] = "Name is required."
-    if not data['supplier'].strip():
-        errors['supplier'] = "Supplier is required."
 
     # Перевірка, що 'quantity' та 'price_per_item' є числами більше або рівними 0
     try:
@@ -82,7 +90,7 @@ def create_product():
     # Створюємо товар
     product = Product.create(
         name=data['name'],
-        supplier=data['supplier'],
+        supplier=data['supplier_id'],
         quantity=quantity,
         total_price=expected_total_price,
         price_per_item=price_per_item
@@ -118,7 +126,7 @@ def get_product(product_id):
 
 @app.route('/api/product/<int:product_id>', methods=['PUT'])
 def update_product(product_id):
-    """Оновити товар з валідацією"""
+    """Оновити товар з валідацією і збереженням всіх змін"""
     data = request.get_json()
 
     # Перевірка обов'язкових полів
@@ -158,6 +166,15 @@ def update_product(product_id):
         # Перевіряємо, чи існує продукт
         product = Product.get(Product.id == product_id)
 
+        # Оновлюємо постачальника, якщо він був переданий
+        supplier_id = data.get('supplier_id')
+        if supplier_id:
+            try:
+                supplier = Supplier.get(Supplier.id == supplier_id)
+                product.supplier = supplier
+            except Supplier.DoesNotExist:
+                return jsonify({'error': 'Supplier not found'}), 404
+
         # Розрахунок зміни кількості
         change_amount = data['quantity'] - product.quantity
 
@@ -165,6 +182,15 @@ def update_product(product_id):
         product.quantity = quantity
         product.total_price = expected_total_price
         product.price_per_item = price_per_item
+
+        # Оновлюємо категорії, якщо вони передані
+        category_ids = data.get('category_ids', [])
+        if category_ids:
+            # Очищаємо попередні категорії та додаємо нові
+            product.categories.clear()
+            categories = Category.select().where(Category.id.in_(category_ids))
+            product.categories.add(categories)
+
         product.save()
 
         # Запис змін в історію
@@ -175,7 +201,10 @@ def update_product(product_id):
                 change_amount=abs(change_amount),
                 change_type=change_type
             )
-        return jsonify(model_to_dict(product)), 200
+
+        # Повертаємо оновлений продукт у вигляді JSON
+        updated_product = model_to_dict(product, backrefs=True, exclude=[ProductCategory])
+        return jsonify(updated_product), 200
 
     except Product.DoesNotExist:
         return jsonify({'error': 'Product not found'}), 404
