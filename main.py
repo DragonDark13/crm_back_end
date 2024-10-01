@@ -80,3 +80,9 @@ def load_products_to_db(data):
 
 # Виклик функції
 load_products_to_db(data)
+
+# Створення початкових категорій у базі даних
+categories = ['Сувеніри', 'Гаррі Поттер', 'Володар Перснів']
+
+for category_name in categories:
+    Category.get_or_create(name=category_name)

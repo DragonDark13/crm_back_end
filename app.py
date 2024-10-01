@@ -25,6 +25,10 @@ def get_products():
         # Перетворюємо продукт в словник і додаємо категорії
         product_dict = model_to_dict(product, exclude=[ProductCategory])
 
+        # Переконайтесь, що total_price і price_per_item у форматі чисел
+        product_dict['total_price'] = float(product.total_price)
+        product_dict['price_per_item'] = float(product.price_per_item)
+
         # Отримуємо категорії продукту
         product_dict['category_ids'] = [pc.category.id for pc in product.categories]
 
@@ -77,11 +81,11 @@ def create_product():
         errors['price_per_item'] = "Price per item must be a valid number."
 
     # Обчислення та перевірка total_price
-    expected_total_price = quantity * price_per_item
-    total_price = data.get('total_price', expected_total_price)
+    # expected_total_price = quantity * price_per_item
+    total_price = data.get('total_price')
 
-    if total_price != expected_total_price:
-        errors['total_price'] = f"Total price should be {expected_total_price}, but received {total_price}."
+    # if total_price != expected_total_price:
+    #     errors['total_price'] = f"Total price should be {expected_total_price}, but received {total_price}."
 
     # Якщо є помилки валідації, повертаємо їх
     if errors:
@@ -92,7 +96,7 @@ def create_product():
         name=data['name'],
         supplier=data['supplier_id'],
         quantity=quantity,
-        total_price=expected_total_price,
+        total_price=total_price,
         price_per_item=price_per_item
     )
 
@@ -152,11 +156,11 @@ def update_product(product_id):
     except ValueError:
         errors['price_per_item'] = "Price per item must be a valid number."
 
-    expected_total_price = quantity * price_per_item
-    total_price = data.get('total_price', expected_total_price)
+    # expected_total_price = quantity * price_per_item
+    total_price = data.get('total_price')
 
-    if total_price != expected_total_price:
-        errors['total_price'] = f"Total price should be {expected_total_price}, but received {total_price}."
+    # if total_price != expected_total_price:
+    #     errors['total_price'] = f"Total price should be {expected_total_price}, but received {total_price}."
 
     # Якщо є помилки валідації, повертаємо їх
     if errors:
@@ -180,7 +184,7 @@ def update_product(product_id):
 
         # Оновлення полів продукту
         product.quantity = quantity
-        product.total_price = expected_total_price
+        product.total_price = total_price
         product.price_per_item = price_per_item
 
         # Оновлюємо категорії, якщо вони передані

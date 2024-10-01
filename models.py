@@ -24,8 +24,8 @@ class Product(BaseModel):
     name = CharField()
     supplier = ForeignKeyField(Supplier, null=True, backref='products')  # Додаємо null=True
     quantity = IntegerField()
-    total_price = IntegerField()
-    price_per_item = IntegerField()
+    total_price = DecimalField(max_digits=10, decimal_places=2)
+    price_per_item = DecimalField(max_digits=10, decimal_places=2)
 
 
 class StockHistory(BaseModel):
@@ -37,8 +37,8 @@ class StockHistory(BaseModel):
 
 class PurchaseHistory(BaseModel):
     product = ForeignKeyField(Product, backref='purchases', on_delete=CASCADE)
-    price_per_item = FloatField()
-    total_price = FloatField()
+    price_per_item = DecimalField(max_digits=10, decimal_places=2)
+    total_price = DecimalField(max_digits=10, decimal_places=2)
     supplier = CharField()
     purchase_date = DateField()
     quantity_purchase = FloatField()
