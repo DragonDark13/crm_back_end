@@ -191,10 +191,14 @@ def update_product(product_id):
         # Оновлюємо категорії, якщо вони передані
         category_ids = data.get('category_ids', [])
         if category_ids:
-            # Очищаємо попередні категорії та додаємо нові
-            product.categories.clear()
+            # Очищаємо попередні категорії
+            ProductCategory.delete().where(ProductCategory.product == product).execute()
+
+            # Додаємо нові категорії
             categories = Category.select().where(Category.id.in_(category_ids))
-            product.categories.add(categories)
+            for category in categories:
+                ProductCategory.create(product=product, category=category)
+
 
         product.save()
 
