@@ -1,4 +1,5 @@
 from datetime import datetime
+from decimal import Decimal
 
 from flask import Flask, jsonify, request
 from peewee import SqliteDatabase
@@ -300,10 +301,17 @@ def purchase_product(product_id):
             return jsonify({'error': 'Quantity must be greater than 0'}), 400
 
         # Валідація ціни та інших полів
-        price_per_item = data['price_per_item']
-        total_price = data['total_price']
-        supplier = data['supplier']
+        price_per_item = Decimal(data['price_per_item'])  # Перетворення у Decimal
+        total_price = Decimal(data['total_price'])  # Перетворення у Decimal
+        supplier_id = data['supplier_id']
         purchase_date = data.get('purchase_date')  # Можна вказати значення за замовчуванням
+
+        if supplier_id:
+            try:
+                supplier = Supplier.get(Supplier.id == supplier_id)
+                product.supplier = supplier
+            except Supplier.DoesNotExist:
+                return jsonify({'error': 'Supplier not found'}), 404
 
         # Перевірка на від'ємні значення ціни
         if price_per_item <= 0 or total_price <= 0:
@@ -320,7 +328,7 @@ def purchase_product(product_id):
             product=product,
             price_per_item=price_per_item,
             total_price=total_price,
-            supplier=supplier,
+            supplier=supplier.name,
             purchase_date=purchase_date,
             quantity_purchase=quantity
         )
