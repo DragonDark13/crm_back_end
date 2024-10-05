@@ -26,6 +26,7 @@ class Product(BaseModel):
     quantity = IntegerField()
     total_price = DecimalField(max_digits=10, decimal_places=2)
     price_per_item = DecimalField(max_digits=10, decimal_places=2)
+    created_date = DateTimeField(default='')
 
 
 class StockHistory(BaseModel):

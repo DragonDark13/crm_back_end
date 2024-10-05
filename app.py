@@ -85,6 +85,12 @@ def create_product():
     # expected_total_price = quantity * price_per_item
     total_price = data.get('total_price')
 
+    created_date = data.get('created_date')  # Можна вказати
+
+    if not created_date:
+        created_date = datetime.now()
+    # значення за замовчуванням
+
     # if total_price != expected_total_price:
     #     errors['total_price'] = f"Total price should be {expected_total_price}, but received {total_price}."
 
@@ -98,14 +104,19 @@ def create_product():
         supplier=data['supplier_id'],
         quantity=quantity,
         total_price=total_price,
-        price_per_item=price_per_item
+        price_per_item=price_per_item,
+        created_date=created_date
     )
+
+    # Встановлюємо timestamp для StockHistory на основі created_date
+    timestamp = created_date if data.get('created_date') else None
 
     # Записуємо подію створення товару до історії запасів
     StockHistory.create(
         product=product,
         change_amount=quantity,
-        change_type='create'  # Тип операції "додавання" при створенні товару
+        change_type='create',  # Тип операції "додавання" при створенні товару
+        timestamp=timestamp or datetime.now()  # Якщо timestamp None, використовуємо поточний час
     )
 
     # Додаємо категорії до товару, якщо передано category_ids
@@ -135,7 +146,7 @@ def update_product(product_id):
     data = request.get_json()
 
     # Перевірка обов'язкових полів
-    required_fields = ['quantity', 'price_per_item', 'total_price']
+    required_fields = ['quantity', 'price_per_item', 'total_price', 'created_date']
     missing_fields = [field for field in required_fields if field not in data]
     if missing_fields:
         return jsonify({'error': f"Missing required fields: {', '.join(missing_fields)}"}), 400
@@ -180,6 +191,14 @@ def update_product(product_id):
             except Supplier.DoesNotExist:
                 return jsonify({'error': 'Supplier not found'}), 404
 
+        created_date = data.get('created_date')
+
+        # Оновлення поля created_date у продукті
+        if created_date:
+            product.created_date = created_date
+        else:
+            product.created_date = datetime.now()
+
         # Розрахунок зміни кількості
         change_amount = data['quantity'] - product.quantity
 
@@ -199,17 +218,28 @@ def update_product(product_id):
             for category in categories:
                 ProductCategory.create(product=product, category=category)
 
-
         product.save()
 
-        # Запис змін в історію
-        if change_amount != 0:
-            change_type = 'add' if change_amount > 0 else 'subtract'
-            StockHistory.create(
-                product=product,
-                change_amount=abs(change_amount),
-                change_type=change_type
-            )
+        # # Запис змін в історію
+        # if change_amount != 0:
+        #     change_type = 'add' if change_amount > 0 else 'subtract'
+        #     StockHistory.create(
+        #         product=product,
+        #         change_amount=abs(change_amount),
+        #         change_type=change_type
+        #     )
+
+        # Шукаємо відповідний запис в StockHistory
+        stock_history_record = StockHistory.get(
+            (StockHistory.product == product) &
+            (StockHistory.change_type == 'create')
+        )
+
+        # Оновлюємо timestamp у знайденому записі
+        if stock_history_record:
+            stock_history_record.timestamp = created_date if created_date else datetime.now()
+            stock_history_record.change_amount = quantity
+            stock_history_record.save()  # Зберігаємо зміни в записі
 
         # Повертаємо оновлений продукт у вигляді JSON
         updated_product = model_to_dict(product, backrefs=True, exclude=[ProductCategory])
