@@ -19,6 +19,29 @@ migrate = Migrate(app, db)
 
 
 @app.route('/api/products', methods=['GET'])
+def verify_product_sale_history():
+    products = Product.select()  # Отримуємо всі продукти
+
+    for product in products:
+        # Підраховуємо загальну кількість проданих товарів і суму продажів для кожного продукту
+        sale_records = SaleHistory.select().where(SaleHistory.product == product)
+
+        total_quantity_sold = sum(record.quantity_sold for record in sale_records)
+        total_selling_price = sum(record.selling_total_price for record in sale_records)
+
+        # Порівнюємо з полями product.selling_quantity та product.selling_total_price
+        if total_quantity_sold == product.selling_quantity and total_selling_price == product.selling_total_price:
+            print(f"Product '{product.name}' verification successful!")
+        else:
+            print(f"Product '{product.name}' verification failed!")
+            print(f"Expected quantity sold: {product.selling_quantity}, calculated: {total_quantity_sold}")
+            print(f"Expected total selling price: {product.selling_total_price}, calculated: {total_selling_price}")
+
+
+# Виклик перевірки при запуску програми
+verify_product_sale_history()
+
+
 def get_products():
     """Отримати всі товари разом з категоріями"""
     products = Product.select()
@@ -428,7 +451,7 @@ def record_sale(product_id):
         product.quantity -= quantity_sold
         product.selling_quantity = product.selling_quantity + quantity_sold
         product.selling_price_per_item = selling_price_per_item
-        product.selling_total_price = selling_total_price
+        product.selling_total_price = product.selling_total_price + selling_total_price
         product.save()
 
         # Створення нового запису продажу в історії
