@@ -1,6 +1,7 @@
 from tkinter import CASCADE
 
 from peewee import Model, CharField, IntegerField, DateTimeField, ForeignKeyField, FloatField, DateField, DecimalField
+from peewee_migrate import Migrator
 from playhouse.sqlite_ext import SqliteDatabase
 from datetime import datetime
 
@@ -23,23 +24,26 @@ class Supplier(BaseModel):
 class Product(BaseModel):
     name = CharField()
     supplier = ForeignKeyField(Supplier, null=True, backref='products')  # Додаємо null=True
-    quantity = IntegerField()
-    total_price = DecimalField(max_digits=10, decimal_places=2)
-    price_per_item = DecimalField(max_digits=10, decimal_places=2)
-    created_date = DateTimeField(default='')
+    quantity = IntegerField(default=0)
+    purchase_total_price = DecimalField(max_digits=10, decimal_places=2, default=0.00)
+    purchase_price_per_item = DecimalField(max_digits=10, decimal_places=2, default=0.00)
+    selling_total_price = DecimalField(max_digits=10, decimal_places=2, default=0.00)
+    selling_price_per_item = DecimalField(max_digits=10, decimal_places=2, default=0.00)
+    selling_quantity = IntegerField(default=0)
+    created_date = DateTimeField(default=datetime.now)
 
 
 class StockHistory(BaseModel):
     product = ForeignKeyField(Product, backref='stock_history', on_delete=CASCADE)
     change_amount = IntegerField()
-    change_type = CharField(choices=[('add', 'Add'), ('subtract', 'Subtract')])
+    change_type = CharField(choices=[('add', 'Add'), ('subtract', 'Subtract'), ('create', 'Create')])
     timestamp = DateTimeField(default=datetime.now)
 
 
 class PurchaseHistory(BaseModel):
     product = ForeignKeyField(Product, backref='purchases', on_delete=CASCADE)
-    price_per_item = DecimalField(max_digits=10, decimal_places=2)
-    total_price = DecimalField(max_digits=10, decimal_places=2)
+    purchase_price_per_item = DecimalField(max_digits=10, decimal_places=2, default=0.00)
+    purchase_total_price = DecimalField(max_digits=10, decimal_places=2, default=0.00)
     supplier = CharField()
     purchase_date = DateField()
     quantity_purchase = FloatField()
@@ -49,8 +53,8 @@ class SaleHistory(BaseModel):
     product = ForeignKeyField(Product, backref='sales', on_delete=CASCADE)
     customer = CharField()
     quantity_sold = IntegerField()
-    price_per_item = DecimalField(max_digits=10, decimal_places=2)
-    total_price = DecimalField(max_digits=12, decimal_places=2)
+    selling_price_per_item = DecimalField(max_digits=10, decimal_places=2, default=0.00)
+    selling_total_price = DecimalField(max_digits=12, decimal_places=2, default=0.00)
     sale_date = DateTimeField(default=datetime.now)
 
 
@@ -67,3 +71,5 @@ class ProductCategory(BaseModel):
 
     class Meta:
         db_table = 'product_categories'
+
+        # Initialize the migrator

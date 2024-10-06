@@ -2,6 +2,7 @@ from datetime import datetime
 from decimal import Decimal
 
 from flask import Flask, jsonify, request
+from flask_migrate import Migrate
 from peewee import SqliteDatabase
 from playhouse.shortcuts import model_to_dict
 from models import Product, StockHistory, PurchaseHistory, SaleHistory, \
@@ -14,6 +15,7 @@ CORS(app)
 
 # Підключаємо базу даних
 db = SqliteDatabase('shop_crm.db')
+migrate = Migrate(app, db)
 
 
 @app.route('/api/products', methods=['GET'])
@@ -26,9 +28,19 @@ def get_products():
         # Перетворюємо продукт в словник і додаємо категорії
         product_dict = model_to_dict(product, exclude=[ProductCategory])
 
-        # Переконайтесь, що total_price і price_per_item у форматі чисел
-        product_dict['total_price'] = float(product.total_price)
-        product_dict['price_per_item'] = float(product.price_per_item)
+        # Переконайтесь, що purchase_total_price і purchase_price_per_item у форматі чисел
+        product_dict['purchase_total_price'] = float(product.purchase_total_price)
+        product_dict['purchase_price_per_item'] = float(product.purchase_price_per_item)
+
+        if product.selling_total_price:
+            product_dict['selling_total_price'] = float(product.selling_total_price)
+        else:
+            product_dict['selling_total_price'] = float('0.00')  # ��кщо продажу немає
+
+        if product.selling_price_per_item:
+            product_dict['selling_price_per_item'] = float(product.selling_price_per_item)
+        else:
+            product_dict['selling_price_per_item'] = 0.00  # ��кщо продажу немає
 
         # Отримуємо категорії продукту
         product_dict['category_ids'] = [pc.category.id for pc in product.categories]
@@ -44,7 +56,6 @@ def get_products():
             product_dict['supplier'] = None  # Якщо постачальника немає
 
         product_list.append(product_dict)
-
     return jsonify(product_list), 200
 
 
@@ -54,7 +65,7 @@ def create_product():
     data = request.get_json()
 
     # Перевірка наявності обов'язкових полів
-    required_fields = ['name', 'supplier_id', 'quantity', 'price_per_item']
+    required_fields = ['name', 'supplier_id', 'quantity', 'purchase_price_per_item', 'selling_price_per_item']
     missing_fields = [field for field in required_fields if field not in data]
     if missing_fields:
         return jsonify({'error': f"Missing required fields: {', '.join(missing_fields)}"}), 400
@@ -66,7 +77,7 @@ def create_product():
     if not data['name'].strip():
         errors['name'] = "Name is required."
 
-    # Перевірка, що 'quantity' та 'price_per_item' є числами більше або рівними 0
+    # Перевірка, що 'quantity' та 'purchase_price_per_item' є числами більше або рівними 0
     try:
         quantity = float(data['quantity'])
         if quantity < 0:
@@ -75,15 +86,16 @@ def create_product():
         errors['quantity'] = "Quantity must be a valid number."
 
     try:
-        price_per_item = float(data['price_per_item'])
-        if price_per_item < 0:
-            errors['price_per_item'] = "Price per item must be greater than or equal to 0."
+        purchase_price_per_item = float(data['purchase_price_per_item'])
+        if purchase_price_per_item < 0:
+            errors['purchase_price_per_item'] = "Price per item must be greater than or equal to 0."
     except ValueError:
-        errors['price_per_item'] = "Price per item must be a valid number."
+        errors['purchase_price_per_item'] = "Price per item must be a valid number."
 
-    # Обчислення та перевірка total_price
-    # expected_total_price = quantity * price_per_item
-    total_price = data.get('total_price')
+    # Обчислення та перевірка purchase_total_price
+    # expected_total_price = quantity * purchase_price_per_item
+    purchase_total_price = data.get('purchase_total_price')
+    selling_price_per_item = data.get('selling_price_per_item')
 
     created_date = data.get('created_date')  # Можна вказати
 
@@ -91,8 +103,8 @@ def create_product():
         created_date = datetime.now()
     # значення за замовчуванням
 
-    # if total_price != expected_total_price:
-    #     errors['total_price'] = f"Total price should be {expected_total_price}, but received {total_price}."
+    # if purchase_total_price != expected_total_price:
+    #     errors['purchase_total_price'] = f"Total price should be {expected_total_price}, but received {purchase_total_price}."
 
     # Якщо є помилки валідації, повертаємо їх
     if errors:
@@ -103,8 +115,9 @@ def create_product():
         name=data['name'],
         supplier=data['supplier_id'],
         quantity=quantity,
-        total_price=total_price,
-        price_per_item=price_per_item,
+        purchase_total_price=purchase_total_price,
+        purchase_price_per_item=purchase_price_per_item,
+        selling_price_per_item=selling_price_per_item,
         created_date=created_date
     )
 
@@ -146,7 +159,7 @@ def update_product(product_id):
     data = request.get_json()
 
     # Перевірка обов'язкових полів
-    required_fields = ['quantity', 'price_per_item', 'total_price', 'created_date']
+    required_fields = ['quantity', 'purchase_price_per_item', 'purchase_total_price', 'created_date']
     missing_fields = [field for field in required_fields if field not in data]
     if missing_fields:
         return jsonify({'error': f"Missing required fields: {', '.join(missing_fields)}"}), 400
@@ -162,17 +175,18 @@ def update_product(product_id):
         errors['quantity'] = "Quantity must be a valid number."
 
     try:
-        price_per_item = float(data['price_per_item'])
-        if price_per_item < 0:
-            errors['price_per_item'] = "Price per item must be greater than or equal to 0."
+        purchase_price_per_item = float(data['purchase_price_per_item'])
+        if purchase_price_per_item < 0:
+            errors['purchase_price_per_item'] = "Price per item must be greater than or equal to 0."
     except ValueError:
-        errors['price_per_item'] = "Price per item must be a valid number."
+        errors['purchase_price_per_item'] = "Price per item must be a valid number."
 
-    # expected_total_price = quantity * price_per_item
-    total_price = data.get('total_price')
+    # expected_total_price = quantity * purchase_price_per_item
+    purchase_total_price = data.get('purchase_total_price')
+    selling_price_per_item = data.get('selling_price_per_item')
 
-    # if total_price != expected_total_price:
-    #     errors['total_price'] = f"Total price should be {expected_total_price}, but received {total_price}."
+    # if purchase_total_price != expected_total_price:
+    #     errors['purchase_total_price'] = f"Total price should be {expected_total_price}, but received {purchase_total_price}."
 
     # Якщо є помилки валідації, повертаємо їх
     if errors:
@@ -204,8 +218,9 @@ def update_product(product_id):
 
         # Оновлення полів продукту
         product.quantity = quantity
-        product.total_price = total_price
-        product.price_per_item = price_per_item
+        product.purchase_total_price = purchase_total_price
+        product.purchase_price_per_item = purchase_price_per_item
+        product.selling_price_per_item = selling_price_per_item
 
         # Оновлюємо категорії, якщо вони передані
         category_ids = data.get('category_ids', [])
@@ -230,16 +245,25 @@ def update_product(product_id):
         #     )
 
         # Шукаємо відповідний запис в StockHistory
-        stock_history_record = StockHistory.get(
+        stock_history_record = StockHistory.get_or_none(
             (StockHistory.product == product) &
             (StockHistory.change_type == 'create')
         )
 
-        # Оновлюємо timestamp у знайденому записі
+        # Якщо запис існує, оновлюємо його
         if stock_history_record:
             stock_history_record.timestamp = created_date if created_date else datetime.now()
             stock_history_record.change_amount = quantity
             stock_history_record.save()  # Зберігаємо зміни в записі
+
+        # Якщо запису немає, створюємо новий
+        else:
+            StockHistory.create(
+                product=product,
+                change_amount=quantity,
+                change_type='create',
+                timestamp=created_date if created_date else datetime.now()
+            )
 
         # Повертаємо оновлений продукт у вигляді JSON
         updated_product = model_to_dict(product, backrefs=True, exclude=[ProductCategory])
@@ -298,8 +322,8 @@ def get_product_history(product_id):
         sale_history_list = [
             {
                 **model_to_dict(sale),
-                'price_per_item': float(sale.price_per_item),  # Конвертація в число
-                'total_price': float(sale.total_price)  # Конвертація в число
+                'selling_price_per_item': float(sale.selling_price_per_item),  # Конвертація в число
+                'selling_total_price': float(sale.selling_total_price)  # Конвертація в число
             }
             for sale in sale_history
         ]
@@ -335,8 +359,8 @@ def purchase_product(product_id):
             return jsonify({'error': 'Quantity must be greater than 0'}), 400
 
         # Валідація ціни та інших полів
-        price_per_item = Decimal(data['price_per_item'])  # Перетворення у Decimal
-        total_price = Decimal(data['total_price'])  # Перетворення у Decimal
+        purchase_price_per_item = Decimal(data['purchase_price_per_item'])  # Перетворення у Decimal
+        purchase_total_price = Decimal(data['purchase_total_price'])  # Перетворення у Decimal
         supplier_id = data['supplier_id']
         purchase_date = data.get('purchase_date')  # Можна вказати значення за замовчуванням
 
@@ -348,20 +372,20 @@ def purchase_product(product_id):
                 return jsonify({'error': 'Supplier not found'}), 404
 
         # Перевірка на від'ємні значення ціни
-        if price_per_item <= 0 or total_price <= 0:
+        if purchase_price_per_item <= 0 or purchase_total_price <= 0:
             return jsonify({'error': 'Price must be greater than 0'}), 400
 
         # Оновлення кількості товару в таблиці Product
         product.quantity += quantity
-        product.total_price += total_price
+        product.purchase_total_price += purchase_total_price
         product.save()
-        product.price_per_item = product.total_price / product.quantity
+        product.purchase_price_per_item = product.purchase_total_price / product.quantity
         product.save()
         # Створення нового запису в історії покупок
         PurchaseHistory.create(
             product=product,
-            price_per_item=price_per_item,
-            total_price=total_price,
+            purchase_price_per_item=purchase_price_per_item,
+            purchase_total_price=purchase_total_price,
             supplier=supplier.name,
             purchase_date=purchase_date,
             quantity_purchase=quantity
@@ -382,7 +406,7 @@ def record_sale(product_id):
         data = request.get_json()
 
         # Валідація даних
-        required_fields = ['customer', 'quantity', 'price_per_item', 'total_price']
+        required_fields = ['customer', 'quantity', 'selling_price_per_item', 'selling_total_price']
         for field in required_fields:
             if field not in data:
                 return jsonify({'error': f'Missing field: {field}'}), 400
@@ -391,9 +415,9 @@ def record_sale(product_id):
         if quantity_sold <= 0:
             return jsonify({'error': 'Quantity must be greater than 0'}), 400
 
-        price_per_item = data['price_per_item']
-        total_price = data['total_price']
-        if price_per_item <= 0 or total_price <= 0:
+        selling_price_per_item = data['selling_price_per_item']
+        selling_total_price = data['selling_total_price']
+        if selling_price_per_item <= 0 or selling_total_price <= 0:
             return jsonify({'error': 'Price per item and total price must be greater than 0'}), 400
 
         # Перевірка, чи є достатня кількість товару на складі
@@ -402,7 +426,9 @@ def record_sale(product_id):
 
         # Оновлення кількості товару
         product.quantity -= quantity_sold
-        product.total_price = product.quantity * product.price_per_item
+        product.selling_quantity = product.selling_quantity + quantity_sold
+        product.selling_price_per_item = selling_price_per_item
+        product.selling_total_price = selling_total_price
         product.save()
 
         # Створення нового запису продажу в історії
@@ -410,8 +436,8 @@ def record_sale(product_id):
             product=product,
             customer=data['customer'],
             quantity_sold=quantity_sold,
-            price_per_item=price_per_item,
-            total_price=total_price,
+            selling_price_per_item=selling_price_per_item,
+            selling_total_price=selling_total_price,
             sale_date=data.get('sale_date', datetime.now())  # Якщо немає дати, використати поточну
         )
 
