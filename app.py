@@ -18,7 +18,6 @@ db = SqliteDatabase('shop_crm.db')
 migrate = Migrate(app, db)
 
 
-@app.route('/api/products', methods=['GET'])
 def verify_product_sale_history():
     products = Product.select()  # Отримуємо всі продукти
 
@@ -42,6 +41,7 @@ def verify_product_sale_history():
 verify_product_sale_history()
 
 
+@app.route('/api/products', methods=['GET'])
 def get_products():
     """Отримати всі товари разом з категоріями"""
     products = Product.select()
