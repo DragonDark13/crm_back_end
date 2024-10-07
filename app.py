@@ -83,87 +83,99 @@ def get_products():
 
 
 @app.route('/api/product', methods=['POST'])
-def create_product():
-    """Створити новий товар з валідацією"""
+def create_and_purchase_product():
+    """Створити новий товар і обробити закупку"""
     data = request.get_json()
 
-    # Перевірка наявності обов'язкових полів
-    required_fields = ['name', 'supplier_id', 'quantity', 'purchase_price_per_item', 'selling_price_per_item']
-    missing_fields = [field for field in required_fields if field not in data]
-    if missing_fields:
-        return jsonify({'error': f"Missing required fields: {', '.join(missing_fields)}"}), 400
+    # Перевірка обов'язкових полів для створення продукту
+    required_product_fields = ['name', 'category_ids', 'created_date']
+    missing_product_fields = [field for field in required_product_fields if field not in data]
+    if missing_product_fields:
+        return jsonify({'error': f"Missing required fields for product: {', '.join(missing_product_fields)}"}), 400
 
-    # Валідація полів
+    # Перевірка обов'язкових полів для закупки
+    required_purchase_fields = ['quantity', 'purchase_price_per_item', 'purchase_total_price', 'supplier_id']
+    missing_purchase_fields = [field for field in required_purchase_fields if field not in data]
+    if missing_purchase_fields:
+        return jsonify({'error': f"Missing required fields for purchase: {', '.join(missing_purchase_fields)}"}), 400
+
     errors = {}
 
-    # Перевірка, що поля 'name' та 'supplier' не пусті
-    if not data['name'].strip():
-        errors['name'] = "Name is required."
-
-    # Перевірка, що 'quantity' та 'purchase_price_per_item' є числами більше або рівними 0
+    # Валідація кількості
     try:
         quantity = float(data['quantity'])
-        if quantity < 0:
-            errors['quantity'] = "Quantity must be greater than or equal to 0."
+        if quantity <= 0:
+            errors['quantity'] = "Quantity must be greater than 0."
     except ValueError:
         errors['quantity'] = "Quantity must be a valid number."
 
+    # Валідація ціни за одиницю
     try:
         purchase_price_per_item = float(data['purchase_price_per_item'])
-        if purchase_price_per_item < 0:
-            errors['purchase_price_per_item'] = "Price per item must be greater than or equal to 0."
+        if purchase_price_per_item <= 0:
+            errors['purchase_price_per_item'] = "Price per item must be greater than 0."
     except ValueError:
         errors['purchase_price_per_item'] = "Price per item must be a valid number."
-
-    # Обчислення та перевірка purchase_total_price
-    # expected_total_price = quantity * purchase_price_per_item
-    purchase_total_price = data.get('purchase_total_price')
-    selling_price_per_item = data.get('selling_price_per_item')
-
-    created_date = data.get('created_date')  # Можна вказати
-
-    if not created_date:
-        created_date = datetime.now()
-    # значення за замовчуванням
-
-    # if purchase_total_price != expected_total_price:
-    #     errors['purchase_total_price'] = f"Total price should be {expected_total_price}, but received {purchase_total_price}."
 
     # Якщо є помилки валідації, повертаємо їх
     if errors:
         return jsonify({'errors': errors}), 400
 
-    # Створюємо товар
-    product = Product.create(
-        name=data['name'],
-        supplier=data['supplier_id'],
-        quantity=quantity,
-        purchase_total_price=purchase_total_price,
-        purchase_price_per_item=purchase_price_per_item,
-        selling_price_per_item=selling_price_per_item,
-        created_date=created_date
-    )
+    try:
+        # Створення нового продукту з кількістю 0
+        product = Product.create(
+            name=data['name'],
+            quantity=0,  # Початкова кількість 0
+            created_date=data.get('created_date', datetime.now())
+        )
 
-    # Встановлюємо timestamp для StockHistory на основі created_date
-    timestamp = created_date if data.get('created_date') else None
-
-    # Записуємо подію створення товару до історії запасів
-    StockHistory.create(
-        product=product,
-        change_amount=quantity,
-        change_type='create',  # Тип операції "додавання" при створенні товару
-        timestamp=timestamp or datetime.now()  # Якщо timestamp None, використовуємо поточний час
-    )
-
-    # Додаємо категорії до товару, якщо передано category_ids
-    if 'category_ids' in data:
-        category_ids = data['category_ids']
-        for category_id in category_ids:
-            category = Category.get_or_none(Category.id == category_id)
-            if category:
+        # Оновлюємо категорії
+        category_ids = data.get('category_ids', [])
+        if category_ids:
+            categories = Category.select().where(Category.id.in_(category_ids))
+            for category in categories:
                 ProductCategory.create(product=product, category=category)
 
-    return jsonify(model_to_dict(product, backrefs=True)), 201
+        # Обробка закупки
+        supplier_id = data['supplier_id']
+        try:
+            supplier = Supplier.get(Supplier.id == supplier_id)
+            product.supplier = supplier
+        except Supplier.DoesNotExist:
+            return jsonify({'error': 'Supplier not found'}), 404
+
+        purchase_total_price = Decimal(data['purchase_total_price'])
+        product.quantity += quantity
+        product.purchase_total_price = purchase_total_price
+        product.purchase_price_per_item = purchase_price_per_item
+        product.selling_price_per_item = Decimal(data['selling_price_per_item'])
+
+        product.save()
+
+        # Створення нового запису в історії закупок
+        PurchaseHistory.create(
+            product=product,
+            purchase_price_per_item=purchase_price_per_item,
+            purchase_total_price=purchase_total_price,
+            supplier=supplier.name,
+            purchase_date=data.get('purchase_date', datetime.now()),
+            quantity_purchase=quantity
+        )
+
+        # Оновлення StockHistory
+        StockHistory.create(
+            product=product,
+            change_amount=quantity,
+            change_type='create',
+            timestamp=data.get('purchase_date', datetime.now())
+        )
+
+        # Повертаємо створений продукт у вигляді JSON
+        created_product = model_to_dict(product, backrefs=True, exclude=[ProductCategory])
+        return jsonify(created_product), 201
+
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
 
 
 @app.route('/api/product/<int:product_id>', methods=['GET'])
