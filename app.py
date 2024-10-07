@@ -152,12 +152,13 @@ def create_and_purchase_product():
 
         product.save()
 
+
         # Створення нового запису в історії закупок
         PurchaseHistory.create(
             product=product,
             purchase_price_per_item=purchase_price_per_item,
             purchase_total_price=purchase_total_price,
-            supplier=supplier.name,
+            supplier=supplier,
             purchase_date=data.get('purchase_date', datetime.now()),
             quantity_purchase=quantity
         )
@@ -421,7 +422,7 @@ def purchase_product(product_id):
             product=product,
             purchase_price_per_item=purchase_price_per_item,
             purchase_total_price=purchase_total_price,
-            supplier=supplier.name,
+            supplier=supplier,
             purchase_date=purchase_date,
             quantity_purchase=quantity
         )
@@ -563,6 +564,67 @@ def get_suppliers():
 
     return jsonify(suppliers_list), 200
 
+
+def get_supplier_purchase_history(supplier_id):
+    supplier = Supplier.get_by_id(supplier_id)
+
+    # Отримання історії закупівель
+    purchase_history = (PurchaseHistory
+                        .select(PurchaseHistory, Product)
+                        .join(Product)
+                        .where(PurchaseHistory.supplier == supplier))
+
+    products = set()  # Унікальний список продуктів
+
+    for purchase in purchase_history:
+        products.add(purchase.product)
+
+    return {
+        "supplier": supplier.name,
+        "purchase_history": purchase_history,
+        "products": list(products)
+    }
+
+
+@app.route('/api/supplier/<int:supplier_id>/purchase-history', methods=['GET'])
+def get_supplier_purchase_history_api(supplier_id):
+    supplier_data = get_supplier_purchase_history(supplier_id)  # Використовуємо раніше створену функцію
+    return jsonify({
+        "supplier": supplier_data['supplier'],
+        "purchase_history": [{
+            "product": purchase.product.name,
+            "quantity_purchase": purchase.quantity_purchase,
+            "purchase_date": purchase.purchase_date,
+            "purchase_price_per_item": purchase.purchase_price_per_item,
+            "purchase_total_price": purchase.purchase_total_price
+        } for purchase in supplier_data['purchase_history']],
+        "products": [{"id": product.id, "name": product.name} for product in supplier_data['products']]
+    })
+
+
+def get_supplier_products(supplier_id):
+    supplier = Supplier.get_by_id(supplier_id)
+
+    # Отримання продуктів, пов'язаних із постачальником
+    products = Product.select().where(Product.supplier == supplier)
+
+    return {
+        "supplier": supplier.name,
+        "products": products
+    }
+
+
+@app.route('/api/supplier/<int:supplier_id>/products', methods=['GET'])
+def get_supplier_products_api(supplier_id):
+    supplier_data = get_supplier_products(supplier_id)  # Використовуємо функцію для отримання продуктів
+    return jsonify({
+        "supplier": supplier_data['supplier'],
+        "products": [{"id": product.id, "name": product.name} for product in supplier_data['products']]
+    })
+
+
+if __name__ == '__main__':
+    app.run(debug=True)
 
 if __name__ == '__main__':
     app.run(debug=True)

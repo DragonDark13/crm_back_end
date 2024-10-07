@@ -15,10 +15,13 @@ class BaseModel(Model):
 
 class Supplier(BaseModel):
     name = CharField(unique=True)
-    contact_info = CharField(null=True)  # Додаткова інформація про контакт (можна адаптувати за потребою)
+    contact_info = CharField(null=True)
+    email = CharField(null=True)
+    phone_number = CharField(null=True)
+    address = CharField(null=True)
 
     class Meta:
-        table_name = 'suppliers'
+        db_table = 'suppliers'
 
 
 class Product(BaseModel):
@@ -44,7 +47,7 @@ class PurchaseHistory(BaseModel):
     product = ForeignKeyField(Product, backref='purchases', on_delete=CASCADE)
     purchase_price_per_item = DecimalField(max_digits=10, decimal_places=2, default=0.00)
     purchase_total_price = DecimalField(max_digits=10, decimal_places=2, default=0.00)
-    supplier = CharField()
+    supplier = ForeignKeyField(Supplier, backref='purchase_history', on_delete=CASCADE)  # Зв'язок з постачальником
     purchase_date = DateField()
     quantity_purchase = FloatField()
 
