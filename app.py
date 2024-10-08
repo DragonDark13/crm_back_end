@@ -3,10 +3,10 @@ from decimal import Decimal
 
 from flask import Flask, jsonify, request
 from flask_migrate import Migrate
-from peewee import SqliteDatabase
+from peewee import SqliteDatabase, fn, SQL
 from playhouse.shortcuts import model_to_dict
 from models import Product, StockHistory, PurchaseHistory, SaleHistory, \
-    Category, ProductCategory, Supplier  # Імпортуємо модель Product з файлу models.py
+    Category, ProductCategory, Supplier, User  # Імпортуємо модель Product з файлу models.py
 
 from flask_cors import CORS
 
@@ -151,7 +151,6 @@ def create_and_purchase_product():
         product.selling_price_per_item = Decimal(data['selling_price_per_item'])
 
         product.save()
-
 
         # Створення нового запису в історії закупок
         PurchaseHistory.create(
@@ -623,8 +622,6 @@ def get_supplier_products_api(supplier_id):
     })
 
 
-if __name__ == '__main__':
-    app.run(debug=True)
 
 if __name__ == '__main__':
     app.run(debug=True)

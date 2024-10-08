@@ -76,3 +76,26 @@ class ProductCategory(BaseModel):
         db_table = 'product_categories'
 
         # Initialize the migrator
+
+
+class Customer(BaseModel):
+    name = CharField()
+    contact_info = CharField(null=True)
+    address = CharField(null=True)
+    email = CharField(unique=True, null=True)
+    phone_number = CharField(null=True)
+
+    class Meta:
+        db_table = 'customers'
+
+
+class UserRole(BaseModel):
+    name = CharField(unique=True)
+
+class User(BaseModel):
+    username = CharField(unique=True)
+    password = CharField()
+    role = ForeignKeyField(UserRole, backref='users')
+
+    class Meta:
+        db_table = 'users'
