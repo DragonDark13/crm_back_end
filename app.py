@@ -3,10 +3,10 @@ from decimal import Decimal
 
 from flask import Flask, jsonify, request
 from flask_migrate import Migrate
-from peewee import SqliteDatabase, fn, SQL
+from peewee import SqliteDatabase, fn, SQL, IntegrityError
 from playhouse.shortcuts import model_to_dict
 from models import Product, StockHistory, PurchaseHistory, SaleHistory, \
-    Category, ProductCategory, Supplier, User  # Імпортуємо модель Product з файлу models.py
+    Category, ProductCategory, Supplier, User, Customer  # Імпортуємо модель Product з файлу models.py
 
 from flask_cors import CORS
 
@@ -467,9 +467,10 @@ def record_sale(product_id):
         product.save()
 
         # Створення нового запису продажу в історії
+        customer = Customer.get(Customer.id == data['customer'].id)
         SaleHistory.create(
             product=product,
-            customer=data['customer'],
+            customer=customer,
             quantity_sold=quantity_sold,
             selling_price_per_item=selling_price_per_item,
             selling_total_price=selling_total_price,
@@ -621,6 +622,51 @@ def get_supplier_products_api(supplier_id):
         "products": [{"id": product.id, "name": product.name} for product in supplier_data['products']]
     })
 
+
+@app.route('/api/customers', methods=['POST'])
+def create_customer():
+    data = request.get_json()
+    required_fields = ['name', 'email']
+
+    # Перевірка на обов'язкові поля
+    missing_fields = [field for field in required_fields if field not in data]
+    if missing_fields:
+        return jsonify({'error': f'Missing required fields: {", ".join(missing_fields)}'}), 400
+
+    try:
+        # Створення нового покупця
+        customer = Customer.create(
+            name=data['name'],
+            contact_info=data.get('contact_info'),
+            address=data.get('address'),
+            email=data['email'],
+            phone_number=data.get('phone_number')
+        )
+        return jsonify({'message': 'Customer created successfully', 'customer': model_to_dict(customer)}), 201
+    except IntegrityError:
+        return jsonify({'error': 'Customer with this email already exists'}), 400
+
+
+@app.route('/api/customers', methods=['GET'])
+def get_all_customers():
+    customers = Customer.select()
+    customer_list = [model_to_dict(customer) for customer in customers]
+    return jsonify(customer_list), 200
+
+
+@app.route('/api/customers/<int:customer_id>', methods=['GET'])
+def get_customer_details(customer_id):
+    try:
+        customer = Customer.get_by_id(customer_id)
+        customer_data = model_to_dict(customer)
+
+        # Отримуємо продажі, пов'язані з покупцем
+        sales = SaleHistory.select().where(SaleHistory.customer == customer)
+        customer_data['sales'] = [model_to_dict(sale) for sale in sales]
+
+        return jsonify(customer_data), 200
+    except Customer.DoesNotExist:
+        return jsonify({'error': 'Customer not found'}), 404
 
 
 if __name__ == '__main__':

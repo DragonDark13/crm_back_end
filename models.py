@@ -52,13 +52,27 @@ class PurchaseHistory(BaseModel):
     quantity_purchase = FloatField()
 
 
+class Customer(BaseModel):
+    name = CharField()
+    contact_info = CharField(null=True)
+    address = CharField(null=True)
+    email = CharField(unique=True, null=True)
+    phone_number = CharField(null=True)
+
+    class Meta:
+        db_table = 'customers'
+
+
 class SaleHistory(BaseModel):
     product = ForeignKeyField(Product, backref='sales', on_delete=CASCADE)
-    customer = CharField()
+    customer = ForeignKeyField(Customer, backref='sales', on_delete=CASCADE)  # Зв'язок із покупцем
     quantity_sold = IntegerField()
     selling_price_per_item = DecimalField(max_digits=10, decimal_places=2, default=0.00)
     selling_total_price = DecimalField(max_digits=12, decimal_places=2, default=0.00)
     sale_date = DateTimeField(default=datetime.now)
+
+    class Meta:
+        db_table = 'sale_history'
 
 
 class Category(BaseModel):
@@ -78,19 +92,9 @@ class ProductCategory(BaseModel):
         # Initialize the migrator
 
 
-class Customer(BaseModel):
-    name = CharField()
-    contact_info = CharField(null=True)
-    address = CharField(null=True)
-    email = CharField(unique=True, null=True)
-    phone_number = CharField(null=True)
-
-    class Meta:
-        db_table = 'customers'
-
-
 class UserRole(BaseModel):
     name = CharField(unique=True)
+
 
 class User(BaseModel):
     username = CharField(unique=True)
