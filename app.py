@@ -467,7 +467,7 @@ def record_sale(product_id):
         product.save()
 
         # Створення нового запису продажу в історії
-        customer = Customer.get(Customer.id == data['customer'].id)
+        customer = Customer.get(Customer.id == data['customer'])
         SaleHistory.create(
             product=product,
             customer=customer,
