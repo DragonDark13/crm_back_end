@@ -1,4 +1,3 @@
-
 # агальний дохід від продажів: Додавання функції для підрахунку доходу.
 from peewee import fn, SQL
 
@@ -83,3 +82,22 @@ def has_permission(user_id, action):
         return True
     # Додати інші ролі та права доступу
     return False
+
+
+def verify_product_sale_history():
+    products = Product.select()  # Отримуємо всі продукти
+
+    for product in products:
+        # Підраховуємо загальну кількість проданих товарів і суму продажів для кожного продукту
+        sale_records = SaleHistory.select().where(SaleHistory.product == product)
+
+        total_quantity_sold = sum(record.quantity_sold for record in sale_records)
+        total_selling_price = sum(record.selling_total_price for record in sale_records)
+
+        # Порівнюємо з полями product.selling_quantity та product.selling_total_price
+        if total_quantity_sold == product.selling_quantity and total_selling_price == product.selling_total_price:
+            print(f"Product '{product.name}' verification successful!")
+        else:
+            print(f"Product '{product.name}' verification failed!")
+            print(f"Expected quantity sold: {product.selling_quantity}, calculated: {total_quantity_sold}")
+            print(f"Expected total selling price: {product.selling_total_price}, calculated: {total_selling_price}")
