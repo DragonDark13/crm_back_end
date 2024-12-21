@@ -1,6 +1,6 @@
-from tkinter import CASCADE
 
-from peewee import Model, CharField, IntegerField, DateTimeField, ForeignKeyField, FloatField, DateField, DecimalField
+from peewee import Model, CharField, IntegerField, DateTimeField, ForeignKeyField, FloatField, DateField, \
+    DecimalField
 from playhouse.sqlite_ext import SqliteDatabase
 from datetime import datetime
 
@@ -36,17 +36,17 @@ class Product(BaseModel):
 
 
 class StockHistory(BaseModel):
-    product = ForeignKeyField(Product, backref='stock_history', on_delete=CASCADE)
+    product = ForeignKeyField(Product, backref='stock_history', on_delete='CASCADE')
     change_amount = IntegerField()
     change_type = CharField(choices=[('add', 'Add'), ('subtract', 'Subtract'), ('create', 'Create')])
     timestamp = DateTimeField(default=datetime.now)
 
 
 class PurchaseHistory(BaseModel):
-    product = ForeignKeyField(Product, backref='purchases', on_delete=CASCADE)
+    product = ForeignKeyField(Product, backref='purchases', on_delete='CASCADE')
     purchase_price_per_item = DecimalField(max_digits=10, decimal_places=2, default=0.00)
     purchase_total_price = DecimalField(max_digits=10, decimal_places=2, default=0.00)
-    supplier = ForeignKeyField(Supplier, backref='purchase_history', on_delete=CASCADE)  # Зв'язок з постачальником
+    supplier = ForeignKeyField(Supplier, backref='purchase_history', on_delete='CASCADE')  # Зв'язок з постачальником
     purchase_date = DateField()
     quantity_purchase = FloatField()
 
@@ -63,8 +63,8 @@ class Customer(BaseModel):
 
 
 class SaleHistory(BaseModel):
-    product = ForeignKeyField(Product, backref='sales', on_delete=CASCADE)
-    customer = ForeignKeyField(Customer, backref='sales', on_delete=CASCADE)  # Зв'язок із покупцем
+    product = ForeignKeyField(Product, backref='sales', on_delete='CASCADE')
+    customer = ForeignKeyField(Customer, backref='sales', on_delete='CASCADE')  # Зв'язок із покупцем
     quantity_sold = IntegerField()
     selling_price_per_item = DecimalField(max_digits=10, decimal_places=2, default=0.00)
     selling_total_price = DecimalField(max_digits=12, decimal_places=2, default=0.00)
@@ -82,7 +82,7 @@ class Category(BaseModel):
 
 
 class ProductCategory(BaseModel):
-    product = ForeignKeyField(Product, backref='categories', on_delete=CASCADE)
+    product = ForeignKeyField(Product, backref='categories', on_delete='CASCADE')
     category = ForeignKeyField(Category, backref='products')
 
     class Meta:
