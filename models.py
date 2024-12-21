@@ -1,7 +1,6 @@
 from tkinter import CASCADE
 
 from peewee import Model, CharField, IntegerField, DateTimeField, ForeignKeyField, FloatField, DateField, DecimalField
-from peewee_migrate import Migrator
 from playhouse.sqlite_ext import SqliteDatabase
 from datetime import datetime
 
@@ -26,7 +25,7 @@ class Supplier(BaseModel):
 
 class Product(BaseModel):
     name = CharField()
-    supplier = ForeignKeyField(Supplier, null=True, backref='products')  # Додаємо null=True
+    supplier = ForeignKeyField(Supplier, null=True, backref='products')  # Дозволяємо поле бути порожнім
     quantity = IntegerField(default=0)
     purchase_total_price = DecimalField(max_digits=10, decimal_places=2, default=0.00)
     purchase_price_per_item = DecimalField(max_digits=10, decimal_places=2, default=0.00)

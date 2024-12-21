@@ -20,54 +20,102 @@ db.create_tables([Product, StockHistory, PurchaseHistory, SaleHistory, ProductCa
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 
 # Приклад додавання товарів
+# data = [
+# {"name": "Палочка Воландеморта", "supplier_name": "skladoptom.com.ua", "quantity": 1, "purchase_total_price": 507.6,
+#  "purchase_price_per_item": 507.6},
+# {"name": "Палочка Грюма", "supplier_name": "skladoptom.com.ua", "quantity": 1, "purchase_total_price": 507.6,
+#  "purchase_price_per_item": 507.6},
+# {"name": "Брелок с гербом Пуффендуя", "supplier_name": "skladoptom.com.ua", "quantity": 1,
+#  "purchase_total_price": 65.49,
+#  "purchase_price_per_item": 65.49},
+# {"name": "Брелок с гербом Когтевран", "supplier_name": "misteria.prom.ua", "quantity": 1,
+#  "purchase_total_price": 86,
+#  "purchase_price_per_item": 86},
+# {"name": "Брелок Дары Смерти", "supplier_name": "misteria.prom.ua", "quantity": 1, "purchase_total_price": 81,
+#  "purchase_price_per_item": 81},
+# {"name": "Брелок Грифиндор круглый", "supplier_name": "misteria.prom.ua", "quantity": 1, "purchase_total_price": 60,
+#  "purchase_price_per_item": 60},
+# {"name": "Брелок Слизерин круглый", "supplier_name": "misteria.prom.ua", "quantity": 1, "purchase_total_price": 60,
+#  "purchase_price_per_item": 60},
+# {"name": "Брелок Когтевран круглый", "supplier_name": "misteria.prom.ua", "quantity": 1, "purchase_total_price": 60,
+#  "purchase_price_per_item": 60},
+# {"name": "Брелок Пуфендуй круглый", "supplier_name": "misteria.prom.ua", "quantity": 1, "purchase_total_price": 60,
+#  "purchase_price_per_item": 60},
+# {"name": "Брелок Хогвартс круглый", "supplier_name": "misteria.prom.ua", "quantity": 1, "purchase_total_price": 0,
+#  "purchase_price_per_item": 0},
+# {"name": "Светильник Сова", "supplier_name": "misteria.prom.ua", "quantity": 1, "purchase_total_price": 390,
+#  "purchase_price_per_item": 390},
+# {"name": "Сервиз чайный Хогвартс", "supplier_name": "Настя @tykkinykki", "quantity": 1,
+#  "purchase_total_price": 3800,
+#  "purchase_price_per_item": 3800},
+# {"name": "Шарф Гриффиндор", "supplier_name": "Татьяна Явтуховская", "quantity": 1, "purchase_total_price": 900,
+#  "purchase_price_per_item": 900},
+# {"name": "Чашка с молнией", "supplier_name": "starsandsky.com.ua", "quantity": 1, "purchase_total_price": 165,
+#  "purchase_price_per_item": 165},
+# {"name": "Чашка с гербом Хогвартса", "supplier_name": "starsandsky.com.ua", "quantity": 1,
+#  "purchase_total_price": 165,
+#  "purchase_price_per_item": 165},
+# {"name": "Чашка с оленем", "supplier_name": "starsandsky.com.ua", "quantity": 1, "purchase_total_price": 165,
+#  "purchase_price_per_item": 165},
+# {"name": "Чашка с совой", "supplier_name": "starsandsky.com.ua", "quantity": 1, "purchase_total_price": 135,
+#  "purchase_price_per_item": 135},
+# {"name": "Чашка с башней", "supplier_name": "starsandsky.com.ua", "quantity": 1, "purchase_total_price": 135,
+#  "purchase_price_per_item": 135},
+# {"name": "Мешочки тканевые 23х17", "supplier_name": "https://prom.ua/ua/c2798198-gsl-internet-magazin.html",
+#  "quantity": 1, "purchase_total_price": 92, "purchase_price_per_item": 23},
+# {"name": "Мешочки тканевые 13х10", "supplier_name": "https://prom.ua/ua/c2798198-gsl-internet-magazin.html",
+#  "quantity": 1, "purchase_total_price": 100, "purchase_price_per_item": 10},
+# {"name": "Мешочки тканевые 10х8", "supplier_name": "https://prom.ua/ua/c2798198-gsl-internet-magazin.html",
+#  "quantity": 1, "purchase_total_price": 120, "purchase_price_per_item": 8}
+# ]
+
+
 data = [
-{"name": "Палочка Воландеморта", "supplier_name": "skladoptom.com.ua", "quantity": 1, "purchase_total_price": 507.6,
- "purchase_price_per_item": 507.6},
-{"name": "Палочка Грюма", "supplier_name": "skladoptom.com.ua", "quantity": 1, "purchase_total_price": 507.6,
- "purchase_price_per_item": 507.6},
-{"name": "Брелок с гербом Пуффендуя", "supplier_name": "skladoptom.com.ua", "quantity": 1,
- "purchase_total_price": 65.49,
- "purchase_price_per_item": 65.49},
-{"name": "Брелок с гербом Когтевран", "supplier_name": "misteria.prom.ua", "quantity": 1,
- "purchase_total_price": 86,
- "purchase_price_per_item": 86},
-{"name": "Брелок Дары Смерти", "supplier_name": "misteria.prom.ua", "quantity": 1, "purchase_total_price": 81,
- "purchase_price_per_item": 81},
-{"name": "Брелок Грифиндор круглый", "supplier_name": "misteria.prom.ua", "quantity": 1, "purchase_total_price": 60,
- "purchase_price_per_item": 60},
-{"name": "Брелок Слизерин круглый", "supplier_name": "misteria.prom.ua", "quantity": 1, "purchase_total_price": 60,
- "purchase_price_per_item": 60},
-{"name": "Брелок Когтевран круглый", "supplier_name": "misteria.prom.ua", "quantity": 1, "purchase_total_price": 60,
- "purchase_price_per_item": 60},
-{"name": "Брелок Пуфендуй круглый", "supplier_name": "misteria.prom.ua", "quantity": 1, "purchase_total_price": 60,
- "purchase_price_per_item": 60},
-{"name": "Брелок Хогвартс круглый", "supplier_name": "misteria.prom.ua", "quantity": 1, "purchase_total_price": 0,
- "purchase_price_per_item": 0},
-{"name": "Светильник Сова", "supplier_name": "misteria.prom.ua", "quantity": 1, "purchase_total_price": 390,
- "purchase_price_per_item": 390},
-{"name": "Сервиз чайный Хогвартс", "supplier_name": "Настя @tykkinykki", "quantity": 1,
- "purchase_total_price": 3800,
- "purchase_price_per_item": 3800},
-{"name": "Шарф Гриффиндор", "supplier_name": "Татьяна Явтуховская", "quantity": 1, "purchase_total_price": 900,
- "purchase_price_per_item": 900},
-{"name": "Чашка с молнией", "supplier_name": "starsandsky.com.ua", "quantity": 1, "purchase_total_price": 165,
- "purchase_price_per_item": 165},
-{"name": "Чашка с гербом Хогвартса", "supplier_name": "starsandsky.com.ua", "quantity": 1,
- "purchase_total_price": 165,
- "purchase_price_per_item": 165},
-{"name": "Чашка с оленем", "supplier_name": "starsandsky.com.ua", "quantity": 1, "purchase_total_price": 165,
- "purchase_price_per_item": 165},
-{"name": "Чашка с совой", "supplier_name": "starsandsky.com.ua", "quantity": 1, "purchase_total_price": 135,
- "purchase_price_per_item": 135},
-{"name": "Чашка с башней", "supplier_name": "starsandsky.com.ua", "quantity": 1, "purchase_total_price": 135,
- "purchase_price_per_item": 135},
-{"name": "Мешочки тканевые 23х17", "supplier_name": "https://prom.ua/ua/c2798198-gsl-internet-magazin.html",
- "quantity": 1, "purchase_total_price": 92, "purchase_price_per_item": 23},
-{"name": "Мешочки тканевые 13х10", "supplier_name": "https://prom.ua/ua/c2798198-gsl-internet-magazin.html",
- "quantity": 1, "purchase_total_price": 100, "purchase_price_per_item": 10},
-{"name": "Мешочки тканевые 10х8", "supplier_name": "https://prom.ua/ua/c2798198-gsl-internet-magazin.html",
- "quantity": 1, "purchase_total_price": 120, "purchase_price_per_item": 8}
+    {"name": "Шоколад", "quantity": 3, "selling_price_per_item": 280},
+    {"name": "Грифіндорський шарф", "quantity": 1, "selling_price_per_item": 1350},
+    {"name": "Паличка Волдеморта", "quantity": 1, "selling_price_per_item": 810},
+    {"name": "Паличка Аластора Грюма", "quantity": 1, "selling_price_per_item": 760},
+    {"name": "Набір для каліграфії", "quantity": 1, "selling_price_per_item": 350},
+    {"name": "Світильник 'Сова'", "quantity": 1, "selling_price_per_item": 600},
+    {"name": "Чашка учня Гогвордсу", "quantity": 2, "selling_price_per_item": 300},
+    {"name": "Чай 'Амортензія'", "quantity": 2, "selling_price_per_item": 60},
+    {"name": "Набір шкарпеток ГП 36-42р.", "quantity": 6, "selling_price_per_item": 70},
+    {"name": "Набір шкарпеток ГП 41-45р.", "quantity": 6, "selling_price_per_item": 70},
+    {"name": "Карта Мародерів", "quantity": 2, "selling_price_per_item": 375},
+    {"name": "Драконячі яйця", "quantity": 5, "selling_price_per_item": 25},
+    {"name": "Ручки що ростуть", "quantity": 4, "selling_price_per_item": 55},
+    {"name": "Олівці що ростуть", "quantity": 5, "selling_price_per_item": 45},
+    {"name": "Набір з олівців що ростуть (12 шт)", "quantity": 1, "selling_price_per_item": 450},
+    {"name": "Окуляри Гаррі Поттера", "quantity": 4, "selling_price_per_item": 65},
+    {"name": "Ложки дерев'яні", "quantity": 2, "selling_price_per_item": 135},
+    {"name": "Ложка дерев'яна з чаєм", "quantity": 1, "selling_price_per_item": 170},
+    {"name": "Диплом про закінчення Хогвардса в рамці", "quantity": 3, "selling_price_per_item": 240},
+    {"name": "Пазл Хатинка Гегріда без рамці", "quantity": 5, "selling_price_per_item": 360},
+    {"name": "Записник учня Гогвордсу", "quantity": 5, "selling_price_per_item": 65},
+    {"name": "Диплом про закінчення Гогвордсу", "quantity": 5, "selling_price_per_item": 240},
+    {"name": "Лист з Гогвордсу", "quantity": 5, "selling_price_per_item": 30},
+    {"name": "Квиток на автобус", "quantity": 5, "selling_price_per_item": 45},
+    {"name": "Квиток на Гогвардс Експресс", "quantity": 2, "selling_price_per_item": 45},
+    {"name": "Готовий набір лист з Гогвордсу", "quantity": 2, "selling_price_per_item": 200},
+    {"name": "Гребінець", "quantity": 1, "selling_price_per_item": 350},
+    {"name": "Кулон Маховик Часу", "quantity": 1, "selling_price_per_item": 160},
+    {"name": "Кулон Платформа 9 3/4", "quantity": 2, "selling_price_per_item": 150},
+    {"name": "Брелок Гогвордс", "quantity": 1, "selling_price_per_item": 140},
+    {"name": "Брелок Гафлпафф", "quantity": 1, "selling_price_per_item": 140},
+    {"name": "Чокер синій", "quantity": 1, "selling_price_per_item": 290},
+    {"name": "Газета 'Щоденний віщун'", "quantity": 5, "selling_price_per_item": 120},
+    {"name": "Свічки що вмикаются дотиком", "quantity": 8, "selling_price_per_item": 145},
+    {"name": "Свічка Доббі", "quantity": 1, "selling_price_per_item": 400},
+    {"name": "Свічка Розподільчий капелюх", "quantity": 1, "selling_price_per_item": 90},
+    {"name": "Свічка Вежа Гогвордсу", "quantity": 2, "selling_price_per_item": 285},
+    {"name": "Свічка Мандрагора в Горщику", "quantity": 1, "selling_price_per_item": 400},
+    {"name": "Свічка Дамблдор", "quantity": 1, "selling_price_per_item": 210},
+    {"name": "Свічка Снейп", "quantity": 1, "selling_price_per_item": 285},
+    {"name": "Свічка Макгонагал", "quantity": 1, "selling_price_per_item": 150},
+    {"name": "Карта Гогвордс", "quantity": 1, "selling_price_per_item": 255},
+    {"name": "Рюкзак", "quantity": 1, "selling_price_per_item": 1950}
 ]
+
 # Створення початкових категорій у базі даних
 categories = ['Сувеніри', 'Гаррі Поттер', 'Володар Перснів']
 
@@ -95,7 +143,7 @@ def load_products_to_db(data):
             continue
 
         # Перевірка обов'язкових полів для закупки
-        required_purchase_fields = ['quantity', 'purchase_price_per_item', 'purchase_total_price', 'supplier_name']
+        required_purchase_fields = ['quantity']
         missing_purchase_fields = [field for field in required_purchase_fields if field not in product_data]
         if missing_purchase_fields:
             logging.error(f"Missing required fields for purchase: {', '.join(missing_purchase_fields)}")
@@ -106,7 +154,8 @@ def load_products_to_db(data):
         if quantity <= 0:
             # Якщо кількість менша або дорівнює 0, просто створюємо продукт без запису закупки
             try:
-                supplier, created = Supplier.get_or_create(name=product_data['supplier_name'])
+                supplier_name = product_data.get('supplier_name', "Unknown Supplier")
+                supplier, created = Supplier.get_or_create(name=supplier_name)
                 created_date = product_data.get('created_date', datetime.now())
 
                 # Створюємо продукт з початковою кількістю 0
@@ -132,17 +181,21 @@ def load_products_to_db(data):
 
         # Валідація ціни за одиницю
         try:
-            purchase_price_per_item = float(product_data['purchase_price_per_item'])
+            purchase_price_per_item = float(
+                product_data.get('purchase_price_per_item', 0))  # Якщо значення немає, встановлюємо 0
             if purchase_price_per_item <= 0:
-                logging.error(f"Invalid purchase price for product '{product_data['name']}'.")
-                continue
-        except ValueError:
-            logging.error(f"Invalid purchase price format for product '{product_data['name']}'.")
-            continue
+                logging.info(
+                    f"Invalid purchase price for product '{product_data.get('name', 'Unknown')}'. Setting it to 0.")
+                purchase_price_per_item = 0  # Встановлюємо 0 для недійсного значення
+        except (ValueError, TypeError):
+            logging.error(
+                f"Invalid purchase price format for product '{product_data.get('name', 'Unknown')}'. Setting it to 0.")
+            purchase_price_per_item = 0  # Встановлюємо 0 для недійсного формату
 
         try:
             # Знаходимо або створюємо постачальника
-            supplier, created = Supplier.get_or_create(name=product_data['supplier_name'])
+            supplier_name = product_data.get('supplier_name', "Unknown Supplier")
+            supplier, created = Supplier.get_or_create(name=supplier_name)
             created_date = product_data.get('created_date', datetime.now())
 
             # Створюємо або знаходимо продукт
@@ -167,10 +220,12 @@ def load_products_to_db(data):
                     ProductCategory.create(product=product, category=category)
 
             # Оновлюємо інформацію про продукт після закупки
-            purchase_total_price = Decimal(product_data['purchase_total_price'])
+            purchase_total_price = Decimal(
+                product_data.get('purchase_total_price', 0))  # Якщо ключ відсутній, використовується 0
             product.quantity += quantity
             product.purchase_total_price += purchase_total_price
-            product.purchase_price_per_item = purchase_price_per_item
+            product.purchase_price_per_item = Decimal(
+                product_data.get('purchase_price_per_item', 0))
             product.save()
 
             # Створюємо запис в історії закупок

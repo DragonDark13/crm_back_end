@@ -2,7 +2,6 @@ from datetime import datetime
 from decimal import Decimal
 
 from flask import Flask, jsonify, request
-from flask_migrate import Migrate
 from peewee import SqliteDatabase, fn, SQL, IntegrityError, DoesNotExist
 from playhouse.shortcuts import model_to_dict
 
@@ -22,7 +21,6 @@ CORS(app)
 
 # Підключаємо базу даних
 db = SqliteDatabase('shop_crm.db')
-migrate = Migrate(app, db)
 
 # Виклик перевірки при запуску програми
 
