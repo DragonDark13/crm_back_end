@@ -13,6 +13,8 @@ from services.customer_routes import customer_bp
 from services.product_service import ProductService, product_bp, product_history_bp
 from services.supplier_routes import supplier_bp
 
+# INCLUDE
+
 app = Flask(__name__)
 CORS(app)
 
