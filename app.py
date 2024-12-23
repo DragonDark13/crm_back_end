@@ -1,15 +1,11 @@
 import subprocess
-from datetime import datetime
-from decimal import Decimal
 import logging
 
 from flask import Flask, jsonify, request
-from peewee import SqliteDatabase, fn, SQL, IntegrityError, DoesNotExist
-from playhouse.shortcuts import model_to_dict
+from peewee import SqliteDatabase
 
 from method import verify_product_sale_history
-from models import Product, StockHistory, PurchaseHistory, SaleHistory, \
-    Category, ProductCategory, Supplier, User, Customer  # Імпортуємо модель Product з файлу models.py
+
 
 from flask_cors import CORS
 
