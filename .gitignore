@@ -1,3 +1,13 @@
 /venv/
 /shop_crm.db
 /.idea/
+
+# Ignore Python cache directories
+__pycache__/
+services/__pycache__/
+
+# Ignore log files
+webhook.log
+
+# Ignore virtual environment directory
+venv/
