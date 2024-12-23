@@ -3,7 +3,6 @@ from datetime import datetime
 from decimal import Decimal
 import logging
 
-
 from flask import Flask, jsonify, request
 from peewee import SqliteDatabase, fn, SQL, IntegrityError, DoesNotExist
 from playhouse.shortcuts import model_to_dict
@@ -73,7 +72,8 @@ def webhook():
     if request.method == 'POST':
         logging.info('Отримано POST-запит на /update_server')
         try:
-            result = subprocess.run(['git', 'pull', 'origin', 'main'], cwd='/home/aleksandrForUpwork/crm_back_end', capture_output=True, text=True)
+            result = subprocess.run(['git', 'pull', 'origin', 'main'], cwd='/home/aleksandrForUpwork/crm_back_end',
+                                    capture_output=True, text=True)
             logging.info(f'Результат git pull: {result.stdout}')
             return 'Updated PythonAnywhere successfully', 200
         except Exception as e:
