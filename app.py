@@ -1,6 +1,8 @@
 import subprocess
 from datetime import datetime
 from decimal import Decimal
+import logging
+
 
 from flask import Flask, jsonify, request
 from peewee import SqliteDatabase, fn, SQL, IntegrityError, DoesNotExist
@@ -63,15 +65,23 @@ app.register_blueprint(supplier_bp)
 
 app.register_blueprint(customer_bp)
 
+logging.basicConfig(filename='/home/aleksandrForUpwork/crm_back_end/webhook.log', level=logging.INFO)
+
 
 @app.route('/update_server', methods=['POST'])
 def webhook():
     if request.method == 'POST':
-        # Виконуємо команду git pull для оновлення коду
-        subprocess.run(['git', 'pull', 'origin', 'main'], cwd='/home/aleksandrForUpwork/crm_back_end')
-        return 'Updated PythonAnywhere successfully', 200
+        logging.info('Отримано POST-запит на /update_server')
+        try:
+            result = subprocess.run(['git', 'pull', 'origin', 'main'], cwd='/home/aleksandrForUpwork/crm_back_end', capture_output=True, text=True)
+            logging.info(f'Результат git pull: {result.stdout}')
+            return 'Updated PythonAnywhere successfully', 200
+        except Exception as e:
+            logging.error(f'Помилка під час виконання git pull: {e}')
+            return 'Internal Server Error', 500
     else:
-        return 'Wrong event type', 400
+        logging.warning('Отримано некоректний метод запиту на /update_server')
+        return 'Method Not Allowed', 405
 
 
 if __name__ == '__main__':
