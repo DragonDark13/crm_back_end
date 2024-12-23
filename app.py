@@ -8,7 +8,6 @@ from method import verify_product_sale_history
 
 from flask_cors import CORS
 
-
 from services.category_routes import category_bp
 from services.customer_routes import customer_bp
 from services.product_service import ProductService, product_bp, product_history_bp
@@ -19,8 +18,6 @@ CORS(app)
 
 # Підключаємо базу даних
 db = SqliteDatabase('shop_crm.db')
-
-# Виклик перевірки при запуску програми
 
 verify_product_sale_history()
 
