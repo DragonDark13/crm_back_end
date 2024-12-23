@@ -1,3 +1,4 @@
+import subprocess
 from datetime import datetime
 from decimal import Decimal
 
@@ -62,6 +63,15 @@ app.register_blueprint(supplier_bp)
 
 app.register_blueprint(customer_bp)
 
+
+@app.route('/update_server', methods=['POST'])
+def webhook():
+    if request.method == 'POST':
+        # Виконуємо команду git pull для оновлення коду
+        subprocess.run(['git', 'pull', 'origin', 'main'], cwd='/home/aleksandrForUpwork/crm_back_end')
+        return 'Updated PythonAnywhere successfully', 200
+    else:
+        return 'Wrong event type', 400
 
 
 if __name__ == '__main__':

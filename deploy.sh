@@ -1,24 +1,23 @@
 #!/bin/bash
 
-# Шлях до проекту
-PROJECT_DIR=/home/aleksandrForUpwork/crm_back_end
+TARGET_DIR="/home/aleksandrForUpwork/crm_back_end"
 
-# Перейти в директорію проекту
-cd $PROJECT_DIR || exit
+echo "Перехожу до директорії $TARGET_DIR..."
+cd "$TARGET_DIR" || exit 1
 
-# Видалити старі файли (окрім .git)
-rm -rf * .[!.]*
+echo "Видаляю старі файли..."
+rm -rf * .[!.]* .??*
 
-# Клонувати останню версію репозиторію
+echo "Клоную репозиторій..."
 git clone https://github.com/DragonDark13/crm_back_end.git .
 
-# Активувати віртуальне середовище
+echo "Активую virtualenv..."
+if [ ! -d "venv" ]; then
+    python3 -m venv venv
+fi
 source venv/bin/activate
 
-# Оновити залежності
+echo "Встановлюю залежності..."
 pip install -r requirements.txt
 
-# Перезапустити WSGI-сервер
-touch /var/www/ваше_ім'я_на_PythonAnywhere_pythonanywhere_com_wsgi.py
-
-echo "Деплой завершено успішно!"
+echo "Деплой завершено!"
