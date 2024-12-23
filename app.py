@@ -2,6 +2,7 @@ import subprocess
 import logging
 
 from flask import Flask, jsonify, request
+from flask_jwt_extended import JWTManager, create_access_token, jwt_required, get_jwt_identity
 from flask_login import login_user, login_required, logout_user
 from flask_login import LoginManager
 from flask_security import PeeweeUserDatastore, Security
@@ -41,10 +42,20 @@ login_manager.init_app(app)
 # Опціонально: налаштуйте сторінку входу
 login_manager.login_view = 'login'  # Назва вашої функції, яка обробляє логін
 
+app.config['JWT_SECRET_KEY'] = 'your_secret_key'  # Задайте надійний секретний ключ
+jwt = JWTManager(app)
+
 
 @login_manager.user_loader
 def load_user(user_id):
     return User.get_or_none(User.id == user_id)  # Припускаємо, що у вас є модель `User` із полем `id`
+
+
+@app.route('/api/protected', methods=['GET'])
+@jwt_required()
+def protected():
+    current_user = get_jwt_identity()  # Отримуємо дані про користувача з токена
+    return jsonify(logged_in_as=current_user), 200
 
 
 @app.route('/api/products', methods=['GET'])
@@ -135,8 +146,8 @@ def login():
     user = User.get_by_username(username)  # Викликаємо метод `get_by_username`
 
     if user and user.verify_password(password):  # Перевірка пароля
-        login_user(user)
-        return jsonify(message="Login successful"), 200
+        access_token = create_access_token(identity={'username': user.username, 'id': user.id})
+        return jsonify(message="Login successful", token=access_token), 200
 
     return jsonify(message="Invalid credentials"), 401
 
