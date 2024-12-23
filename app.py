@@ -6,8 +6,8 @@ from peewee import SqliteDatabase
 
 from method import verify_product_sale_history
 
-
 from flask_cors import CORS
+
 
 from services.category_routes import category_bp
 from services.customer_routes import customer_bp
@@ -68,6 +68,8 @@ def webhook():
     if request.method == 'POST':
         logging.info('Отримано POST-запит на /update_server')
         try:
+            subprocess.run(['source', '/path/to/venv/bin/activate'], shell=True)
+            subprocess.run(['git', 'fetch', 'origin'], cwd='/home/aleksandrForUpwork/crm_back_end')
             result = subprocess.run(['git', 'pull', 'origin', 'main'], cwd='/home/aleksandrForUpwork/crm_back_end',
                                     capture_output=True, text=True)
             logging.info(f'Результат git pull: {result.stdout}')
