@@ -154,9 +154,18 @@ def login():
 
 # Logout route
 @app.route('/api/logout', methods=['POST'])
-@login_required
+@jwt_required()
 def logout():
-    logout_user()
+    # If using JWT, you can blacklist the token or handle cleanup
+    # Flask-JWT-Extended does not automatically handle JWT invalidation.
+    # This is an example if you're manually blacklisting tokens or handling session logout.
+
+    # Get the current user's identity from the token (optional)
+    current_user = get_jwt_identity()
+
+    # Optional: Add token blacklist logic here if needed
+    # jwt.blacklist_token(token)
+
     return jsonify(message="Logout successful"), 200
 
 
