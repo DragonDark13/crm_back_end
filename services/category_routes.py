@@ -1,60 +1,74 @@
 from flask import Blueprint, jsonify, request
-from peewee import DoesNotExist
-from models import Category, Product, ProductCategory
-from playhouse.shortcuts import model_to_dict
+from sqlalchemy.exc import IntegrityError
+from sqlalchemy.orm import Session
+from models import Category, Product, product_categories_table
+from database import db_session  # Assuming `db_session` is the SQLAlchemy session
 
-# Створюємо Blueprint для категорій
+# Create a Blueprint for categories
 category_bp = Blueprint('categories', __name__)
 
 
 @category_bp.route('/api/categories', methods=['GET'])
 def get_all_categories():
-    """Отримати список всіх категорій"""
-    categories = Category.select()  # Отримуємо всі категорії
-    category_list = [model_to_dict(category) for category in categories]  # Перетворюємо на список словників
-    return jsonify(category_list), 200  # Повертаємо JSON відповідь
+    """Retrieve all categories."""
+    with db_session() as session:
+        categories = session.query(Category).all()
+        category_list = [{'id': cat.id, 'name': cat.name} for cat in categories]
+    return jsonify(category_list), 200
 
 
 @category_bp.route('/api/categories', methods=['POST'])
 def create_category():
-    """Створити нову категорію"""
+    """Create a new category."""
     data = request.get_json()
     try:
-        category, created = Category.get_or_create(name=data['name'])
-        if created:
-            return jsonify({'message': 'Category created successfully', 'category': model_to_dict(category)}), 201
-        else:
-            return jsonify({'message': 'Category already exists', 'category': model_to_dict(category)}), 200
+        with db_session() as session:
+            category = Category(name=data['name'])
+            session.add(category)
+            session.commit()
+            return jsonify({'message': 'Category created successfully',
+                            'category': {'id': category.id, 'name': category.name}}), 201
+    except IntegrityError:
+        return jsonify({'message': 'Category already exists'}), 400
     except Exception as e:
         return jsonify({'error': str(e)}), 400
 
 
 @category_bp.route('/api/product/<int:product_id>/categories', methods=['POST'])
 def assign_categories_to_product(product_id):
-    """Прив'язати категорії до товару"""
+    """Assign categories to a product."""
     data = request.get_json()
     try:
-        product = Product.get(Product.id == product_id)
-        category_ids = data['category_ids']  # список ID категорій
+        with db_session() as session:
+            product = session.query(Product).get(product_id)
+            if not product:
+                return jsonify({'error': 'Product not found'}), 404
 
-        # Додаємо категорії до товару
-        for category_id in category_ids:
-            category = Category.get(Category.id == category_id)
-            ProductCategory.get_or_create(product=product, category=category)
+            category_ids = data.get('category_ids', [])
+            for category_id in category_ids:
+                category = session.query(Category).get(category_id)
+                if not category:
+                    return jsonify({'error': f'Category with ID {category_id} not found'}), 404
+                # Avoid duplicate entries
+                if category not in product.categories:
+                    product.categories.append(category)
 
-        return jsonify({'message': 'Categories assigned successfully'}), 200
-    except Product.DoesNotExist:
-        return jsonify({'error': 'Product not found'}), 404
-    except Category.DoesNotExist:
-        return jsonify({'error': 'One or more categories not found'}), 404
+            session.commit()
+            return jsonify({'message': 'Categories assigned successfully'}), 200
+    except Exception as e:
+        return jsonify({'error': str(e)}), 400
 
 
 @category_bp.route('/api/product/<int:product_id>/categories', methods=['GET'])
 def get_product_categories(product_id):
-    """Отримати категорії товару"""
+    """Retrieve categories of a product."""
     try:
-        product = Product.get(Product.id == product_id)
-        categories = [model_to_dict(category) for category in product.categories]
-        return jsonify(categories), 200
-    except Product.DoesNotExist:
-        return jsonify({'error': 'Product not found'}), 404
+        with db_session() as session:
+            product = session.query(Product).get(product_id)
+            if not product:
+                return jsonify({'error': 'Product not found'}), 404
+
+            categories = [{'id': cat.id, 'name': cat.name} for cat in product.categories]
+            return jsonify(categories), 200
+    except Exception as e:
+        return jsonify({'error': str(e)}), 400

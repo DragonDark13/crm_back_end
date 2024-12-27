@@ -1,123 +1,158 @@
 from flask_login import UserMixin
+from flask_sqlalchemy import SQLAlchemy
 from flask_security import RoleMixin
-from peewee import Model, CharField, IntegerField, DateTimeField, ForeignKeyField, FloatField, DateField, \
-    DecimalField, DoesNotExist
-from playhouse.sqlite_ext import SqliteDatabase
+from sqlalchemy import Column, Integer, String, DateTime, ForeignKey, Float, Date, DECIMAL, Table, create_engine
+from sqlalchemy.orm import relationship, declarative_base, sessionmaker, scoped_session
 from datetime import datetime
-
 from werkzeug.security import generate_password_hash, check_password_hash
 
-db = SqliteDatabase('shop_crm.db')
+# Create a SQLAlchemy instance
+db = SQLAlchemy()
+
+# Define your base model
+Base = db.Model  # Use SQLAlchemy's model base
+
+# Association table for many-to-many relationships
+user_roles_table = Table(
+    'user_roles', Base.metadata,
+    Column('user_id', Integer, ForeignKey('users.id', ondelete='CASCADE')),
+    Column('role_id', Integer, ForeignKey('roles.id', ondelete='CASCADE'))
+)
+
+product_categories_table = Table(
+    'product_categories', Base.metadata,
+    Column('product_id', Integer, ForeignKey('products.id', ondelete='CASCADE')),
+    Column('category_id', Integer, ForeignKey('categories.id'))
+)
 
 
-class BaseModel(Model):
-    class Meta:
-        database = db
+class Supplier(Base):
+    __tablename__ = 'suppliers'
+
+    id = Column(Integer, primary_key=True)
+    name = Column(String, unique=True, nullable=False)
+    contact_info = Column(String, nullable=True)
+    email = Column(String, nullable=True)
+    phone_number = Column(String, nullable=True)
+    address = Column(String, nullable=True)
+    products = relationship("Product", back_populates="supplier")
+    # Add this line to create a relationship with PurchaseHistory
+    purchase_history = relationship("PurchaseHistory", back_populates="supplier", cascade="all, delete-orphan")
 
 
-class Supplier(BaseModel):
-    name = CharField(unique=True)
-    contact_info = CharField(null=True)
-    email = CharField(null=True)
-    phone_number = CharField(null=True)
-    address = CharField(null=True)
+class Product(Base):
+    __tablename__ = 'products'
 
-    class Meta:
-        db_table = 'suppliers'
+    id = Column(Integer, primary_key=True)
+    name = Column(String, nullable=False)
+    supplier_id = Column(Integer, ForeignKey('suppliers.id', ondelete='SET NULL'), nullable=True)
+    quantity = Column(Integer, default=0)
+    purchase_total_price = Column(DECIMAL(10, 2), default=0.00)
+    purchase_price_per_item = Column(DECIMAL(10, 2), default=0.00)
+    selling_total_price = Column(DECIMAL(10, 2), default=0.00)
+    selling_price_per_item = Column(DECIMAL(10, 2), default=0.00)
+    selling_quantity = Column(Integer, default=0)
+    created_date = Column(DateTime, default=datetime.now)
+    supplier = relationship("Supplier", back_populates="products")
+    stock_history = relationship("StockHistory", back_populates="product", cascade="all, delete-orphan")
+    purchases = relationship("PurchaseHistory", back_populates="product", cascade="all, delete-orphan")
+    sales = relationship("SaleHistory", back_populates="product", cascade="all, delete-orphan")
+    categories = relationship("Category", secondary=product_categories_table, back_populates="products")
 
-
-class Product(BaseModel):
-    name = CharField()
-    supplier = ForeignKeyField(Supplier, null=True, backref='products')  # Дозволяємо поле бути порожнім
-    quantity = IntegerField(default=0)
-    purchase_total_price = DecimalField(max_digits=10, decimal_places=2, default=0.00)
-    purchase_price_per_item = DecimalField(max_digits=10, decimal_places=2, default=0.00)
-    selling_total_price = DecimalField(max_digits=10, decimal_places=2, default=0.00)
-    selling_price_per_item = DecimalField(max_digits=10, decimal_places=2, default=0.00)
-    selling_quantity = IntegerField(default=0)
-    created_date = DateTimeField(default=datetime.now)
-
-
-class StockHistory(BaseModel):
-    product = ForeignKeyField(Product, backref='stock_history', on_delete='CASCADE')
-    change_amount = IntegerField()
-    change_type = CharField(choices=[('add', 'Add'), ('subtract', 'Subtract'), ('create', 'Create')])
-    timestamp = DateTimeField(default=datetime.now)
-
-
-class PurchaseHistory(BaseModel):
-    product = ForeignKeyField(Product, backref='purchases', on_delete='CASCADE')
-    purchase_price_per_item = DecimalField(max_digits=10, decimal_places=2, default=0.00)
-    purchase_total_price = DecimalField(max_digits=10, decimal_places=2, default=0.00)
-    supplier = ForeignKeyField(Supplier, backref='purchase_history', on_delete='CASCADE')  # Зв'язок з постачальником
-    purchase_date = DateField()
-    quantity_purchase = FloatField()
+    def to_dict(self):
+        """Convert product instance to dictionary."""
+        return {
+            'id': self.id,
+            'name': self.name,
+            'supplier_id': self.supplier_id,
+            'quantity': self.quantity,
+            'purchase_total_price': float(self.purchase_total_price or 0),
+            'purchase_price_per_item': float(self.purchase_price_per_item or 0),
+            'selling_total_price': float(self.selling_total_price or 0),
+            'selling_price_per_item': float(self.selling_price_per_item or 0),
+            'created_date': self.created_date.isoformat() if self.created_date else None
+        }
 
 
-class Customer(BaseModel):
-    name = CharField(unique=True)
-    contact_info = CharField(null=True)
-    address = CharField(null=True)
-    email = CharField(null=True)
-    phone_number = CharField(null=True)
+class StockHistory(Base):
+    __tablename__ = 'stock_history'
 
-    class Meta:
-        db_table = 'customers'
-
-
-class SaleHistory(BaseModel):
-    product = ForeignKeyField(Product, backref='sales', on_delete='CASCADE')
-    customer = ForeignKeyField(Customer, backref='sales', on_delete='CASCADE')  # Зв'язок із покупцем
-    quantity_sold = IntegerField()
-    selling_price_per_item = DecimalField(max_digits=10, decimal_places=2, default=0.00)
-    selling_total_price = DecimalField(max_digits=12, decimal_places=2, default=0.00)
-    sale_date = DateTimeField(default=datetime.now)
-
-    class Meta:
-        db_table = 'sale_history'
+    id = Column(Integer, primary_key=True)
+    product_id = Column(Integer, ForeignKey('products.id', ondelete='CASCADE'))
+    change_amount = Column(Integer, nullable=False)
+    change_type = Column(String, nullable=False)
+    timestamp = Column(DateTime, default=datetime.now)
+    product = relationship("Product", back_populates="stock_history")
 
 
-class Category(BaseModel):
-    name = CharField(unique=True)
+class PurchaseHistory(Base):
+    __tablename__ = 'purchase_history'
 
-    class Meta:
-        db_table = 'categories'
-
-
-class ProductCategory(BaseModel):
-    product = ForeignKeyField(Product, backref='categories', on_delete='CASCADE')
-    category = ForeignKeyField(Category, backref='products')
-
-    class Meta:
-        db_table = 'product_categories'
-
-        # Initialize the migrator
+    id = Column(Integer, primary_key=True)
+    product_id = Column(Integer, ForeignKey('products.id', ondelete='CASCADE'))
+    supplier_id = Column(Integer, ForeignKey('suppliers.id', ondelete='CASCADE'))
+    purchase_price_per_item = Column(DECIMAL(10, 2), default=0.00)
+    purchase_total_price = Column(DECIMAL(10, 2), default=0.00)
+    purchase_date = Column(Date, nullable=False)
+    quantity_purchase = Column(Float, nullable=False)
+    product = relationship("Product", back_populates="purchases")
+    supplier = relationship("Supplier", back_populates="purchase_history")
 
 
-class Role(BaseModel, RoleMixin):
-    name = CharField(unique=True)
-    description = CharField(null=True)
+class Customer(Base):
+    __tablename__ = 'customers'
 
-    class Meta:
-        db_table = 'roles'
+    id = Column(Integer, primary_key=True)
+    name = Column(String, unique=True, nullable=False)
+    contact_info = Column(String, nullable=True)
+    address = Column(String, nullable=True)
+    email = Column(String, nullable=True)
+    phone_number = Column(String, nullable=True)
+    sales = relationship("SaleHistory", back_populates="customer")
 
 
-class User(BaseModel, UserMixin):
-    username = CharField(unique=True)
-    email = CharField(unique=True, null=True)
-    password = CharField()
-    active = IntegerField(default=1)
-    confirmed_at = DateTimeField(null=True)
+class SaleHistory(Base):
+    __tablename__ = 'sale_history'
 
-    class Meta:
-        db_table = 'users'
+    id = Column(Integer, primary_key=True)
+    product_id = Column(Integer, ForeignKey('products.id', ondelete='CASCADE'))
+    customer_id = Column(Integer, ForeignKey('customers.id', ondelete='CASCADE'))
+    quantity_sold = Column(Integer, nullable=False)
+    selling_price_per_item = Column(DECIMAL(10, 2), default=0.00)
+    selling_total_price = Column(DECIMAL(12, 2), default=0.00)
+    sale_date = Column(DateTime, default=datetime.now)
+    product = relationship("Product", back_populates="sales")
+    customer = relationship("Customer", back_populates="sales")
 
-    @classmethod
-    def get_by_username(cls, username):
-        try:
-            return cls.get(cls.username == username)
-        except DoesNotExist:
-            return None
+
+class Category(Base):
+    __tablename__ = 'categories'
+
+    id = Column(Integer, primary_key=True)
+    name = Column(String, unique=True, nullable=False)
+    products = relationship("Product", secondary=product_categories_table, back_populates="categories")
+
+
+class Role(Base, RoleMixin):
+    __tablename__ = 'roles'
+
+    id = Column(Integer, primary_key=True)
+    name = Column(String, unique=True, nullable=False)
+    description = Column(String, nullable=True)
+    users = relationship("User", secondary=user_roles_table, back_populates="roles")
+
+
+class User(Base, UserMixin):
+    __tablename__ = 'users'
+
+    id = Column(Integer, primary_key=True)
+    username = Column(String, unique=True, nullable=False)
+    email = Column(String, unique=True, nullable=True)
+    password = Column(String, nullable=False)
+    active = Column(Integer, default=1)
+    confirmed_at = Column(DateTime, nullable=True)
+    fs_uniquifier = Column(String(255), unique=True, nullable=False)  # Add fs_uniquifier
+    roles = relationship("Role", secondary=user_roles_table, back_populates="users")
 
     def set_password(self, password):
         """Hashes the password and stores it."""
@@ -128,9 +163,7 @@ class User(BaseModel, UserMixin):
         return check_password_hash(self.password, password)
 
 
-class UserRoles(BaseModel):
-    user = ForeignKeyField(User, backref='roles', on_delete='CASCADE')
-    role = ForeignKeyField(Role, backref='users', on_delete='CASCADE')
-
-    class Meta:
-        db_table = 'user_roles'
+# Create engine and session
+engine = create_engine('sqlite:///shop_crm.db')  # Example database URI
+Session = sessionmaker(bind=engine)
+db_session = scoped_session(Session)  # Scoped session for thread-local management
