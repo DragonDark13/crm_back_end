@@ -6,15 +6,20 @@ from peewee import IntegrityError
 # Створюємо Blueprint для покупців
 customer_bp = Blueprint('customer', __name__)
 
+
 @customer_bp.route('/api/customers', methods=['POST'])
 def create_customer():
     data = request.get_json()
-    required_fields = ['name', 'email']
+    required_fields = ['name']
 
     # Перевірка на обов'язкові поля
     missing_fields = [field for field in required_fields if field not in data]
     if missing_fields:
         return jsonify({'error': f'Missing required fields: {", ".join(missing_fields)}'}), 400
+
+    # Перевірка на унікальність імені
+    if Customer.select().where(Customer.name == data['name']).exists():
+        return jsonify({'error': 'Customer with this name already exists'}), 400
 
     try:
         # Створення нового покупця
@@ -22,12 +27,12 @@ def create_customer():
             name=data['name'],
             contact_info=data.get('contact_info'),
             address=data.get('address'),
-            email=data['email'],
+            email=data.get('email'),  # Email більше не перевіряється на унікальність
             phone_number=data.get('phone_number')
         )
         return jsonify({'message': 'Customer created successfully', 'customer': model_to_dict(customer)}), 201
-    except IntegrityError:
-        return jsonify({'error': 'Customer with this email already exists'}), 400
+    except Exception as e:
+        return jsonify({'error': f'Failed to create customer: {str(e)}'}), 500
 
 
 @customer_bp.route('/api/customers', methods=['GET'])

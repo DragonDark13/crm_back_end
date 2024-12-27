@@ -55,10 +55,10 @@ class PurchaseHistory(BaseModel):
 
 
 class Customer(BaseModel):
-    name = CharField()
+    name = CharField(unique=True)
     contact_info = CharField(null=True)
     address = CharField(null=True)
-    email = CharField(unique=True, null=True)
+    email = CharField(null=True)
     phone_number = CharField(null=True)
 
     class Meta:
