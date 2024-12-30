@@ -64,7 +64,8 @@ def supplier_report():
 
 def category_sales_report():
     report = (
-        db_session.query(product_categories_table.category, func.sum(SaleHistory.selling_total_price).label('total_sales'))
+        db_session.query(product_categories_table.category,
+                         func.sum(SaleHistory.selling_total_price).label('total_sales'))
             .join(product_categories_table)
             .group_by(product_categories_table.category)
             .order_by(func.sum(SaleHistory.selling_total_price).desc())
@@ -81,17 +82,25 @@ def has_permission(user_id, action):
 
 
 def verify_product_sale_history():
-    products = db_session.query(Product).all()
+    try:
+        # Отримуємо всі продукти
+        products = db_session.query(Product).all()
 
-    for product in products:
-        sale_records = db_session.query(SaleHistory).filter(SaleHistory.product == product).all()
+        for product in products:
+            # Знаходимо всі записи продажів для кожного продукту
+            sale_records = db_session.query(SaleHistory).filter(SaleHistory.product_id == product.id).all()
 
-        total_quantity_sold = sum(record.quantity_sold for record in sale_records)
-        total_selling_price = sum(record.selling_total_price for record in sale_records)
+            # Обчислюємо загальну кількість проданого та суму продажу
+            total_quantity_sold = sum(record.quantity_sold for record in sale_records)
+            total_selling_price = sum(record.selling_total_price for record in sale_records)
 
-        if total_quantity_sold == product.selling_quantity and total_selling_price == product.selling_total_price:
-            print(f"Product '{product.name}' verification successful!")
-        else:
-            print(f"Product '{product.name}' verification failed!")
-            print(f"Expected quantity sold: {product.selling_quantity}, calculated: {total_quantity_sold}")
-            print(f"Expected total selling price: {product.selling_total_price}, calculated: {total_selling_price}")
+            # Перевіряємо дані
+            if total_quantity_sold == product.sold_quantity and total_selling_price == float(product.selling_total_price):
+                print(f"Product '{product.name}' verification successful!")
+            else:
+                print(f"Product '{product.name}' verification failed!")
+                print(f"Expected quantity sold: {product.sold_quantity}, calculated: {total_quantity_sold}")
+                print(f"Expected total selling price: {product.selling_total_price}, calculated: {total_selling_price}")
+
+    except Exception as e:
+        print(f"An error occurred: {e}")

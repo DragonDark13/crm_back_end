@@ -6,10 +6,13 @@ from sqlalchemy.exc import NoResultFound
 from decimal import Decimal
 from datetime import datetime
 from sqlalchemy.orm import sessionmaker
+from database import db_session  # Assuming `db_session` is the SQLAlchemy session
+from flask import jsonify
+from decimal import Decimal
+from datetime import datetime
 
 # Створюємо Blueprint для продуктів
 product_bp = Blueprint('products', __name__)
-from database import db_session  # Assuming `db_session` is the SQLAlchemy session
 
 
 class ProductService:
@@ -79,37 +82,58 @@ class ProductService:
             return {'errors': errors}, 400
 
         try:
+            # Convert the 'created_date' string to a datetime object
+            created_date_str = data.get('created_date')
+            if created_date_str:
+                created_date = datetime.strptime(created_date_str, '%Y-%m-%d').date()
+            else:
+                created_date = datetime.today().date()  # Default to today's date if not provided
+
+            # Create the product
             product = Product(
                 name=data['name'],
-                quantity=0,
-                created_date=data.get('created_date')
+                total_quantity=0,
+                available_quantity=0,
+                created_date=created_date  # Pass the datetime object
             )
 
-            # Додаємо категорії
+            # Add product to session before associating categories
+            db_session.add(product)
+
+            # Add categories to the product
             category_ids = data.get('category_ids', [])
             if category_ids:
-                ProductService.assign_categories_to_product(product, category_ids)
+                # Ensure categories exist
+                categories = db_session.query(Category).filter(Category.id.in_(category_ids)).all()
+                if len(categories) != len(category_ids):
+                    return {'error': 'Some categories were not found'}, 404
+                product.categories.extend(categories)
 
-            supplier = db_session.query(Supplier).filter(Supplier.id == data['supplier_id']).one()
+            # Assign supplier to the product
+            supplier = db_session.query(Supplier).filter(Supplier.id == data['supplier_id']).one_or_none()
+            if not supplier:
+                return {'error': 'Supplier not found'}, 404
+
             product.supplier = supplier
 
+            # Set purchase price and quantity values
             product.purchase_total_price = Decimal(data['purchase_total_price'])
             product.purchase_price_per_item = Decimal(data['purchase_price_per_item'])
-            product.quantity = data['quantity']
+            product.total_quantity = data['quantity']
+            product.available_quantity = data['quantity']
             product.selling_price_per_item = Decimal(data.get('selling_price_per_item', 0))
 
-            # Add to session and commit
-            db_session.add(product)
+            # Commit the product to the session
             db_session.commit()
 
-            # Створення записів в історії
+            # Create purchase and stock history entries
             purchase_history = PurchaseHistory(
                 product_id=product.id,
                 purchase_price_per_item=Decimal(data['purchase_price_per_item']),
                 purchase_total_price=Decimal(data['purchase_total_price']),
                 supplier_id=supplier.id,
                 quantity_purchase=data['quantity'],
-                purchase_date=data.get('purchase_date')
+                purchase_date=created_date  # Use the created_date here as well
             )
             db_session.add(purchase_history)
 
@@ -117,7 +141,7 @@ class ProductService:
                 product_id=product.id,
                 change_amount=data['quantity'],
                 change_type='create',
-                timestamp=data.get('purchase_date')
+                timestamp=created_date  # Use the created_date here
             )
             db_session.add(stock_history)
 
@@ -127,6 +151,7 @@ class ProductService:
         except NoResultFound:
             return {'error': 'Supplier not found'}, 404
         except Exception as e:
+            db_session.rollback()
             return {'error': str(e)}, 500
 
     @staticmethod
@@ -266,15 +291,17 @@ product_history_bp = Blueprint('product_history', __name__)
 def delete_product(product_id):
     """Delete product and all related records."""
     try:
+        # Fetch the product
         product = db_session.query(Product).filter(Product.id == product_id).one()
 
         # Delete related records
-        db_session.query(product_categories_table).filter(product_categories_table.product_id == product.id).delete()
+        # Ensure the column name in the filter is correct (e.g., product_id or product_fk)
+        db_session.query(product_categories_table).filter(product_categories_table.c.product_id == product.id).delete()
         db_session.query(SaleHistory).filter(SaleHistory.product_id == product.id).delete()
         db_session.query(PurchaseHistory).filter(PurchaseHistory.product_id == product.id).delete()
         db_session.query(StockHistory).filter(StockHistory.product_id == product.id).delete()
 
-        # Delete the product
+        # Delete the product itself
         db_session.delete(product)
         db_session.commit()
 
@@ -303,11 +330,13 @@ def get_product_history(product_id):
         purchase_history = db_session.query(PurchaseHistory).filter(PurchaseHistory.product_id == product.id).all()
         purchase_history_list = [record.to_dict() for record in purchase_history]
 
-        # Sale History
+        # Query SaleHistory for a specific product
         sale_history = db_session.query(SaleHistory).filter(SaleHistory.product_id == product.id).all()
+
+        # Prepare a list of dictionaries with the required details
         sale_history_list = [
             {
-                **record.to_dict(),
+                **record.to_dict(include_customer=True),  # Include customer details in the response
                 'selling_price_per_item': float(record.selling_price_per_item),
                 'selling_total_price': float(record.selling_total_price)
             }
@@ -323,11 +352,6 @@ def get_product_history(product_id):
         return jsonify(combined_history), 200
     except NoResultFound:
         return jsonify({'error': 'Product not found'}), 404
-
-
-from flask import jsonify
-from decimal import Decimal
-from datetime import datetime
 
 
 @product_history_bp.route('/api/product/<int:product_id>/purchase', methods=['POST'])
@@ -347,7 +371,10 @@ def purchase_product(product_id):
         purchase_price_per_item = Decimal(data['purchase_price_per_item'])
         purchase_total_price = Decimal(data['purchase_total_price'])
         supplier_id = data.get('supplier_id')
-        purchase_date = data.get('purchase_date', datetime.now())
+
+        # Convert purchase_date string to Python date object
+        purchase_date_str = data.get('purchase_date', datetime.now().strftime('%Y-%m-%d'))
+        purchase_date = datetime.strptime(purchase_date_str, '%Y-%m-%d').date()
 
         if supplier_id:
             supplier = db_session.query(Supplier).filter(Supplier.id == supplier_id).one_or_none()
@@ -355,9 +382,11 @@ def purchase_product(product_id):
                 return jsonify({'error': 'Supplier not found'}), 404
             product.supplier = supplier
 
-        product.quantity += quantity
+        product.total_quantity += quantity
+        product.available_quantity += quantity
+        product.selling_total_price += purchase_total_price
         product.purchase_total_price += purchase_total_price
-        product.purchase_price_per_item = product.purchase_total_price / product.quantity
+        product.purchase_price_per_item = product.purchase_total_price / product.total_quantity
         db_session.commit()
 
         # Create PurchaseHistory record
@@ -396,16 +425,24 @@ def record_sale(product_id):
         selling_price_per_item = Decimal(data['selling_price_per_item'])
         selling_total_price = Decimal(data['selling_total_price'])
 
-        if product.quantity < quantity_sold:
+        if product.available_quantity < quantity_sold:
             return jsonify({'error': 'Not enough quantity in stock'}), 400
 
-        product.quantity -= quantity_sold
+        product.available_quantity -= quantity_sold
         product.selling_quantity += quantity_sold
+        product.sold_quantity += quantity_sold
         product.selling_price_per_item = selling_price_per_item
         product.selling_total_price += selling_total_price
         db_session.commit()
 
         customer = db_session.query(Customer).filter(Customer.id == data['customer']).one()
+
+        # Convert sale_date string to a datetime object if it's provided
+        sale_date_str = data.get('sale_date', None)
+        if sale_date_str:
+            sale_date = datetime.strptime(sale_date_str, '%Y-%m-%d')
+        else:
+            sale_date = datetime.now()
 
         sale_history = SaleHistory(
             product_id=product.id,
@@ -413,7 +450,7 @@ def record_sale(product_id):
             quantity_sold=quantity_sold,
             selling_price_per_item=selling_price_per_item,
             selling_total_price=selling_total_price,
-            sale_date=data.get('sale_date', datetime.now())
+            sale_date=sale_date
         )
         db_session.add(sale_history)
         db_session.commit()

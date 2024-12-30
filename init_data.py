@@ -116,8 +116,13 @@ def load_products_to_db(data):
             db_session.commit()
 
         # Перевірка кількості
-        quantity = product_data.get('quantity', 0)
-        if quantity < 0:
+        total_quantity = product_data.get('quantity', 0)
+        if total_quantity < 0:
+            logging.warning(f"Invalid quantity for '{product_data['name']}'. Skipping product.")
+            continue
+
+        available_quantity = product_data.get('quantity', 0)
+        if available_quantity < 0:
             logging.warning(f"Invalid quantity for '{product_data['name']}'. Skipping product.")
             continue
 
@@ -126,7 +131,8 @@ def load_products_to_db(data):
             product = Product(
                 name=product_data['name'],
                 supplier=supplier,
-                quantity=quantity,
+                total_quantity=total_quantity,
+                available_quantity=available_quantity,
                 selling_price_per_item=product_data.get('selling_price_per_item', 0),
                 created_date=datetime.now()
             )
