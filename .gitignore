@@ -12,3 +12,5 @@ webhook.log
 # Ignore virtual environment directory
 venv/
 /migrations/
+/instance/
+/**.db
