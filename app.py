@@ -19,9 +19,30 @@ from services.category_routes import category_bp
 from services.customer_routes import customer_bp
 from services.product_service import ProductService, product_bp, product_history_bp
 from services.supplier_routes import supplier_bp
+import logging
 
 # INCLUDE FROM blueprint
 
+# Create a logger
+logger = logging.getLogger("app_logger")
+logger.setLevel(logging.INFO)  # Set the desired logging level
+
+# Create a file handler
+file_handler = logging.FileHandler("app.log")
+file_handler.setLevel(logging.INFO)
+
+# Create a console handler
+console_handler = logging.StreamHandler()
+console_handler.setLevel(logging.INFO)
+
+# Create a formatter and set it for both handlers
+formatter = logging.Formatter('%(asctime)s - %(levelname)s - %(message)s')
+file_handler.setFormatter(formatter)
+console_handler.setFormatter(formatter)
+
+# Add the handlers to the logger
+logger.addHandler(file_handler)
+logger.addHandler(console_handler)
 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = 'super-secret'
@@ -176,6 +197,14 @@ def login():
 @jwt_required()
 def logout():
     return jsonify(message="Logout successful"), 200
+
+
+@app.before_request
+def log_request_info():
+    logger.info(f"Request method: {request.method}, URL: {request.url}")
+    # logger.info(f"Headers: {request.headers}")
+    if request.method in ["POST", "PUT", "PATCH"]:
+        logger.info(f"Body: {request.get_data(as_text=True)}")
 
 
 if __name__ == '__main__':

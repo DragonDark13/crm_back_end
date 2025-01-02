@@ -1,3 +1,7 @@
+import logging
+
+from sqlalchemy import insert
+
 from models import Product, product_categories_table, Supplier, PurchaseHistory, StockHistory, Category, SaleHistory, \
     Customer
 from flask import jsonify, Blueprint, request
@@ -189,7 +193,7 @@ def update_product(product_id):
     data = request.get_json()
 
     # Перевірка обов'язкових полів
-    required_fields = ['quantity', 'purchase_price_per_item', 'purchase_total_price', 'created_date']
+    required_fields = ['available_quantity', 'purchase_price_per_item', 'purchase_total_price', 'created_date']
     missing_fields = [field for field in required_fields if field not in data]
     if missing_fields:
         return jsonify({'error': f"Missing required fields: {', '.join(missing_fields)}"}), 400
@@ -198,11 +202,11 @@ def update_product(product_id):
 
     # Валідація полів
     try:
-        quantity = float(data['quantity'])
-        if quantity < 0:
-            errors['quantity'] = "Quantity must be greater than or equal to 0."
+        available_quantity = float(data['available_quantity'])
+        if available_quantity < 0:
+            errors['available_quantity'] = "available_quantity must be greater than or equal to 0."
     except ValueError:
-        errors['quantity'] = "Quantity must be a valid number."
+        errors['available_quantity'] = "available_quantity must be a valid number."
 
     try:
         purchase_price_per_item = float(data['purchase_price_per_item'])
@@ -228,33 +232,38 @@ def update_product(product_id):
             except NoResultFound:
                 return jsonify({'error': 'Supplier not found'}), 404
 
-        created_date = data.get('created_date')
+        created_date = datetime.strptime(data.get('created_date'), "%Y-%m-%d")
 
         if created_date:
             product.created_date = created_date
         else:
             product.created_date = datetime.now()
 
-        change_amount = data['quantity'] - product.quantity
+        change_amount = data['available_quantity'] - product.available_quantity
 
-        product.quantity = quantity
+        product.available_quantity = available_quantity
         product.purchase_total_price = purchase_total_price
         product.purchase_price_per_item = purchase_price_per_item
         product.selling_price_per_item = selling_price_per_item
 
         category_ids = data.get('category_ids', [])
+        category_ids = data.get('category_ids', [])
         if category_ids:
-            # Clear old categories first
+            # Clear old categories first by deleting the association from the junction table
             db_session.query(product_categories_table).filter(
-                product_categories_table.product_id == product.id).delete()
+                product_categories_table.c.product_id == product.id).delete()
 
+            # Fetch the new categories from the database
             categories = db_session.query(Category).filter(Category.id.in_(category_ids)).all()
+
+            # Add new category associations to the product using insert
             for category in categories:
-                product_category = product_categories_table(product_id=product.id, category_id=category.id)
-                db_session.add(product_category)
+                db_session.execute(
+                    insert(product_categories_table).values(product_id=product.id, category_id=category.id)
+                )
 
-        db_session.commit()
-
+            # Commit the transaction
+            db_session.commit()
         stock_history_record = db_session.query(StockHistory).filter(
             StockHistory.product_id == product.id,
             StockHistory.change_type == 'create'
@@ -262,13 +271,13 @@ def update_product(product_id):
 
         if stock_history_record:
             stock_history_record.timestamp = created_date if created_date else datetime.now()
-            stock_history_record.change_amount = quantity
+            stock_history_record.change_amount = available_quantity
             db_session.commit()
 
         else:
             stock_history = StockHistory(
                 product_id=product.id,
-                change_amount=quantity,
+                change_amount=available_quantity,
                 change_type='create',
                 timestamp=created_date if created_date else datetime.now()
             )
