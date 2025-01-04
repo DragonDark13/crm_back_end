@@ -1,12 +1,12 @@
 import logging
 
-from sqlalchemy import insert
+from sqlalchemy import insert, delete
 
 from models import Product, product_categories_table, Supplier, PurchaseHistory, StockHistory, Category, SaleHistory, \
-    Customer
+    Customer, ReturnHistory
 from flask import jsonify, Blueprint, request
 from sqlalchemy.orm import joinedload
-from sqlalchemy.exc import NoResultFound
+from sqlalchemy.exc import NoResultFound, SQLAlchemyError
 from decimal import Decimal
 from datetime import datetime
 from sqlalchemy.orm import sessionmaker
@@ -292,6 +292,27 @@ def update_product(product_id):
         return jsonify({'error': 'Product not found'}),
 
 
+def delete_all_products(session):
+    """
+    Видалення всіх товарів та пов'язаних із ними записів.
+    """
+    try:
+        # Видалення записів з пов'язаних таблиць
+        session.execute(delete(ReturnHistory))
+        session.execute(delete(SaleHistory))
+        session.execute(delete(StockHistory))
+        session.execute(delete(PurchaseHistory))
+        session.execute(delete(Product))
+
+        # Коміт транзакції
+        session.commit()
+        print("Усі товари та пов'язані записи успішно видалено.")
+    except SQLAlchemyError as e:
+        # У разі помилки відкотити транзакцію
+        session.rollback()
+        print(f"Помилка під час видалення: {str(e)}")
+
+
 # Створюємо Blueprint для продуктів і пов'язаних маршрутів
 product_history_bp = Blueprint('product_history', __name__)
 
@@ -469,6 +490,83 @@ def record_sale(product_id):
         return jsonify({'error': 'Product or Customer not found'}), 404
     except KeyError as e:
         return jsonify({'error': f'Missing field: {str(e)}'}), 400
+
+
+@product_history_bp.route('/api/delete-history/<int:product_id>/<string:history_type>/<int:history_id>',
+                          methods=['DELETE'])
+def delete_product_history(product_id, history_type, history_id):
+    try:
+        if history_type == 'stock':
+            result = delete_stock_history(product_id, history_id)
+        elif history_type == 'purchase':
+            result = delete_purchase_history(product_id, history_id)
+        elif history_type == 'sale':
+            result = delete_sale_history(product_id, history_id)
+        else:
+            return jsonify({'error': 'Invalid history type'}), 400
+
+        if result.get('error'):
+            return jsonify({'error': result['error']}), 400
+
+        db_session.commit()
+        return jsonify({'message': 'History record deleted and changes reverted'}), 200
+    except SQLAlchemyError as e:
+        db_session.rollback()
+        return jsonify({'error': 'Database error: ' + str(e)}), 500
+    except Exception as e:
+        return jsonify({'error': 'Unexpected error: ' + str(e)}), 500
+
+
+def delete_stock_history(product_id, history_id):
+    """Delete stock history and verify product ID"""
+    history = db_session.query(StockHistory).filter_by(id=history_id, product_id=product_id).first()
+    if not history:
+        return {'error': 'Stock history record not found or does not belong to this product'}
+    product = history.product
+    if history.change_type == 'add':
+        product.available_quantity -= history.change_amount
+    elif history.change_type == 'remove':
+        product.available_quantity += history.change_amount
+    db_session.delete(history)
+    return {'success': True}
+
+
+def delete_purchase_history(product_id, history_id):
+    """Логіка видалення записів історії закупівель"""
+    history = db_session.query(PurchaseHistory).filter_by(id=history_id, product_id=product_id).first()
+    if not history:
+        return {'error': 'Purchase history record not found'}
+
+    product = history.product
+    product.total_quantity -= history.quantity_purchase
+    product.available_quantity -= history.quantity_purchase
+    product.purchase_total_price -= history.purchase_total_price
+    product.purchase_price_per_item = (
+        float(product.purchase_total_price) / product.total_quantity
+        if product.total_quantity > 0 else 0
+    )
+
+    db_session.delete(history)
+    return {'success': True}
+
+
+def delete_sale_history(product_id, history_id):
+    """Логіка видалення записів історії продажів"""
+    history = db_session.query(SaleHistory).filter_by(id=history_id, product_id=product_id).first()
+    if not history:
+        return {'error': 'Sale history record not found'}
+
+    product = history.product
+    product.available_quantity += history.quantity_sold
+    product.sold_quantity -= history.quantity_sold
+    product.selling_total_price -= history.selling_total_price
+    product.selling_price_per_item = (
+        product.selling_total_price / product.sold_quantity
+        if product.sold_quantity > 0 else 0
+    )
+
+    db_session.delete(history)
+    return {'success': True}
 
 
 def validate_sale_data(data):

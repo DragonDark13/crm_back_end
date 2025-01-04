@@ -14,3 +14,7 @@ venv/
 /migrations/
 /instance/
 /**.db
+/csv
+**.cvs
+/csv/**.csv
+/csv/
