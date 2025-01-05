@@ -262,6 +262,108 @@ class ReturnHistory(Base):
     sale = relationship("SaleHistory", back_populates="returns", overlaps="sale_history")  # Resolve the overlap warning
 
 
+class PackagingMaterial(Base):
+    __tablename__ = 'packaging_materials'
+
+    id = Column(Integer, primary_key=True)
+    name = Column(String, unique=True, nullable=False)  # Назва матеріалу
+    packaging_material_supplier_id = Column(Integer, ForeignKey('packaging_material_suppliers.id', ondelete='SET NULL'),
+                                            nullable=True)  # Link to the new supplier model
+    total_quantity = Column(Float, default=0)  # Загальна кількість закупленого
+    available_quantity = Column(Float, default=0)  # Кількість в наявності
+    purchase_price_per_unit = Column(DECIMAL(10, 2), default=0.00)  # Закупівельна ціна за одиницю
+    reorder_level = Column(Float, default=0)  # Мінімальний рівень для повторного замовлення
+    created_date = Column(DateTime, default=datetime.now)
+    packaging_material_supplier = relationship("PackagingMaterialSupplier",
+                                               back_populates="packaging_materials")  # New relationship
+    stock_history = relationship("PackagingStockHistory", back_populates="material", cascade="all, delete-orphan")
+    purchase_history = relationship("PackagingPurchaseHistory", back_populates="material", cascade="all, delete-orphan")
+
+    def to_dict(self):
+        return {
+            'id': self.id,
+            'name': self.name,
+            'packaging_material_supplier_id': self.packaging_material_supplier_id,
+            'total_quantity': self.total_quantity,
+            'available_quantity': self.available_quantity,
+            'purchase_price_per_unit': float(self.purchase_price_per_unit or 0),
+            'reorder_level': self.reorder_level,
+            'created_date': self.created_date.isoformat() if self.created_date else None,
+            'supplier': self.packaging_material_supplier.to_dict() if self.packaging_material_supplier else None
+        }
+
+
+class PackagingStockHistory(Base):
+    __tablename__ = 'packaging_stock_history'
+
+    id = Column(Integer, primary_key=True)
+    material_id = Column(Integer, ForeignKey('packaging_materials.id', ondelete='CASCADE'))
+    change_amount = Column(Float, nullable=False)  # Зміна кількості (позитивна або негативна)
+    change_type = Column(String, nullable=False)  # Тип зміни (закупівля, списання тощо)
+    timestamp = Column(DateTime, default=datetime.now)
+    material = relationship("PackagingMaterial", back_populates="stock_history")
+
+    def to_dict(self):
+        return {
+            'id': self.id,
+            'material_id': self.material_id,
+            'change_amount': self.change_amount,
+            'change_type': self.change_type,
+            'timestamp': self.timestamp.isoformat()
+        }
+
+
+class PackagingPurchaseHistory(Base):
+    __tablename__ = 'packaging_purchase_history'
+
+    id = Column(Integer, primary_key=True)
+    material_id = Column(Integer, ForeignKey('packaging_materials.id', ondelete='CASCADE'))
+    supplier_id = Column(Integer, ForeignKey('packaging_material_suppliers.id',
+                                             ondelete='SET NULL'))  # Updated to reference packaging_material_suppliers
+    quantity_purchased = Column(Float, nullable=False)
+    purchase_price_per_unit = Column(DECIMAL(10, 2), default=0.00)
+    purchase_total_price = Column(DECIMAL(12, 2), default=0.00)
+    purchase_date = Column(DateTime, default=datetime.now)
+    material = relationship("PackagingMaterial", back_populates="purchase_history")
+    packaging_material_supplier = relationship("PackagingMaterialSupplier")  # Updated to PackagingMaterialSupplier
+
+    def to_dict(self):
+        return {
+            'id': self.id,
+            'material_id': self.material_id,
+            'supplier_id': self.supplier_id,
+            'quantity_purchased': self.quantity_purchased,
+            'purchase_price_per_unit': float(self.purchase_price_per_unit),
+            'purchase_total_price': float(self.purchase_total_price),
+            'purchase_date': self.purchase_date.isoformat()
+        }
+
+
+class PackagingMaterialSupplier(Base):
+    __tablename__ = 'packaging_material_suppliers'
+
+    id = Column(Integer, primary_key=True)
+    name = Column(String, unique=True, nullable=False)
+    contact_info = Column(String, nullable=True)
+    email = Column(String, nullable=True)
+    phone_number = Column(String, nullable=True)
+    address = Column(String, nullable=True)
+    packaging_materials = relationship("PackagingMaterial", back_populates="packaging_material_supplier",
+                                       cascade="all, delete-orphan")
+    purchase_history = relationship("PackagingPurchaseHistory",
+                                    back_populates="packaging_material_supplier")  # New relationship added
+
+    def to_dict(self):
+        return {
+            'id': self.id,
+            'name': self.name,
+            'contact_info': self.contact_info,
+            'email': self.email,
+            'phone_number': self.phone_number,
+            'address': self.address,
+        }
+
+
 # Create engine and session
 engine = create_engine('sqlite:///shop_crm.db')  # Example database URI
 Session = sessionmaker(bind=engine)

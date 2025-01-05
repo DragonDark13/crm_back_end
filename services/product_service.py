@@ -18,7 +18,6 @@ from datetime import datetime
 # Створюємо Blueprint для продуктів
 product_bp = Blueprint('products', __name__)
 
-
 class ProductService:
 
     @staticmethod
@@ -416,7 +415,8 @@ def purchase_product(product_id):
         product.available_quantity += quantity
         product.selling_total_price += purchase_total_price
         product.purchase_total_price += purchase_total_price
-        product.purchase_price_per_item = product.purchase_total_price / product.total_quantity
+        product.purchase_price_per_item = purchase_price_per_item  # Update to new price per item
+
         db_session.commit()
 
         # Create PurchaseHistory record

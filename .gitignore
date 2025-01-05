@@ -18,3 +18,4 @@ venv/
 **.cvs
 /csv/**.csv
 /csv/
+/csv_package/
