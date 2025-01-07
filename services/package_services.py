@@ -164,6 +164,7 @@ def update_packaging_status():
 
         # Віднімаємо використану кількість
         material.available_quantity -= quantity_used
+        material.available_stock_cost -= quantity_used * float(material.purchase_price_per_unit or 0)
 
         # Встановлюємо статус "used"
         if material.available_quantity == quantity_used:

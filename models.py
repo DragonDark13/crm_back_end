@@ -165,8 +165,13 @@ class SaleHistory(Base):
     payment = relationship("Payment", uselist=False, back_populates="sale", cascade="all, delete-orphan")
     profit = Column(DECIMAL(10, 2), default=0.00)
 
-    # Add back_populates for returns
+    # Add packaging material fields
+    packaging_material_id = Column(Integer, ForeignKey('packaging_materials.id', ondelete='SET NULL'))
+    packaging_quantity = Column(Float, default=0)  # Quantity of packaging material used
+    total_packaging_cost = Column(Float, default=0)
+    packaging_material = relationship("PackagingMaterial")  # Link to the packaging material used in the sale
     returns = relationship("ReturnHistory", back_populates="sale", cascade="all, delete-orphan")
+    packaging_sale_history = relationship("PackagingSaleHistory", back_populates="sale", cascade="all, delete-orphan")
 
     def to_dict(self, include_customer=False):
         result = {
@@ -178,6 +183,8 @@ class SaleHistory(Base):
             'selling_total_price': float(self.selling_total_price),
             'sale_date': self.sale_date.strftime('%Y-%m-%d %H:%M:%S'),
             'profit': float(self.profit),
+            'packaging_material_id': self.packaging_material_id,
+            'packaging_quantity': self.packaging_quantity,
         }
         if include_customer and self.customer:
             result['customer'] = self.customer.to_dict()  # Add customer info if needed
@@ -374,6 +381,30 @@ class PackagingMaterialSupplier(Base):
             'email': self.email,
             'phone_number': self.phone_number,
             'address': self.address,
+        }
+
+
+class PackagingSaleHistory(Base):
+    __tablename__ = 'packaging_sale_history'
+
+    id = Column(Integer, primary_key=True)
+    sale_id = Column(Integer, ForeignKey('sale_history.id', ondelete='CASCADE'))
+    packaging_material_id = Column(Integer, ForeignKey('packaging_materials.id', ondelete='SET NULL'))
+    packaging_quantity = Column(Float, nullable=False)
+    total_packaging_cost = Column(DECIMAL(12, 2), nullable=False)
+    sale_date = Column(DateTime, default=datetime.now)
+
+    sale = relationship("SaleHistory", back_populates="packaging_sale_history")
+    packaging_material = relationship("PackagingMaterial")
+
+    def to_dict(self):
+        return {
+            'id': self.id,
+            'sale_id': self.sale_id,
+            'packaging_material_id': self.packaging_material_id,
+            'packaging_quantity': self.packaging_quantity,
+            'total_packaging_cost': float(self.total_packaging_cost),
+            'sale_date': self.sale_date.isoformat()
         }
 
 

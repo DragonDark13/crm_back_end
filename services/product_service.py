@@ -3,7 +3,7 @@ import logging
 from sqlalchemy import insert, delete
 
 from models import Product, product_categories_table, Supplier, PurchaseHistory, StockHistory, Category, SaleHistory, \
-    Customer, ReturnHistory
+    Customer, ReturnHistory, PackagingMaterial, PackagingSaleHistory
 from flask import jsonify, Blueprint, request
 from sqlalchemy.orm import joinedload
 from sqlalchemy.exc import NoResultFound, SQLAlchemyError
@@ -17,6 +17,7 @@ from datetime import datetime
 
 # Створюємо Blueprint для продуктів
 product_bp = Blueprint('products', __name__)
+
 
 class ProductService:
 
@@ -455,6 +456,10 @@ def record_sale(product_id):
         selling_price_per_item = Decimal(data['selling_price_per_item'])
         selling_total_price = Decimal(data['selling_total_price'])
 
+        total_packaging_cost = Decimal(data.get('total_packaging_cost', 0))  # Optional packaging material
+        packaging_material_id = data.get('packaging_id', None)  # Optional packaging material
+        packaging_quantity = data.get('packaging_quantity', 0)  # Default to 0 if not provided
+
         if product.available_quantity < quantity_sold:
             return jsonify({'error': 'Not enough quantity in stock'}), 400
 
@@ -480,9 +485,44 @@ def record_sale(product_id):
             quantity_sold=quantity_sold,
             selling_price_per_item=selling_price_per_item,
             selling_total_price=selling_total_price,
-            sale_date=sale_date
+            sale_date=sale_date,
+            packaging_material_id=packaging_material_id,
+            profit=((
+                            product.selling_price_per_item - product.purchase_price_per_item) * quantity_sold) - total_packaging_cost,
+            packaging_quantity=packaging_quantity,
+            total_packaging_cost=total_packaging_cost
         )
         db_session.add(sale_history)
+
+        # Запис у PackagingSaleHistory
+        if packaging_material_id:
+            packaging_material = db_session.query(PackagingMaterial).filter(
+                PackagingMaterial.id == packaging_material_id).one()
+            if packaging_material:
+
+                # Check if the packaging material exists and has sufficient quantity
+                if packaging_material.available_quantity < packaging_quantity:
+                    return jsonify({'error': 'Not enough packaging material available'}), 400
+
+                packaging_material.available_quantity -= packaging_quantity  # Deduct the packaging material
+                packaging_material.available_stock_cost -= total_packaging_cost
+
+                # Встановлюємо статус "used"
+                if packaging_material.available_quantity == 0:
+                    packaging_material.status = 'used'
+
+                db_session.add(packaging_material)
+
+                # Додати запис у PackagingSaleHistory
+                packaging_sale_history = PackagingSaleHistory(
+                    sale_id=sale_history.id,
+                    packaging_material_id=packaging_material_id,
+                    packaging_quantity=packaging_quantity,
+                    total_packaging_cost=total_packaging_cost,
+                    sale_date=sale_date
+                )
+                db_session.add(packaging_sale_history)
+
         db_session.commit()
 
         return jsonify({'message': 'Sale recorded successfully'}), 201
