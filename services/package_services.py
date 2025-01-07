@@ -2,7 +2,8 @@ from flask import Blueprint, jsonify, request
 from sqlalchemy.exc import SQLAlchemyError
 
 from database import db_session
-from models import PackagingMaterial, PackagingPurchaseHistory, PackagingMaterialSupplier
+from models import PackagingMaterial, PackagingPurchaseHistory, PackagingMaterialSupplier, PackagingStockHistory, \
+    PackagingSaleHistory
 
 package_bp = Blueprint('packages', __name__)
 
@@ -177,3 +178,28 @@ def update_packaging_status():
     except SQLAlchemyError as e:
         db_session.rollback()
         return jsonify({'error': 'Database error', 'details': str(e)}), 500
+
+
+@package_bp.route('/api/materials/<int:packaging_material_id>/history', methods=['GET'])
+def get_packaging_material_history(packaging_material_id):
+    # Отримуємо всі історії продажів для конкретного пакування
+    sales_history = db_session.query(PackagingSaleHistory).filter(
+        PackagingSaleHistory.packaging_material_id == packaging_material_id).all()
+
+    # Отримуємо всі історії закупівель для конкретного пакування
+    purchase_history = db_session.query(PackagingPurchaseHistory).filter(
+        PackagingPurchaseHistory.material_id == packaging_material_id).all()
+
+    # Отримуємо всі зміни на складі для конкретного пакування
+    stock_history = db_session.query(PackagingStockHistory).filter(
+        PackagingStockHistory.material_id == packaging_material_id).all()
+
+    # Формуємо результат
+    result = {
+        'packaging_material_id': packaging_material_id,
+        'sales_history': [sale.to_dict() for sale in sales_history],
+        'purchase_history': [purchase.to_dict() for purchase in purchase_history],
+        'stock_history': [stock.to_dict() for stock in stock_history]
+    }
+
+    return result

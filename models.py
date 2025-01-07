@@ -408,6 +408,16 @@ class PackagingSaleHistory(Base):
         }
 
 
+class OtherInvestment(Base):
+    __tablename__ = "other_investments"
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    type_name = Column(String, nullable=False)  # Назва типу вкладення
+    supplier = Column(String, nullable=False)
+    cost = Column(Float, nullable=False)  # Вартість
+    date = Column(Date, nullable=False)  # Дата
+
+
 # Create engine and session
 engine = create_engine('sqlite:///shop_crm.db')  # Example database URI
 Session = sessionmaker(bind=engine)

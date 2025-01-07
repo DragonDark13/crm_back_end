@@ -19,3 +19,4 @@ venv/
 /csv/**.csv
 /csv/
 /csv_package/
+/csv_others_investments/**.csv
