@@ -4,14 +4,15 @@ from decimal import Decimal
 from sqlalchemy.exc import IntegrityError
 
 # Функція для завантаження продуктів у базу даних
-from app import db_session
+from database import db_session
 from models import Product, Supplier
 
 from datetime import datetime
 from decimal import Decimal
 import csv
 from sqlalchemy.exc import IntegrityError
-from models import db_session, Product, Supplier, PurchaseHistory, StockHistory
+from models import Product, Supplier, PurchaseHistory, StockHistory
+from database import db_session
 
 
 def load_products_from_csv(file_path, created_date):

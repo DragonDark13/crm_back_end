@@ -1,4 +1,3 @@
-import logging
 
 from sqlalchemy import insert, delete
 
@@ -7,10 +6,6 @@ from models import Product, product_categories_table, Supplier, PurchaseHistory,
 from flask import jsonify, Blueprint, request
 from sqlalchemy.orm import joinedload
 from sqlalchemy.exc import NoResultFound, SQLAlchemyError
-from decimal import Decimal
-from datetime import datetime
-from sqlalchemy.orm import sessionmaker
-from database import db_session  # Assuming `db_session` is the SQLAlchemy session
 from flask import jsonify
 from decimal import Decimal
 from datetime import datetime
@@ -23,6 +18,8 @@ class ProductService:
 
     @staticmethod
     def get_product_by_id(product_id):
+        from database import db_session  # Assuming `db_session` is the SQLAlchemy session
+
         """Отримати продукт за ID"""
         try:
             product = db_session.query(Product).filter(Product.id == product_id).one()
@@ -39,6 +36,8 @@ class ProductService:
 
     @staticmethod
     def get_all_products():
+        from database import db_session  # Assuming `db_session` is the SQLAlchemy session
+
         """Отримати всі товари з категоріями"""
         products = db_session.query(Product).options(joinedload(Product.categories), joinedload(Product.supplier)).all()
         product_list = []
@@ -67,6 +66,8 @@ class ProductService:
 
     @staticmethod
     def create_product(data):
+        from database import db_session  # Assuming `db_session` is the SQLAlchemy session
+
         """Створення нового продукту та обробка закупки"""
         required_product_fields = ['name', 'category_ids', 'created_date']
         missing_product_fields = [field for field in required_product_fields if field not in data]
@@ -180,6 +181,8 @@ class ProductService:
 
     @staticmethod
     def assign_categories_to_product(product, category_ids):
+        from database import db_session  # Assuming `db_session` is the SQLAlchemy session
+
         """Призначити категорії для продукту"""
         categories = db_session.query(Category).filter(Category.id.in_(category_ids)).all()
         for category in categories:
@@ -189,6 +192,8 @@ class ProductService:
 
 @product_bp.route('/api/product/<int:product_id>', methods=['PUT'])
 def update_product(product_id):
+    from database import db_session  # Assuming `db_session` is the SQLAlchemy session
+
     """Оновити товар з валідацією і збереженням всіх змін"""
     data = request.get_json()
 
@@ -321,6 +326,8 @@ product_history_bp = Blueprint('product_history', __name__)
 def delete_product(product_id):
     """Delete product and all related records."""
     try:
+        from database import db_session  # Assuming `db_session` is the SQLAlchemy session
+
         # Fetch the product
         product = db_session.query(Product).filter(Product.id == product_id).one()
 
@@ -344,6 +351,8 @@ def delete_product(product_id):
 def get_product_history(product_id):
     """Get history of stock, purchase, and sales changes for a product."""
     try:
+        from database import db_session  # Assuming `db_session` is the SQLAlchemy session
+
         product = db_session.query(Product).filter(Product.id == product_id).one()
 
         # Stock History
@@ -388,6 +397,7 @@ def get_product_history(product_id):
 def purchase_product(product_id):
     """Handle product purchase and record in history."""
     data = request.get_json()
+    from database import db_session  # Assuming `db_session` is the SQLAlchemy session
 
     # Validate data
     errors = validate_purchase_data(data)
@@ -443,6 +453,7 @@ def purchase_product(product_id):
 def record_sale(product_id):
     """Record a sale for a product and update sale history."""
     data = request.get_json()
+    from database import db_session  # Assuming `db_session` is the SQLAlchemy session
 
     # Validate data
     errors = validate_sale_data(data)
@@ -535,6 +546,8 @@ def record_sale(product_id):
 @product_history_bp.route('/api/delete-history/<int:product_id>/<string:history_type>/<int:history_id>',
                           methods=['DELETE'])
 def delete_product_history(product_id, history_type, history_id):
+    from database import db_session  # Assuming `db_session` is the SQLAlchemy session
+
     try:
         if history_type == 'stock':
             result = delete_stock_history(product_id, history_id)
@@ -559,6 +572,8 @@ def delete_product_history(product_id, history_type, history_id):
 
 def delete_stock_history(product_id, history_id):
     """Delete stock history and verify product ID"""
+    from database import db_session  # Assuming `db_session` is the SQLAlchemy session
+
     history = db_session.query(StockHistory).filter_by(id=history_id, product_id=product_id).first()
     if not history:
         return {'error': 'Stock history record not found or does not belong to this product'}
@@ -573,6 +588,8 @@ def delete_stock_history(product_id, history_id):
 
 def delete_purchase_history(product_id, history_id):
     """Логіка видалення записів історії закупівель"""
+    from database import db_session  # Assuming `db_session` is the SQLAlchemy session
+
     history = db_session.query(PurchaseHistory).filter_by(id=history_id, product_id=product_id).first()
     if not history:
         return {'error': 'Purchase history record not found'}
@@ -592,6 +609,8 @@ def delete_purchase_history(product_id, history_id):
 
 def delete_sale_history(product_id, history_id):
     """Логіка видалення записів історії продажів"""
+    from database import db_session  # Assuming `db_session` is the SQLAlchemy session
+
     history = db_session.query(SaleHistory).filter_by(id=history_id, product_id=product_id).first()
     if not history:
         return {'error': 'Sale history record not found'}

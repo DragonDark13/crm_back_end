@@ -74,9 +74,9 @@ app.config['JWT_SECRET_KEY'] = 'your_secret_key'  # Set a secure secret key for 
 jwt = JWTManager(app)
 
 # Session setup
-engine = create_engine('sqlite:///shop_crm.db', echo=True)
-Session = sessionmaker(bind=engine)
-db_session = scoped_session(Session)
+# engine = create_engine('sqlite:///shop_crm.db', echo=True)
+# Session = sessionmaker(bind=engine)
+# db_session = scoped_session(Session)
 
 
 @login_manager.user_loader

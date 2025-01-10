@@ -3,7 +3,7 @@ from datetime import datetime
 import csv
 from sqlalchemy.exc import IntegrityError
 
-from app import db_session
+from database import db_session
 from models import PackagingMaterial, Supplier, PackagingMaterialSupplier
 
 

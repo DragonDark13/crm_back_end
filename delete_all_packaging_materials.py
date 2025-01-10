@@ -1,4 +1,4 @@
-from app import db_session
+from database import db_session
 from models import PackagingMaterial, PackagingStockHistory, PackagingPurchaseHistory
 
 

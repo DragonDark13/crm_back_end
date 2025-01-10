@@ -7,7 +7,7 @@ from sqlalchemy.exc import IntegrityError
 from models import StockHistory, PurchaseHistory, SaleHistory, Category, Supplier, Product, User, Customer, Base
 
 # Ініціалізуємо базу даних
-from models import db_session
+from database import db_session
 
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 

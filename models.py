@@ -140,14 +140,21 @@ class Customer(Base):
     phone_number = Column(String, nullable=True)
     sales = relationship("SaleHistory", back_populates="customer", cascade="all, delete-orphan")
 
-    def to_dict(self):
-        return {
+    def to_dict(self, include_sales=False):
+        customer_data = {
             'id': self.id,
             'name': self.name,
             'email': self.email,
             'address': self.address,
             'phone_number': self.phone_number
         }
+
+        if include_sales:
+            customer_data['sales'] = [
+                sale.to_dict() for sale in self.sales
+            ]
+
+        return customer_data
 
 
 class SaleHistory(Base):
@@ -419,6 +426,6 @@ class OtherInvestment(Base):
 
 
 # Create engine and session
-engine = create_engine('sqlite:///shop_crm.db')  # Example database URI
-Session = sessionmaker(bind=engine)
-db_session = scoped_session(Session)  # Scoped session for thread-local management
+# engine = create_engine('sqlite:///shop_crm.db')  # Example database URI
+# Session = sessionmaker(bind=engine)
+# db_session = scoped_session(Session)  # Scoped session for thread-local management

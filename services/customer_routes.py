@@ -1,5 +1,7 @@
-from flask import Blueprint, jsonify, request
-from models import Customer, SaleHistory, db_session
+from flask import Blueprint, jsonify, request, abort
+from flask_sqlalchemy.session import Session
+
+from models import Customer, SaleHistory
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import joinedload
 
@@ -10,6 +12,8 @@ customer_bp = Blueprint('customer', __name__)
 # Create customer
 @customer_bp.route('/api/customers', methods=['POST'])
 def create_customer():
+    from database import db_session  # Assuming `db_session` is the SQLAlchemy session
+
     data = request.get_json()
     required_fields = ['name']
 
@@ -44,16 +48,20 @@ def create_customer():
 
 
 # Get all customers
-@customer_bp.route('/api/customers', methods=['GET'])
+@customer_bp.route('/api/get_all_customers', methods=['GET'])
 def get_all_customers():
+    from database import db_session  # Assuming `db_session` is the SQLAlchemy session
+
     customers = db_session.query(Customer).all()
     customer_list = [customer.to_dict() for customer in customers]
     return jsonify(customer_list), 200
 
 
 # Get customer details by ID
-@customer_bp.route('/api/customers/<int:customer_id>', methods=['GET'])
+@customer_bp.route('/api/customers_details/<int:customer_id>', methods=['GET'])
 def get_customer_details(customer_id):
+    from database import db_session  # Assuming `db_session` is the SQLAlchemy session
+
     try:
         customer = db_session.query(Customer).filter_by(id=customer_id).one()
         customer_data = customer.to_dict()
@@ -65,3 +73,63 @@ def get_customer_details(customer_id):
         return jsonify(customer_data), 200
     except Exception as e:
         return jsonify({'error': f'Customer not found: {str(e)}'}), 404
+
+
+@customer_bp.route('/update_customers/<int:customer_id>', methods=['PUT'])
+def edit_customer(customer_id: int):
+    customer_data = request.get_json()
+    from database import db_session  # Assuming `db_session` is the SQLAlchemy session
+
+    if not customer_data:
+        abort(400, description="Invalid data provided")
+
+    updated_customer = update_customer(db_session, customer_id, customer_data)
+
+    if not updated_customer:
+        abort(404, description="Customer not found")
+
+    return jsonify(updated_customer.to_dict())
+
+
+def update_customer(session: Session, customer_id: int, customer_data: dict):
+    customer = session.query(Customer).get(customer_id)
+    if not customer:
+        return None  # Клієнт не знайдений
+
+    # Оновлюємо поля, якщо вони є в customer_data
+    for key, value in customer_data.items():
+        if hasattr(customer, key):
+            setattr(customer, key, value)
+
+    try:
+        session.commit()
+        return customer
+    except Exception as e:
+        session.rollback()
+        raise e
+
+
+@customer_bp.route('/delete_customers/<int:customer_id>', methods=['DELETE'])
+def delete_customer_route(customer_id: int):
+    from database import db_session  # Assuming `db_session` is the SQLAlchemy session
+
+    success = delete_customer(db_session, customer_id)
+
+    if not success:
+        abort(404, description="Customer not found")
+
+    return jsonify({"message": "Customer deleted successfully"}), 204
+
+
+def delete_customer(session: Session, customer_id: int):
+    customer = session.query(Customer).get(customer_id)
+    if not customer:
+        return None  # Клієнт не знайдений
+
+    try:
+        session.delete(customer)
+        session.commit()
+        return True
+    except Exception as e:
+        session.rollback()
+        raise e

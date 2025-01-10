@@ -2,15 +2,17 @@ from flask import Blueprint, jsonify, request
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 from models import Category, Product, product_categories_table
-from database import db_session  # Assuming `db_session` is the SQLAlchemy session
 
 # Create a Blueprint for categories
 category_bp = Blueprint('categories', __name__)
 
 
 @category_bp.route('/api/categories', methods=['GET'])
+
 def get_all_categories():
     """Retrieve all categories."""
+    from database import db_session  # Assuming `db_session` is the SQLAlchemy session
+
     with db_session() as session:
         categories = session.query(Category).all()
         category_list = [{'id': cat.id, 'name': cat.name} for cat in categories]
@@ -19,6 +21,8 @@ def get_all_categories():
 
 @category_bp.route('/api/categories', methods=['POST'])
 def create_category():
+    from database import db_session  # Assuming `db_session` is the SQLAlchemy session
+
     """Create a new category."""
     data = request.get_json()
     try:
@@ -36,6 +40,8 @@ def create_category():
 
 @category_bp.route('/api/product/<int:product_id>/categories', methods=['POST'])
 def assign_categories_to_product(product_id):
+    from database import db_session  # Assuming `db_session` is the SQLAlchemy session
+
     """Assign categories to a product."""
     data = request.get_json()
     try:
@@ -61,6 +67,8 @@ def assign_categories_to_product(product_id):
 
 @category_bp.route('/api/product/<int:product_id>/categories', methods=['GET'])
 def get_product_categories(product_id):
+    from database import db_session  # Assuming `db_session` is the SQLAlchemy session
+
     """Retrieve categories of a product."""
     try:
         with db_session() as session:

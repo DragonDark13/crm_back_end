@@ -1,16 +1,17 @@
 from flask import Blueprint, jsonify, request
-from models import Supplier, PurchaseHistory, Product, db_session
+from models import Supplier, PurchaseHistory, Product
 from sqlalchemy.exc import IntegrityError
-from sqlalchemy.orm import joinedload
 
 # Create Blueprint for suppliers
 supplier_bp = Blueprint('supplier', __name__)
 
 
 # Create a new supplier
-@supplier_bp.route('/api/supplier', methods=['POST'])
+@supplier_bp.route('/api/create_supplier', methods=['POST'])
 def create_supplier():
     """Add a new supplier"""
+    from database import db_session  # Assuming `db_session` is the SQLAlchemy session
+
     data = request.get_json()
 
     # Check for required fields
@@ -44,43 +45,39 @@ def create_supplier():
 
 
 # Get all suppliers
-@supplier_bp.route('/api/suppliers', methods=['GET'])
+@supplier_bp.route('/api/suppliers/list', methods=['GET'])
 def get_suppliers():
+    from database import db_session  # Assuming `db_session` is the SQLAlchemy session
+
     """Get a list of all suppliers"""
-    # Using SQLAlchemy's query method to get all suppliers
     suppliers = db_session.query(Supplier).all()
 
-    # Convert the list of suppliers into dictionaries
-    suppliers_list = []
-    for supplier in suppliers:
-        supplier_dict = {
-            'id': supplier.id,
-            'name': supplier.name,
-            'contact_info': supplier.contact_info,
-            'email': supplier.email,
-            'phone_number': supplier.phone_number,
-            'address': supplier.address
-        }
-        suppliers_list.append(supplier_dict)
+    suppliers_list = [{
+        'id': supplier.id,
+        'name': supplier.name,
+        'contact_info': supplier.contact_info,
+        'email': supplier.email,
+        'phone_number': supplier.phone_number,
+        'address': supplier.address
+    } for supplier in suppliers]
 
     return jsonify(suppliers_list), 200
 
 
 # Get supplier purchase history
 def get_supplier_purchase_history(supplier_id):
+    from database import db_session  # Assuming `db_session` is the SQLAlchemy session
+
     supplier = db_session.query(Supplier).filter_by(id=supplier_id).one_or_none()
 
     if not supplier:
         return None
 
-    # Get purchase history with products using SQLAlchemy's join
+    # Get purchase history with products
     purchase_history = db_session.query(PurchaseHistory).join(Product).filter(
         PurchaseHistory.supplier == supplier).all()
 
-    products = set()  # Unique list of products
-
-    for purchase in purchase_history:
-        products.add(purchase.product)
+    products = {purchase.product for purchase in purchase_history}
 
     return {
         "supplier": supplier.name,
@@ -92,7 +89,7 @@ def get_supplier_purchase_history(supplier_id):
 # Get supplier purchase history through API endpoint
 @supplier_bp.route('/api/supplier/<int:supplier_id>/purchase-history', methods=['GET'])
 def get_supplier_purchase_history_api(supplier_id):
-    supplier_data = get_supplier_purchase_history(supplier_id)  # Use the previously created function
+    supplier_data = get_supplier_purchase_history(supplier_id)
 
     if not supplier_data:
         return jsonify({'error': 'Supplier not found'}), 404
@@ -112,12 +109,13 @@ def get_supplier_purchase_history_api(supplier_id):
 
 # Get supplier products
 def get_supplier_products(supplier_id):
+    from database import db_session  # Assuming `db_session` is the SQLAlchemy session
+
     supplier = db_session.query(Supplier).filter_by(id=supplier_id).one_or_none()
 
     if not supplier:
         return None
 
-    # Get products related to the supplier
     products = db_session.query(Product).filter_by(supplier_id=supplier.id).all()
 
     return {
@@ -129,7 +127,7 @@ def get_supplier_products(supplier_id):
 # Get supplier products through API endpoint
 @supplier_bp.route('/api/supplier/<int:supplier_id>/products', methods=['GET'])
 def get_supplier_products_api(supplier_id):
-    supplier_data = get_supplier_products(supplier_id)  # Use function to get products
+    supplier_data = get_supplier_products(supplier_id)
 
     if not supplier_data:
         return jsonify({'error': 'Supplier not found'}), 404
@@ -138,3 +136,53 @@ def get_supplier_products_api(supplier_id):
         "supplier": supplier_data['supplier'],
         "products": [{"id": product.id, "name": product.name} for product in supplier_data['products']]
     })
+
+
+# Delete a supplier
+@supplier_bp.route('/api/delete_supplier/<int:supplier_id>', methods=['DELETE'])
+def delete_supplier(supplier_id):
+    from database import db_session  # Assuming `db_session` is the SQLAlchemy session
+
+    """Delete a supplier by ID"""
+    supplier = db_session.query(Supplier).filter_by(id=supplier_id).one_or_none()
+
+    if not supplier:
+        return jsonify({'error': 'Supplier not found'}), 404
+
+    try:
+        db_session.delete(supplier)
+        db_session.commit()
+        return jsonify({'message': 'Supplier deleted successfully'}), 200
+    except Exception as e:
+        db_session.rollback()
+        return jsonify({'error': f'Failed to delete supplier: {str(e)}'}), 500
+
+
+# Update supplier data
+@supplier_bp.route('/api/supplier_edit/<int:supplier_id>', methods=['PUT'])
+def update_supplier(supplier_id):
+    """Update supplier information"""
+    data = request.get_json()
+    from database import db_session  # Assuming `db_session` is the SQLAlchemy session
+
+    supplier = db_session.query(Supplier).filter_by(id=supplier_id).one_or_none()
+
+    if not supplier:
+        return jsonify({'error': 'Supplier not found'}), 404
+
+    # Update fields based on request data
+    supplier.name = data.get('name', supplier.name)
+    supplier.contact_info = data.get('contact_info', supplier.contact_info)
+    supplier.email = data.get('email', supplier.email)
+    supplier.phone_number = data.get('phone_number', supplier.phone_number)
+    supplier.address = data.get('address', supplier.address)
+
+    try:
+        db_session.commit()
+        return jsonify({'message': 'Supplier updated successfully'}), 200
+    except IntegrityError as e:
+        db_session.rollback()
+        return jsonify({'error': f'Failed to update supplier: {str(e)}'}), 500
+    except Exception as e:
+        db_session.rollback()
+        return jsonify({'error': f'Unexpected error: {str(e)}'}), 500
