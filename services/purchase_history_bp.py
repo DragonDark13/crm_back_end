@@ -2,7 +2,8 @@ from flask import Blueprint
 from sqlalchemy import select, func
 
 from database import db_session
-from models import PurchaseHistory, Supplier, Product, Category, product_categories_table
+from models import PurchaseHistory, Supplier, Product, Category, product_categories_table, PackagingMaterial, \
+    OtherInvestment
 
 purchase_history_bp = Blueprint('purchase_history', __name__)
 
@@ -14,7 +15,7 @@ def get_purchase_history_data():
     :param session: Поточна сесія бази даних.
     :return: Список словників із даними про історію закупівель.
     """
-    query = (
+    product_purchase_history_query = (
         select(
             PurchaseHistory.id.label('purchase_id'),
             Product.id.label('product_id'),
@@ -39,26 +40,101 @@ def get_purchase_history_data():
         )  # Групування, щоб уникнути дублювання
     )
 
-    results = db_session.execute(query).fetchall()
+    # 2. Історія всіх закупівель пакування
+    packaging_purchase_history_query = (
+        select(
+            PurchaseHistory.id.label('purchase_id'),
+            PackagingMaterial.id.label('packaging_id'),
+            PackagingMaterial.name.label('packaging_name'),
+            Supplier.id.label('supplier_id'),
+            Supplier.name.label('supplier_name'),
+            PurchaseHistory.quantity_purchase.label('quantity'),
+            PurchaseHistory.purchase_price_per_item.label('price_per_item'),
+            PurchaseHistory.purchase_total_price.label('total_price'),
+            PurchaseHistory.purchase_date.label('date')
+        )
+            .join(PackagingMaterial, PurchaseHistory.product_id == PackagingMaterial.id)
+            .join(Supplier, PurchaseHistory.supplier_id == Supplier.id)
+            .group_by(
+            PurchaseHistory.id,
+            PackagingMaterial.id,
+            Supplier.id
+        )
+    )
 
-    # Форматування даних для зручного використання у фронтенді
-    purchase_history_data = []
-    for row in results:
-        purchase_history_data.append({
-            "purchase_id": row.purchase_id,
-            "product_id": row.product_id,
-            "product_name": row.product_name,
+    # 3. Інші витрати (OtherInvestments table)
+    other_investments_query = (
+        select(
+            OtherInvestment.id.label('expense_id'),
+            OtherInvestment.type_name.label('expense_name'),
+            OtherInvestment.supplier.label('supplier'),
+            OtherInvestment.cost.label('expense_amount'),
+            OtherInvestment.date.label('expense_date')
+        )
+            .group_by(OtherInvestment.id)
+    )
 
-            "product_categories": [int(cat_id) for cat_id in
-                                   row.product_categories.split(', ')] if row.product_categories else [],
-            # Перетворення в масив ід
-            # Додавання категорії            "product_name": row.product_name,
-            "supplier_id": row.supplier_id,
-            "supplier_name": row.supplier_name,
-            "quantity": row.quantity,
-            "price_per_item": float(row.price_per_item or 0),
-            "total_price": float(row.total_price or 0),
-            "date": row.date.strftime('%Y-%m-%d')
+    # Виконання запитів
+    product_results = db_session.execute(product_purchase_history_query).mappings().fetchall()
+    packaging_results = db_session.execute(packaging_purchase_history_query).mappings().fetchall()
+    other_investments_results = db_session.execute(other_investments_query).mappings().fetchall()
+
+    # Форматування даних для продуктів
+    # Перетворення масивів в один уніфікований масив
+    combined_data = []
+
+    # Обробка продуктів
+    for item in product_results:
+        combined_data.append({
+            "id": item["purchase_id"],
+            "name": item["product_name"],
+            "categories": [int(cat_id) for cat_id in item["product_categories"].split(', ')] if item[
+                "product_categories"] else [],
+            "supplier_id": item["supplier_id"],
+            "supplier_name": item["supplier_name"],
+            "quantity": item["quantity"],
+            "price_per_item": item["price_per_item"],
+            "total_price": item["total_price"],
+            "date": item["date"],
+            "type": "Product",
         })
 
-    return purchase_history_data
+    # Обробка пакування
+    for item in packaging_results:
+        combined_data.append({
+            "id": item["purchase_id"],
+            "name": item["packaging_name"],
+            "categories": [],
+            "supplier_id": item["supplier_id"],
+            "supplier_name": item["supplier_name"],
+            "quantity": item["quantity"],
+            "price_per_item": item["price_per_item"],
+            "total_price": item["total_price"],
+            "date": item["date"],
+            "type": "Packaging",
+        })
+
+    # Обробка інших витрат
+    for item in other_investments_results:
+        combined_data.append({
+            "id": item["expense_id"],
+            "name": item["expense_name"],
+            "categories": [],
+            "supplier_id": None,
+            "supplier_name": item["supplier"],
+            "quantity": None,
+            "price_per_item": None,
+            "total_price": item["expense_amount"],
+            "date": item["expense_date"],
+            "type": "Other Investment",
+        })
+
+        # Повернення комбінованого масиву з сортуванням за датою
+        combined_data_sorted = sorted(
+            combined_data,
+            key=lambda x: x["date"],  # Сортуємо за ключем "date"
+            reverse=True  # Сортування у спадному порядку (останні дати на початку)
+        )
+
+    # Повернення комбінованого масиву
+    return combined_data_sorted

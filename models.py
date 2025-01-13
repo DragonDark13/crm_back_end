@@ -424,6 +424,15 @@ class OtherInvestment(Base):
     cost = Column(Float, nullable=False)  # Вартість
     date = Column(Date, nullable=False)  # Дата
 
+    def to_dict(self):
+        """Convert OtherInvestment instance to a dictionary."""
+        return {
+            'id': self.id,
+            'type_name': self.type_name,
+            'supplier': self.supplier,
+            'cost': float(self.cost or 0),  # Convert to float, handling possible None
+            'date': self.date.isoformat() if self.date else None,  # Format date to ISO string
+        }
 
 # Create engine and session
 # engine = create_engine('sqlite:///shop_crm.db')  # Example database URI
