@@ -4,7 +4,7 @@ import csv
 from sqlalchemy.exc import IntegrityError
 
 from database import db_session
-from models import PackagingMaterial, Supplier, PackagingMaterialSupplier
+from models import PackagingMaterial, PackagingMaterialSupplier, PackagingPurchaseHistory, PackagingStockHistory
 
 
 def import_packaging_materials_from_csv(file_path, purchase_date, db_session):
@@ -27,31 +27,31 @@ def import_packaging_materials_from_csv(file_path, purchase_date, db_session):
                 cost_per_unit = float(row.get('Стоимость за 1 шт', 0).replace(',', '.'))
 
                 # Truncate supplier_name to 30 characters and store full name in contact_info
-                truncated_supplier_name = supplier_name[:30]  # Limiting to 30 characters
-                contact_info = supplier_name  # Storing full name in contact_info
+                truncated_supplier_name = supplier_name[:30]
+                contact_info = supplier_name
 
                 # Get or create PackagingMaterialSupplier
                 supplier = db_session.query(PackagingMaterialSupplier).filter_by(name=truncated_supplier_name).first()
                 if not supplier:
                     supplier = PackagingMaterialSupplier(
                         name=truncated_supplier_name,
-                        contact_info=contact_info,  # Storing full supplier name in contact_info
+                        contact_info=contact_info,
                         address=contact_info
                     )
                     db_session.add(supplier)
                     db_session.commit()
 
                 # Check if the packaging material already exists
-                material = db_session.query(PackagingMaterial).filter_by(name=name,
-                                                                         packaging_material_supplier_id=supplier.id).first()
+                material = db_session.query(PackagingMaterial).filter_by(
+                    name=name, packaging_material_supplier_id=supplier.id).first()
 
                 if material:
                     # Update existing material
                     material.available_quantity += quantity
                     material.total_quantity += quantity
-                    material.purchase_price_per_unit = cost_per_unit  # Update purchase price per unit
-                    material.total_purchase_cost += total_cost  # Update total purchase cost
-                    material.available_stock_cost += total_cost  # Update available stock cost
+                    material.purchase_price_per_unit = cost_per_unit
+                    material.total_purchase_cost += total_cost
+                    material.available_stock_cost += total_cost
                 else:
                     # Add new material
                     material = PackagingMaterial(
@@ -60,12 +60,33 @@ def import_packaging_materials_from_csv(file_path, purchase_date, db_session):
                         total_quantity=quantity,
                         available_quantity=quantity,
                         purchase_price_per_unit=cost_per_unit,
-                        reorder_level=0,  # Default value
-                        created_date=purchase_date,  # If created_date is set to purchase date
-                        total_purchase_cost=total_cost,  # Initial total purchase cost
-                        available_stock_cost=quantity * cost_per_unit  # Initial available stock cost
+                        reorder_level=0,
+                        created_date=purchase_date,
+                        total_purchase_cost=total_cost,
+                        available_stock_cost=quantity * cost_per_unit
                     )
                     db_session.add(material)
+                    db_session.flush()  # Забезпечує генерацію material.id
+
+                # Add to purchase history
+                purchase_history = PackagingPurchaseHistory(
+                    material_id=material.id,
+                    supplier_id=supplier.id,
+                    quantity_purchased=quantity,
+                    purchase_price_per_unit=cost_per_unit,
+                    purchase_total_price=total_cost,
+                    purchase_date=purchase_date
+                )
+                db_session.add(purchase_history)
+
+                # Add to stock history
+                stock_history = PackagingStockHistory(
+                    material_id=material.id,
+                    change_amount=quantity,
+                    change_type='purchase',
+                    timestamp=purchase_date
+                )
+                db_session.add(stock_history)
 
             db_session.commit()
             print(f"Successfully imported packaging materials from {file_path}")
