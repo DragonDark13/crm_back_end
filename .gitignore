@@ -20,3 +20,5 @@ venv/
 /csv/
 /csv_package/
 /csv_others_investments/**.csv
+/.env
+/.flaskenv

@@ -4,4 +4,3 @@ setuptools~=75.3.0
 SQLAlchemy~=2.0.36
 alembic~=1.14.0
 pandas~=2.0.3
-openpyxl

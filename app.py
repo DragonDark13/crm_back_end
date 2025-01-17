@@ -1,6 +1,7 @@
 import subprocess
 import logging
-
+import os
+from dotenv import load_dotenv
 from flask import Flask, jsonify, request
 from flask_jwt_extended import JWTManager, create_access_token, jwt_required, get_jwt_identity
 from flask_login import login_user, login_required, logout_user
@@ -48,9 +49,14 @@ console_handler.setFormatter(formatter)
 logger.addHandler(file_handler)
 logger.addHandler(console_handler)
 
+load_dotenv()  # Завантажує змінні середовища з .env або .flaskenv
+
+print("SECRET_KEY:", os.getenv('SECRET_KEY'))
+print("SECURITY_PASSWORD_SALT:", os.getenv('SECURITY_PASSWORD_SALT'))
+
 app = Flask(__name__)
-app.config['SECRET_KEY'] = 'super-secret'
-app.config['SECURITY_PASSWORD_SALT'] = 'some_salt'
+app.config['SECRET_KEY'] = os.getenv('SECRET_KEY')
+app.config['SECURITY_PASSWORD_SALT'] = os.getenv('SECURITY_PASSWORD_SALT')
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///shop_crm.db'  # Update the URI for SQLAlchemy
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False  # Disable track modifications to save resources
 CORS(app)
@@ -173,8 +179,8 @@ def create_roles_and_users():
 
     if not User.query.filter_by(username='manager').first():
         manager_user = User(username='manager', email='manager@example.com')
-        manager_user.set_password('managerpassword')  # Hash password
-        manager_user.fs_uniquifier = str(uuid.uuid4())  # Set fs_uniquifier to a unique UUID
+        manager_user.set_password('managerpassword')  # Хешуємо пароль лише один раз
+        manager_user.fs_uniquifier = str(uuid.uuid4())  # Встановлюємо унікальний UUID для fs_uniquifier
         db.session.add(manager_user)
         db.session.commit()
         manager_user.roles.append(manager_role)
