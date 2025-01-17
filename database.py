@@ -6,7 +6,7 @@ from models import Base  # Adjust the import if needed
 DATABASE_URI = 'sqlite:///shop_crm.db'  # SQLite database in the root folder
 
 # Create the engine
-engine = create_engine(DATABASE_URI, echo=True, pool_size=10, max_overflow=20, pool_timeout=30)
+engine = create_engine(DATABASE_URI, echo=True, pool_size=25, max_overflow=20, pool_timeout=30)
 
 # Create a configured "Session" class
 Session = sessionmaker(bind=engine)

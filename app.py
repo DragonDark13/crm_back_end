@@ -17,6 +17,7 @@ from flask_cors import CORS
 from models import db, User, Role
 from services.category_routes import category_bp
 from services.customer_routes import customer_bp
+from services.export_to_excel_services import export_to_excel_bp
 from services.other_investments_services import investments_bp
 from services.package_services import package_bp
 from services.product_service import ProductService, product_bp, product_history_bp
@@ -74,6 +75,7 @@ login_manager.login_view = 'login'
 app.config['JWT_SECRET_KEY'] = 'your_secret_key'  # Set a secure secret key for JWT
 jwt = JWTManager(app)
 
+
 # Session setup
 # engine = create_engine('sqlite:///shop_crm.db', echo=True)
 # Session = sessionmaker(bind=engine)
@@ -123,6 +125,7 @@ app.register_blueprint(customer_bp)
 app.register_blueprint(package_bp)
 app.register_blueprint(investments_bp)
 app.register_blueprint(purchase_history_bp)
+app.register_blueprint(export_to_excel_bp)
 
 
 @app.route('/update_server', methods=['POST'])

@@ -109,7 +109,7 @@ def update_customer(session: Session, customer_id: int, customer_data: dict):
         raise e
 
 
-@customer_bp.route('/delete_customers/<int:customer_id>', methods=['DELETE'])
+@customer_bp.route('/api/delete_customers/<int:customer_id>', methods=['DELETE'])
 def delete_customer_route(customer_id: int):
     from database import db_session  # Assuming `db_session` is the SQLAlchemy session
 

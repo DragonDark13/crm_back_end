@@ -1,6 +1,7 @@
 Flask==3.0.3
-peewee==3.17.6
 Werkzeug==3.0.4
 setuptools~=75.3.0
 SQLAlchemy~=2.0.36
 alembic~=1.14.0
+pandas~=2.0.3
+openpyxl
