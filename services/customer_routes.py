@@ -10,7 +10,7 @@ customer_bp = Blueprint('customer', __name__)
 
 
 # Create customer
-@customer_bp.route('/api/customers', methods=['POST'])
+@customer_bp.route('/api/customer_create', methods=['POST'])
 def create_customer():
     from database import db_session  # Assuming `db_session` is the SQLAlchemy session
 

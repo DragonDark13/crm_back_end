@@ -23,6 +23,7 @@ from services.other_investments_services import investments_bp
 from services.package_services import package_bp
 from services.product_service import ProductService, product_bp, product_history_bp
 from services.purchase_history_bp import purchase_history_bp
+from services.sales_history_services import sales_history_services_bp
 from services.supplier_routes import supplier_bp
 import logging
 
@@ -132,6 +133,7 @@ app.register_blueprint(package_bp)
 app.register_blueprint(investments_bp)
 app.register_blueprint(purchase_history_bp)
 app.register_blueprint(export_to_excel_bp)
+app.register_blueprint(sales_history_services_bp)
 
 
 @app.route('/update_server', methods=['POST'])

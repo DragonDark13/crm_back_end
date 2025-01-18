@@ -1,4 +1,3 @@
-
 from sqlalchemy import insert, delete
 
 from models import Product, product_categories_table, Supplier, PurchaseHistory, StockHistory, Category, SaleHistory, \
@@ -518,13 +517,13 @@ def record_sale(product_id):
                 packaging_material.available_quantity -= packaging_quantity  # Deduct the packaging material
                 packaging_material.available_stock_cost -= total_packaging_cost
 
-                # Встановлюємо статус "used"
+                # Встановлюємо статус "used" якщо немає на складі
                 if packaging_material.available_quantity == 0:
                     packaging_material.status = 'used'
 
                 db_session.add(packaging_material)
 
-                # Додати запис у PackagingSaleHistory
+                # Додати один запис у PackagingSaleHistory
                 packaging_sale_history = PackagingSaleHistory(
                     sale_id=sale_history.id,
                     packaging_material_id=packaging_material_id,
@@ -534,7 +533,7 @@ def record_sale(product_id):
                 )
                 db_session.add(packaging_sale_history)
 
-        db_session.commit()
+                db_session.commit()
 
         return jsonify({'message': 'Sale recorded successfully'}), 201
     except NoResultFound:
