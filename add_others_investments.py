@@ -3,8 +3,9 @@ from datetime import datetime
 from sqlalchemy.exc import IntegrityError
 
 import csv
+from database import db_session
 
-from models import OtherInvestment, db_session
+from models import OtherInvestment
 
 
 def load_other_investments_from_csv(file_path, created_date):
@@ -43,12 +44,13 @@ def load_other_investments_from_csv(file_path, created_date):
 
 # Список з шляхами до CSV-файлів та відповідними датами
 investment_files_data = [
-    ('csv_others_investments/15.02.2023.csv', "15.02.2023"),
-    ('csv_others_investments/15.03.2023.csv', "15.03.2023"),
-    ('csv_others_investments/15.05.2023.csv', "15.04.2023"),
-    ('csv_others_investments/15.05.2023.csv', "15.05.2023"),
-    ('csv_others_investments/15.06.2023.csv', "15.06.2023"),
-    ('csv_others_investments/15.09.2023.csv', "15.09.2023"),
+    # ('csv_others_investments/15.02.2023.csv', "15.02.2023"),
+    # ('csv_others_investments/15.03.2023.csv', "15.03.2023"),
+    # ('csv_others_investments/15.05.2023.csv', "15.04.2023"),
+    # ('csv_others_investments/15.04.2023.csv', "15.04.2023"),
+    # ('csv_others_investments/15.06.2023.csv', "15.06.2023"),
+    # ('csv_others_investments/15.09.2024.csv', "15.09.2024"),
+    # ('csv_others_investments/15.01.2025.csv', "15.01.2025"),
 ]
 
 # Цикл для виклику функції load_other_investments_from_csv для кожного файлу

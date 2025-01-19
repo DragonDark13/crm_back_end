@@ -102,12 +102,13 @@ def import_packaging_materials_from_csv(file_path, purchase_date, db_session):
 
 # Список з шляхами до CSV-файлів та відповідними датами
 files_data = [
-    ('csv_package/15.02.2023.csv', "15.02.2023"),
-    ('csv_package/15.03.2023.csv', "15.03.2023"),
-    ('csv_package/15.04.2023.csv', "15.04.2023"),
-    ('csv_package/15.05.2023.csv', "15.05.2023"),
-    ('csv_package/15.06.2023.csv', "15.06.2023"),
-    ('csv_package/15.09.2023.csv', "15.09.2023"),
+    # ('csv_package/15.02.2023.csv', "15.02.2023"),
+    # ('csv_package/15.03.2023.csv', "15.03.2023"),
+    # ('csv_package/15.04.2023.csv', "15.04.2023"),
+    # ('csv_package/15.05.2023.csv', "15.05.2023"),
+    # ('csv_package/15.06.2023.csv', "15.06.2023"),
+    # ('csv_package/15.09.2024.csv', "15.09.2024"),
+    # ('csv_package/15.01.2025.csv', "15.01.2025"),
 ]
 
 # Цикл для виклику функції import_packaging_materials_from_csv для кожного файлу

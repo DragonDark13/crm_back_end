@@ -1,11 +1,13 @@
+from sqlalchemy import inspect
+
 import csv
 from datetime import datetime
 from decimal import Decimal
 from sqlalchemy.exc import IntegrityError
 
 # Функція для завантаження продуктів у базу даних
-from database import db_session
-from models import Product, Supplier
+from database import db_session, engine
+from models import Product, Supplier, Base
 
 from datetime import datetime
 from decimal import Decimal
@@ -13,6 +15,18 @@ import csv
 from sqlalchemy.exc import IntegrityError
 from models import Product, Supplier, PurchaseHistory, StockHistory
 from database import db_session
+
+
+def ensure_table_exists(table_name):
+    """
+    Перевіряє, чи існує таблиця у базі даних. Якщо ні — створює її.
+    :param table_name: Назва таблиці.
+    """
+    inspector = inspect(engine)
+    if table_name not in inspector.get_table_names():
+        print(f"Таблиця '{table_name}' не знайдена. Створення...")
+        Base.metadata.create_all(bind=engine)
+        print(f"Таблиця '{table_name}' успішно створена.")
 
 
 def load_products_from_csv(file_path, created_date):
@@ -33,6 +47,8 @@ def load_products_from_csv(file_path, created_date):
             quantity = int(row['Количество'].split()[0])
             total_price = Decimal(row['Стоимость за количество'].replace(',', '.'))
             price_per_item = Decimal(row['Стоимость за 1 шт'].replace(',', '.'))
+
+            ensure_table_exists('suppliers')
 
             # Створення або отримання постачальника
             supplier = db_session.query(Supplier).filter_by(name=supplier_name).first()
@@ -127,12 +143,14 @@ def load_products_from_csv(file_path, created_date):
 
 # Список з шляхами до CSV-файлів та відповідними датами
 files_data = [
-    ('csv/15.02.2023.csv', "15.02.2023"),
-    ('csv/15.03.2023.csv', "15.03.2023"),
-    ('csv/15.05.2023.csv', "15.05.2023"),
-    ('csv/15.06.2023.csv', "15.06.2023"),
-    ('csv/15.08.2023.csv', "15.08.2023"),
-    ('csv/15.09.2023.csv', "15.09.2023")
+    # ('csv/15.02.2023.csv', "15.02.2023"),
+    # ('csv/15.03.2023.csv', "15.03.2023"),
+    # ('csv/15.05.2023.csv', "15.05.2023"),
+    # ('csv/15.06.2023.csv', "15.06.2023"),
+    # ('csv/15.08.2023.csv', "15.08.2023"),
+    # ('csv/15.09.2024.csv', "15.09.2024"),
+    # ('csv/15.12.2024.csv', "15.12.2024"),
+    # ('csv/15.01.2025.csv', "15.01.2025")
 ]
 
 # Цикл для виклику функції load_products_from_csv для кожного файлу
