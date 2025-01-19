@@ -1,17 +1,13 @@
 import subprocess
-import logging
 import os
+from datetime import timedelta
+
 from dotenv import load_dotenv
 from flask import Flask, jsonify, request
 from flask_jwt_extended import JWTManager, create_access_token, jwt_required, get_jwt_identity
-from flask_login import login_user, login_required, logout_user
-from flask_login import LoginManager
-from flask_security import SQLAlchemyUserDatastore, Security
-from sqlalchemy import create_engine
-from sqlalchemy.orm import sessionmaker, scoped_session
+from flask_login import LoginManager, UserMixin, login_user, login_required, logout_user, current_user
 import uuid
-
-from method import verify_product_sale_history
+import logging
 
 from flask_cors import CORS
 
@@ -25,9 +21,6 @@ from services.product_service import ProductService, product_bp, product_history
 from services.purchase_history_bp import purchase_history_bp
 from services.sales_history_services import sales_history_services_bp
 from services.supplier_routes import supplier_bp
-import logging
-
-# INCLUDE FROM blueprint
 
 # Create a logger
 logger = logging.getLogger("app_logger")
@@ -56,8 +49,8 @@ print("SECRET_KEY:", os.getenv('SECRET_KEY'))
 print("SECURITY_PASSWORD_SALT:", os.getenv('SECURITY_PASSWORD_SALT'))
 
 app = Flask(__name__)
+app.config['JWT_SECRET_KEY'] = os.getenv('SECRET_KEY')  # Make sure this key is the same across the app
 app.config['SECRET_KEY'] = os.getenv('SECRET_KEY')
-app.config['SECURITY_PASSWORD_SALT'] = os.getenv('SECURITY_PASSWORD_SALT')
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///shop_crm.db'  # Update the URI for SQLAlchemy
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False  # Disable track modifications to save resources
 CORS(app)
@@ -65,21 +58,14 @@ CORS(app)
 # Initialize the database
 db.init_app(app)
 
-# Initialize Flask-Security
-user_datastore = SQLAlchemyUserDatastore(db, User, Role)
-security = Security(app, user_datastore)
-
-# Verify product sale history (as defined in the provided method)
-verify_product_sale_history()
-
 # Initialize LoginManager
 login_manager = LoginManager()
 login_manager.init_app(app)
 
-# Optional: set login view if needed
-login_manager.login_view = 'login'
+# JWT setup
+app.config['JWT_SECRET_KEY'] = os.getenv('JWT_SECRET_KEY')  # Set a secure secret key for JWT
+app.config['JWT_ACCESS_TOKEN_EXPIRES'] = timedelta(hours=1)  # Token expires in 1 hour
 
-app.config['JWT_SECRET_KEY'] = 'your_secret_key'  # Set a secure secret key for JWT
 jwt = JWTManager(app)
 
 
@@ -219,7 +205,6 @@ def logout():
 @app.before_request
 def log_request_info():
     logger.info(f"Request method: {request.method}, URL: {request.url}")
-    # logger.info(f"Headers: {request.headers}")
     if request.method in ["POST", "PUT", "PATCH"]:
         logger.info(f"Body: {request.get_data(as_text=True)}")
 
