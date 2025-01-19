@@ -1,11 +1,3 @@
-# Виконайте видалення всіх записів
-from database import db_session
-from models import OtherInvestment
+from services.other_investments_services import delete_all_investments
 
-db_session.query(OtherInvestment).delete()
-
-# Збережіть зміни в базі даних
-db_session.commit()
-
-# Закрийте сесію
-db_session.close()
+delete_all_investments()

@@ -1,5 +1,7 @@
 from sqlalchemy import func
-from models import StockHistory, SaleHistory, PurchaseHistory, product_categories_table, User, Product
+
+from database import engine
+from models import StockHistory, SaleHistory, PurchaseHistory, product_categories_table, User, Product, Base
 
 
 def calculate_total_sales():
@@ -98,7 +100,6 @@ def has_permission(user_id, action):
 
 
 def verify_product_sale_history():
-
     try:
         from database import db_session  # Assuming `db_session` is the SQLAlchemy db_session
 
@@ -114,7 +115,8 @@ def verify_product_sale_history():
             total_selling_price = sum(record.selling_total_price for record in sale_records)
 
             # Перевіряємо дані
-            if total_quantity_sold == product.sold_quantity and total_selling_price == float(product.selling_total_price):
+            if total_quantity_sold == product.sold_quantity and total_selling_price == float(
+                    product.selling_total_price):
                 print(f"Product '{product.name}' verification successful!")
             else:
                 print(f"Product '{product.name}' verification failed!")
@@ -123,3 +125,6 @@ def verify_product_sale_history():
 
     except Exception as e:
         print(f"An error occurred: {e}")
+
+
+

@@ -1,6 +1,5 @@
-from flask_login import UserMixin
 from flask_sqlalchemy import SQLAlchemy
-from flask_security import RoleMixin
+from flask_login import UserMixin
 from sqlalchemy import Column, Integer, String, DateTime, ForeignKey, Float, Date, DECIMAL, Table, create_engine
 from sqlalchemy.orm import relationship, declarative_base, sessionmaker, scoped_session
 from datetime import datetime
@@ -206,7 +205,7 @@ class Category(Base):
     products = relationship("Product", secondary=product_categories_table, back_populates="categories")
 
 
-class Role(Base, RoleMixin):
+class Role(Base, UserMixin):
     __tablename__ = 'roles'
 
     id = Column(Integer, primary_key=True)
@@ -230,6 +229,9 @@ class User(Base, UserMixin):
     def set_password(self, password):
         """Hashes the password and stores it."""
         self.password = generate_password_hash(password)
+
+    def check_password(self, password):
+        return check_password_hash(self.password_hash, password)
 
     def verify_password(self, password):
         """Verifies the provided password against the stored hashed password."""

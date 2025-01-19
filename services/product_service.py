@@ -1,5 +1,6 @@
 from sqlalchemy import insert, delete
 
+from database import db_session
 from models import Product, product_categories_table, Supplier, PurchaseHistory, StockHistory, Category, SaleHistory, \
     Customer, ReturnHistory, PackagingMaterial, PackagingSaleHistory
 from flask import jsonify, Blueprint, request
@@ -296,25 +297,30 @@ def update_product(product_id):
         return jsonify({'error': 'Product not found'}),
 
 
-def delete_all_products(session):
+@product_bp.route('/api/delete_all_products', methods=['DELETE'])
+def delete_all_products():
     """
     Видалення всіх товарів та пов'язаних із ними записів.
     """
     try:
         # Видалення записів з пов'язаних таблиць
-        session.execute(delete(ReturnHistory))
-        session.execute(delete(SaleHistory))
-        session.execute(delete(StockHistory))
-        session.execute(delete(PurchaseHistory))
-        session.execute(delete(Product))
+        db_session.execute(delete(ReturnHistory))
+        db_session.execute(delete(SaleHistory))
+        db_session.execute(delete(StockHistory))
+        db_session.execute(delete(PurchaseHistory))
+        db_session.execute(delete(Product))
 
         # Коміт транзакції
-        session.commit()
+        db_session.commit()
         print("Усі товари та пов'язані записи успішно видалено.")
+
+        # Повернення успішної відповіді
+        return jsonify({'message': 'Усі товари та пов’язані записи успішно видалено.'}), 200
     except SQLAlchemyError as e:
         # У разі помилки відкотити транзакцію
-        session.rollback()
+        db_session.rollback()
         print(f"Помилка під час видалення: {str(e)}")
+        return jsonify({'error': f'Помилка під час видалення: {str(e)}'}), 500
 
 
 # Створюємо Blueprint для продуктів і пов'язаних маршрутів
@@ -622,6 +628,28 @@ def delete_sale_history(product_id, history_id):
         product.selling_total_price / product.sold_quantity
         if product.sold_quantity > 0 else 0
     )
+
+    # Якщо було використано пакувальні матеріали
+    if history.packaging_material_id:
+        packaging_material = db_session.query(PackagingMaterial).filter(
+            PackagingMaterial.id == history.packaging_material_id).first()
+
+        if packaging_material:
+            # Відновлюємо кількість пакувальних матеріалів та їхню вартість
+            packaging_material.available_quantity += history.packaging_quantity
+            packaging_material.available_stock_cost += history.total_packaging_cost
+
+            # Змінюємо статус, якщо матеріал більше не "used"
+            if packaging_material.available_quantity > 0 and packaging_material.status == 'used':
+                packaging_material.status = 'available'
+
+            db_session.add(packaging_material)
+
+        # Видаляємо запис із PackagingSaleHistory
+        packaging_sale_history = db_session.query(PackagingSaleHistory).filter_by(
+            sale_id=history.id, packaging_material_id=history.packaging_material_id).first()
+        if packaging_sale_history:
+            db_session.delete(packaging_sale_history)
 
     db_session.delete(history)
     return {'success': True}

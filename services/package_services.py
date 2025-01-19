@@ -1,6 +1,7 @@
 from flask import Blueprint, jsonify, request
 from sqlalchemy.exc import SQLAlchemyError
 
+from database import db_session
 from models import PackagingMaterial, PackagingPurchaseHistory, PackagingMaterialSupplier, PackagingStockHistory, \
     PackagingSaleHistory
 
@@ -213,3 +214,32 @@ def get_packaging_material_history(packaging_material_id):
     }
 
     return result
+
+
+from flask import jsonify
+
+
+@package_bp.route('/api/delete_all_materials', methods=['DELETE'])
+def delete_all_packaging_materials():
+    try:
+        # Видалення всіх упаковочних матеріалів разом з пов'язаними даними
+        db_session.query(PackagingMaterial).delete(synchronize_session=False)
+        db_session.query(PackagingStockHistory).delete(synchronize_session=False)
+        db_session.query(PackagingPurchaseHistory).delete(synchronize_session=False)
+
+        # Підтвердження змін
+        db_session.commit()
+        print("Усі упаковочні матеріали та пов'язані дані були успішно видалені.")
+
+        # Повернення відповіді у разі успіху
+        return jsonify({'message': 'Усі упаковочні матеріали та пов’язані дані були успішно видалені.'}), 200
+    except Exception as e:
+        # Якщо сталася помилка, скасувати зміни
+        db_session.rollback()
+        print(f"Сталася помилка: {e}")
+
+        # Повернення відповіді у разі помилки
+        return jsonify({'error': f'Сталася помилка: {str(e)}'}), 500
+    finally:
+        # Закрити сесію
+        db_session.close()

@@ -1,5 +1,7 @@
 from flask import Blueprint, request, jsonify
+from sqlalchemy.exc import SQLAlchemyError
 
+from database import db_session
 from models import OtherInvestment
 from datetime import datetime
 
@@ -62,4 +64,25 @@ def delete_investment(id):
         db_session.rollback()
         return jsonify({"error": str(e)}), 400
     finally:
+        db_session.close()
+
+
+@investments_bp.route('/api/delete_all_investments', methods=['DELETE'])
+def delete_all_investments():
+    """
+    Видалення всіх записів з таблиці OtherInvestment.
+    """
+    try:
+        # Видалення записів з таблиці
+        db_session.query(OtherInvestment).delete(synchronize_session=False)
+
+        # Збереження змін
+        db_session.commit()
+        return jsonify({"message": "Усі записи з таблиці OtherInvestment успішно видалено."}), 200
+    except SQLAlchemyError as e:
+        # У разі помилки відкотити транзакцію
+        db_session.rollback()
+        return jsonify({"error": str(e)}), 500
+    finally:
+        # Закриття сесії
         db_session.close()
