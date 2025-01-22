@@ -22,3 +22,5 @@ venv/
 /csv_others_investments/**.csv
 /.env
 /.flaskenv
+/instance/**.db
+
