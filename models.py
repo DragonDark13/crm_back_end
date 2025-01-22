@@ -59,6 +59,7 @@ class Product(Base):
     sales = relationship("SaleHistory", back_populates="product", cascade="all, delete-orphan")
     categories = relationship("Category", secondary=product_categories_table, back_populates="products")
     reorder_level = Column(Integer, default=0)
+    reserved_quantity = db.Column(db.Integer, default=0)  # Зарезервована кількість
 
     def to_dict(self):
         """Convert product instance to dictionary."""
@@ -298,6 +299,7 @@ class PackagingMaterial(Base):
                                                back_populates="packaging_materials")  # New relationship
     stock_history = relationship("PackagingStockHistory", back_populates="material", cascade="all, delete-orphan")
     purchase_history = relationship("PackagingPurchaseHistory", back_populates="material", cascade="all, delete-orphan")
+    reserved_quantity = db.Column(db.Integer, default=0)  # Зарезервована кількість
 
     def to_dict(self):
         return {
@@ -435,6 +437,94 @@ class OtherInvestment(Base):
             'cost': float(self.cost or 0),  # Convert to float, handling possible None
             'date': self.date.isoformat() if self.date else None,  # Format date to ISO string
         }
+
+
+class GiftSet(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(255), nullable=False)
+    description = db.Column(db.Text, nullable=True)
+    total_price = db.Column(db.Float, default=0.0)
+
+
+class GiftSetProduct(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    gift_set_id = db.Column(db.Integer, db.ForeignKey('gift_set.id'), nullable=False)
+    product_id = db.Column(db.Integer, db.ForeignKey('products.id'), nullable=False)
+    quantity = db.Column(db.Integer, default=1)
+
+    # Зв'язок з продуктом
+    product = db.relationship('Product', backref=db.backref('gift_set_products', lazy=True))
+
+
+class GiftSetPackaging(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    gift_set_id = db.Column(db.Integer, db.ForeignKey('gift_set.id'), nullable=False)
+    packaging_id = db.Column(db.Integer, db.ForeignKey('packaging_materials.id'), nullable=False)
+    quantity = db.Column(db.Integer, default=1)
+
+    # Зв'язок з упаковкою
+    packaging = db.relationship('PackagingMaterial', backref=db.backref('gift_set_packagings', lazy=True))
+
+
+class GiftSetSalesHistory(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    gift_set_id = db.Column(db.Integer, db.ForeignKey('gift_set.id'), nullable=False)
+    sold_at = db.Column(db.DateTime, default=datetime.utcnow)
+    sold_price = db.Column(db.Float, nullable=False)
+    quantity = db.Column(db.Integer, nullable=False)
+    customer_name = db.Column(db.String(255), nullable=True)  # Необов'язкове поле для покупця
+
+    # Зв'язок з gift_set
+    gift_set = db.relationship('GiftSet', backref=db.backref('sales_history', lazy=True))
+
+    # Зв'язок з продуктами: треба явно визначити primaryjoin
+    gift_set_products = db.relationship(
+        'GiftSetProduct',
+        backref='sales_history',
+        lazy=True,
+        primaryjoin='GiftSetSalesHistory.gift_set_id == foreign(GiftSetProduct.gift_set_id)'
+    )
+
+    # Зв'язок з упаковками: треба явно визначити primaryjoin
+    gift_set_packagings = db.relationship(
+        'GiftSetPackaging',
+        backref='sales_history',
+        lazy=True,
+        primaryjoin='GiftSetSalesHistory.gift_set_id == foreign(GiftSetPackaging.gift_set_id)'
+    )
+
+
+def to_dict(self):
+    """Перетворити об'єкт в словник для відповіді API."""
+    products = [
+        {
+            "product_id": item.product_id,
+            "name": item.product.name,
+            "quantity": item.quantity,
+            "price": item.product.price
+        }
+        for item in self.gift_set_products
+    ]
+    packagings = [
+        {
+            "packaging_id": item.packaging_id,
+            "type": item.packaging.type,
+            "quantity": item.quantity,
+            "price": item.packaging.price
+        }
+        for item in self.gift_set_packagings
+    ]
+
+    return {
+        "id": self.id,
+        "gift_set_id": self.gift_set_id,
+        "sold_at": self.sold_at.isoformat(),
+        "sold_price": self.sold_price,
+        "quantity": self.quantity,
+        "customer_name": self.customer_name,
+        "products": products,
+        "packagings": packagings
+    }
 
 # Create engine and session
 # engine = create_engine('sqlite:///shop_crm.db')  # Example database URI
