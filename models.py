@@ -59,7 +59,7 @@ class Product(Base):
     sales = relationship("SaleHistory", back_populates="product", cascade="all, delete-orphan")
     categories = relationship("Category", secondary=product_categories_table, back_populates="products")
     reorder_level = Column(Integer, default=0)
-    reserved_quantity = db.Column(db.Integer, default=0)  # Зарезервована кількість
+    reserved_quantity = Column(Integer, nullable=False, default=0)  # Додайте default=0
 
     def to_dict(self):
         """Convert product instance to dictionary."""
@@ -284,7 +284,7 @@ class PackagingMaterial(Base):
 
     id = Column(Integer, primary_key=True)
     name = Column(String, unique=True, nullable=False)  # Назва матеріалу
-    status = db.Column(db.String(50), nullable=False, default='available')  # статус пакування
+    status = db.Column(db.String(50), default='available')  # статус пакування
     packaging_material_supplier_id = Column(Integer, ForeignKey('packaging_material_suppliers.id', ondelete='SET NULL'),
                                             nullable=True)  # Link to the new supplier model
     total_quantity = Column(Float, default=0)  # Загальна кількість закупленого
@@ -299,7 +299,9 @@ class PackagingMaterial(Base):
                                                back_populates="packaging_materials")  # New relationship
     stock_history = relationship("PackagingStockHistory", back_populates="material", cascade="all, delete-orphan")
     purchase_history = relationship("PackagingPurchaseHistory", back_populates="material", cascade="all, delete-orphan")
-    reserved_quantity = db.Column(db.Integer, default=0)  # Зарезервована кількість
+    reserved_quantity = Column(Integer, nullable=False, default=0)  # Додайте default=0
+
+    # Зарезервована кількість
 
     def to_dict(self):
         return {
@@ -444,6 +446,50 @@ class GiftSet(db.Model):
     name = db.Column(db.String(255), nullable=False)
     description = db.Column(db.Text, nullable=True)
     total_price = db.Column(db.Float, default=0.0)
+    gift_selling_price = db.Column(db.Float, default=0.0)
+
+    # Використовуємо back_populates для точного визначення зв'язків
+    gift_set_products = db.relationship(
+        'GiftSetProduct',
+        back_populates='gift_set',
+        lazy=True
+    )
+    gift_set_packagings = db.relationship(
+        'GiftSetPackaging',
+        back_populates='gift_set',
+        lazy=True
+    )
+
+    # Доданий метод to_dict
+    def to_dict(self):
+        products = [
+            {
+                "product_id": item.product_id,
+                "name": item.product.name,
+                "quantity": item.quantity,
+                "price": item.product.purchase_price_per_item
+            }
+            for item in self.gift_set_products
+        ]
+        packagings = [
+            {
+                "packaging_id": item.packaging_id,
+                "name": item.packaging.name,
+                "quantity": item.quantity,
+                "price": item.packaging.purchase_price_per_unit
+            }
+            for item in self.gift_set_packagings
+        ]
+
+        return {
+            "id": self.id,
+            "name": self.name,
+            "description": self.description,
+            "total_price": self.total_price,
+            "gift_selling_price": self.gift_selling_price,
+            "products": products,
+            "packagings": packagings
+        }
 
 
 class GiftSetProduct(db.Model):
@@ -452,8 +498,14 @@ class GiftSetProduct(db.Model):
     product_id = db.Column(db.Integer, db.ForeignKey('products.id'), nullable=False)
     quantity = db.Column(db.Integer, default=1)
 
-    # Зв'язок з продуктом
-    product = db.relationship('Product', backref=db.backref('gift_set_products', lazy=True))
+    gift_set = db.relationship(
+        'GiftSet',
+        back_populates='gift_set_products'
+    )
+    product = db.relationship(
+        'Product',
+        backref=db.backref('gift_set_products', lazy=True)
+    )
 
 
 class GiftSetPackaging(db.Model):
@@ -462,8 +514,14 @@ class GiftSetPackaging(db.Model):
     packaging_id = db.Column(db.Integer, db.ForeignKey('packaging_materials.id'), nullable=False)
     quantity = db.Column(db.Integer, default=1)
 
-    # Зв'язок з упаковкою
-    packaging = db.relationship('PackagingMaterial', backref=db.backref('gift_set_packagings', lazy=True))
+    gift_set = db.relationship(
+        'GiftSet',
+        back_populates='gift_set_packagings'
+    )
+    packaging = db.relationship(
+        'PackagingMaterial',
+        backref=db.backref('gift_set_packagings', lazy=True)
+    )
 
 
 class GiftSetSalesHistory(db.Model):
@@ -474,23 +532,10 @@ class GiftSetSalesHistory(db.Model):
     quantity = db.Column(db.Integer, nullable=False)
     customer_name = db.Column(db.String(255), nullable=True)  # Необов'язкове поле для покупця
 
-    # Зв'язок з gift_set
-    gift_set = db.relationship('GiftSet', backref=db.backref('sales_history', lazy=True))
-
-    # Зв'язок з продуктами: треба явно визначити primaryjoin
-    gift_set_products = db.relationship(
-        'GiftSetProduct',
-        backref='sales_history',
-        lazy=True,
-        primaryjoin='GiftSetSalesHistory.gift_set_id == foreign(GiftSetProduct.gift_set_id)'
-    )
-
-    # Зв'язок з упаковками: треба явно визначити primaryjoin
-    gift_set_packagings = db.relationship(
-        'GiftSetPackaging',
-        backref='sales_history',
-        lazy=True,
-        primaryjoin='GiftSetSalesHistory.gift_set_id == foreign(GiftSetPackaging.gift_set_id)'
+    gift_set = db.relationship(
+        'GiftSet',
+        backref=db.backref('gift_set_sales_history', lazy=True),
+        overlaps="gift_set_products,gift_set_packagings"  # Додаємо overlaps для уникнення конфліктів
     )
 
 

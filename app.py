@@ -15,6 +15,7 @@ from models import db, User, Role
 from services.category_routes import category_bp
 from services.customer_routes import customer_bp
 from services.export_to_excel_services import export_to_excel_bp
+from services.gift_box_services import gift_box_services_bp
 from services.other_investments_services import investments_bp
 from services.package_services import package_bp
 from services.product_service import ProductService, product_bp, product_history_bp
@@ -120,6 +121,7 @@ app.register_blueprint(investments_bp)
 app.register_blueprint(purchase_history_bp)
 app.register_blueprint(export_to_excel_bp)
 app.register_blueprint(sales_history_services_bp)
+app.register_blueprint(gift_box_services_bp)
 
 
 @app.route('/update_server', methods=['POST'])

@@ -14,9 +14,25 @@ def create_gift_set():
         return jsonify({"error": "Invalid data"}), 400
 
     name = data['name']
+    description = data['description']
     items = data['items']  # список об'єктів {item_id, item_type, quantity}
+    gift_selling_price = data.get('gift_selling_price', 0)  # Optional gift selling price
 
-    gift_set = GiftSet(name=name)
+# Перевірка на унікальність назви набору
+    existing_gift_set = db_session.query(GiftSet).filter(GiftSet.name == name).first()
+    if existing_gift_set:
+        return jsonify({"error": f"Gift set with name '{name}' already exists"}), 400
+
+    # Перевірка на наявність хоча б одного продукту або пакування
+    if not any(item['item_type'] in ['product', 'packaging'] for item in items):
+        return jsonify({"error": "At least one product or packaging must be included in the gift set"}), 400
+
+
+    gift_set = GiftSet(
+        name=name,
+        description=description,
+        gift_selling_price=gift_selling_price
+    )
     db_session.add(gift_set)
     db_session.commit()  # Отримуємо gift_set.id
 
@@ -28,12 +44,14 @@ def create_gift_set():
         quantity = item.get('quantity', 1)
 
         if item_type == "product":
-            product = Product.query.get(item_id)
-            if not product or product.quantity - product.reserved_quantity < quantity:
-                return jsonify({"error": f"Product {item_id} not available"}), 400
+            product = db_session.query(Product).filter(Product.id == item_id).one_or_none()
+            if not product:
+                return jsonify({"error": f"Product {item_id} not found"}), 400
+            if product.available_quantity < quantity:
+                return jsonify({"error": f"Product {item_id} not available in required quantity"}), 400
             product.available_quantity -= quantity
             product.reserved_quantity += quantity  # Резервуємо товар
-            total_price += product.price * quantity
+            total_price += product.purchase_price_per_item * quantity
             gift_set_product = GiftSetProduct(
                 gift_set_id=gift_set.id,
                 product_id=product.id,
@@ -42,12 +60,14 @@ def create_gift_set():
             db_session.add(gift_set_product)
 
         elif item_type == "packaging":
-            packaging = PackagingMaterial.query.get(item_id)
-            if not packaging or packaging.quantity - packaging.reserved_quantity < quantity:
-                return jsonify({"error": f"Packaging {item_id} not available"}), 400
+            packaging = db_session.query(PackagingMaterial).filter(PackagingMaterial.id == item_id).one_or_none()
+            if not packaging:
+                return jsonify({"error": f"Packaging {item_id} not found"}), 400
+            if packaging.available_quantity < quantity:
+                return jsonify({"error": f"Packaging {item_id} not available in required quantity"}), 400
             packaging.available_quantity -= quantity  # Оновлюємо кількість доступного пакування та відзначаємо як використане
             packaging.reserved_quantity += quantity  # Резервуємо пакування
-            total_price += packaging.price * quantity
+            total_price += packaging.purchase_price_per_unit * quantity
             gift_set_packaging = GiftSetPackaging(
                 gift_set_id=gift_set.id,
                 packaging_id=packaging.id,
@@ -165,3 +185,28 @@ def sell_gift_set(gift_set_id):
         "message": "Gift set sold successfully",
         "sales_record": sales_record.to_dict()
     }), 200
+
+
+@gift_box_services_bp.route('/api/get_all_gift_sets', methods=['GET'])
+def get_gift_sets():
+    # Отримуємо параметри для фільтрації (за потреби)
+    name_filter = request.args.get('name', '').lower()
+    min_price = request.args.get('min_price', type=float, default=0)
+    max_price = request.args.get('max_price', type=float, default=float('inf'))
+
+    # Пошук наборів подарунків за заданими фільтрами
+    gift_sets_query = db_session.query(GiftSet).filter(
+        GiftSet.total_price >= min_price,
+        GiftSet.total_price <= max_price
+    )
+
+    if name_filter:
+        gift_sets_query = gift_sets_query.filter(GiftSet.name.ilike(f'%{name_filter}%'))
+
+    # Отримуємо всі набори
+    gift_sets = gift_sets_query.all()
+
+    # Перетворюємо кожен gift_set на словник для відповіді
+    gift_sets_data = [gift_set.to_dict() for gift_set in gift_sets]
+
+    return jsonify(gift_sets_data), 200

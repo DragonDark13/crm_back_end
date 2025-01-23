@@ -7186,3 +7186,122 @@ Accept-Language: en-GB,en;q=0.9,uk-UA;q=0.8,uk;q=0.7,en-US;q=0.6,ru;q=0.5
 2025-01-19 16:40:49,930 - INFO - Request method: GET, URL: http://127.0.0.1:5000/api/categories
 2025-01-19 16:40:51,706 - INFO - Request method: GET, URL: http://127.0.0.1:5000/api/suppliers/list
 2025-01-19 16:40:51,713 - INFO - Request method: GET, URL: http://127.0.0.1:5000/api/categories
+2025-01-22 15:14:32,421 - INFO - Request method: GET, URL: http://127.0.0.1:5000/api/suppliers/list
+2025-01-22 15:14:32,423 - INFO - Request method: GET, URL: http://127.0.0.1:5000/api/get_all_packaging_materials
+2025-01-22 15:14:32,424 - INFO - Request method: GET, URL: http://127.0.0.1:5000/api/get_all_customers
+2025-01-22 15:14:32,426 - INFO - Request method: GET, URL: http://127.0.0.1:5000/api/categories
+2025-01-22 15:14:32,429 - INFO - Request method: GET, URL: http://127.0.0.1:5000/api/products
+2025-01-22 15:14:32,539 - INFO - Request method: GET, URL: http://127.0.0.1:5000/api/categories
+2025-01-22 15:14:32,548 - INFO - Request method: GET, URL: http://127.0.0.1:5000/api/suppliers/list
+2025-01-22 15:21:01,523 - INFO - Request method: GET, URL: http://127.0.0.1:5000/api/get_all_packaging_materials
+2025-01-22 15:21:01,526 - INFO - Request method: GET, URL: http://127.0.0.1:5000/api/get_all_customers
+2025-01-22 15:21:01,529 - INFO - Request method: GET, URL: http://127.0.0.1:5000/api/categories
+2025-01-22 15:21:01,532 - INFO - Request method: GET, URL: http://127.0.0.1:5000/api/suppliers/list
+2025-01-22 15:21:01,537 - INFO - Request method: GET, URL: http://127.0.0.1:5000/api/products
+2025-01-22 15:35:22,715 - INFO - Request method: GET, URL: http://127.0.0.1:5000/api/get_all_packaging_materials
+2025-01-22 15:35:22,718 - INFO - Request method: GET, URL: http://127.0.0.1:5000/api/get_all_customers
+2025-01-22 15:35:22,719 - INFO - Request method: GET, URL: http://127.0.0.1:5000/api/categories
+2025-01-22 15:35:22,723 - INFO - Request method: GET, URL: http://127.0.0.1:5000/api/suppliers/list
+2025-01-22 15:35:22,727 - INFO - Request method: GET, URL: http://127.0.0.1:5000/api/products
+2025-01-22 15:56:23,880 - INFO - Request method: GET, URL: http://127.0.0.1:5000/api/get_all_packaging_materials
+2025-01-22 15:56:23,883 - INFO - Request method: GET, URL: http://127.0.0.1:5000/api/get_all_customers
+2025-01-22 15:56:23,885 - INFO - Request method: GET, URL: http://127.0.0.1:5000/api/categories
+2025-01-22 15:56:23,891 - INFO - Request method: GET, URL: http://127.0.0.1:5000/api/suppliers/list
+2025-01-22 15:56:23,894 - INFO - Request method: GET, URL: http://127.0.0.1:5000/api/products
+2025-01-22 15:58:27,024 - INFO - Request method: GET, URL: http://127.0.0.1:5000/api/get_all_packaging_materials
+2025-01-22 15:58:27,026 - INFO - Request method: GET, URL: http://127.0.0.1:5000/api/get_all_customers
+2025-01-22 15:58:27,027 - INFO - Request method: GET, URL: http://127.0.0.1:5000/api/categories
+2025-01-22 15:58:27,030 - INFO - Request method: GET, URL: http://127.0.0.1:5000/api/suppliers/list
+2025-01-22 15:58:27,032 - INFO - Request method: GET, URL: http://127.0.0.1:5000/api/products
+2025-01-22 16:02:21,903 - INFO - Request method: GET, URL: http://127.0.0.1:5000/api/get_all_packaging_materials
+2025-01-22 16:02:21,904 - INFO - Request method: GET, URL: http://127.0.0.1:5000/api/get_all_customers
+2025-01-22 16:02:21,907 - INFO - Request method: GET, URL: http://127.0.0.1:5000/api/categories
+2025-01-22 16:02:21,909 - INFO - Request method: GET, URL: http://127.0.0.1:5000/api/suppliers/list
+2025-01-22 16:02:21,912 - INFO - Request method: GET, URL: http://127.0.0.1:5000/api/products
+2025-01-22 16:02:34,847 - INFO - Request method: GET, URL: http://127.0.0.1:5000/api/get_all_purchase_history
+2025-01-22 16:06:18,221 - INFO - Request method: GET, URL: http://127.0.0.1:5000/api/get_all_packaging_materials
+2025-01-22 16:06:18,223 - INFO - Request method: GET, URL: http://127.0.0.1:5000/api/get_all_customers
+2025-01-22 16:06:18,230 - INFO - Request method: GET, URL: http://127.0.0.1:5000/api/categories
+2025-01-22 16:06:18,232 - INFO - Request method: GET, URL: http://127.0.0.1:5000/api/suppliers/list
+2025-01-22 16:06:18,236 - INFO - Request method: GET, URL: http://127.0.0.1:5000/api/products
+2025-01-23 17:12:45,103 - INFO - Request method: GET, URL: http://127.0.0.1:5000/api/get_all_purchase_history
+2025-01-23 17:12:46,339 - INFO - Request method: GET, URL: http://127.0.0.1:5000/favicon.ico
+2025-01-23 17:15:50,216 - INFO - Request method: GET, URL: http://127.0.0.1:5000/api/suppliers/list
+2025-01-23 17:15:50,217 - INFO - Request method: GET, URL: http://127.0.0.1:5000/api/categories
+2025-01-23 17:15:50,221 - INFO - Request method: GET, URL: http://127.0.0.1:5000/api/get_all_packaging_materials
+2025-01-23 17:15:50,224 - INFO - Request method: GET, URL: http://127.0.0.1:5000/api/get_all_customers
+2025-01-23 17:15:50,230 - INFO - Request method: GET, URL: http://127.0.0.1:5000/api/products
+2025-01-23 17:15:50,246 - INFO - Request method: GET, URL: http://127.0.0.1:5000/api/categories
+2025-01-23 17:15:50,256 - INFO - Request method: GET, URL: http://127.0.0.1:5000/api/suppliers/list
+2025-01-23 17:17:47,736 - INFO - Request method: GET, URL: http://127.0.0.1:5000/api/get_all_packaging_materials
+2025-01-23 17:17:47,736 - INFO - Request method: GET, URL: http://127.0.0.1:5000/api/get_all_customers
+2025-01-23 17:17:47,736 - INFO - Request method: GET, URL: http://127.0.0.1:5000/api/categories
+2025-01-23 17:17:47,736 - INFO - Request method: GET, URL: http://127.0.0.1:5000/api/suppliers/list
+2025-01-23 17:17:47,736 - INFO - Request method: GET, URL: http://127.0.0.1:5000/api/products
+2025-01-23 17:19:58,558 - INFO - Request method: GET, URL: http://127.0.0.1:5000/api/get_all_packaging_materials
+2025-01-23 17:19:58,558 - INFO - Request method: GET, URL: http://127.0.0.1:5000/api/get_all_customers
+2025-01-23 17:19:58,558 - INFO - Request method: GET, URL: http://127.0.0.1:5000/api/categories
+2025-01-23 17:19:58,574 - INFO - Request method: GET, URL: http://127.0.0.1:5000/api/suppliers/list
+2025-01-23 17:19:58,577 - INFO - Request method: GET, URL: http://127.0.0.1:5000/api/products
+2025-01-23 17:34:53,227 - INFO - Request method: GET, URL: http://127.0.0.1:5000/api/suppliers/list
+2025-01-23 17:34:53,227 - INFO - Request method: GET, URL: http://127.0.0.1:5000/api/categories
+2025-01-23 17:34:53,227 - INFO - Request method: GET, URL: http://127.0.0.1:5000/api/get_all_customers
+2025-01-23 17:34:53,227 - INFO - Request method: GET, URL: http://127.0.0.1:5000/api/products
+2025-01-23 17:34:53,227 - INFO - Request method: GET, URL: http://127.0.0.1:5000/api/get_all_packaging_materials
+2025-01-23 17:35:46,003 - INFO - Request method: OPTIONS, URL: http://127.0.0.1:5000/api/create_gift_set
+2025-01-23 17:37:31,391 - INFO - Request method: OPTIONS, URL: http://127.0.0.1:5000/api/create_gift_set
+2025-01-23 17:38:14,344 - INFO - Request method: OPTIONS, URL: http://127.0.0.1:5000/api/create_gift_set
+2025-01-23 17:38:14,352 - INFO - Request method: POST, URL: http://127.0.0.1:5000/api/create_gift_set
+2025-01-23 17:38:14,353 - INFO - Body: {"name":"пнпоеное","description":"","gift_selling_price":700,"items":[{"item_id":2,"item_type":"product","quantity":1},{"item_id":5,"item_type":"product","quantity":1},{"item_id":1,"item_type":"packaging","quantity":1}]}
+2025-01-23 17:48:34,302 - INFO - Request method: OPTIONS, URL: http://127.0.0.1:5000/api/create_gift_set
+2025-01-23 17:48:34,304 - INFO - Request method: POST, URL: http://127.0.0.1:5000/api/create_gift_set
+2025-01-23 17:48:34,311 - INFO - Body: {"name":"пнпоеное","description":"","gift_selling_price":700,"items":[{"item_id":2,"item_type":"product","quantity":1,"price":507.6},{"item_id":5,"item_type":"product","quantity":1,"price":81},{"item_id":1,"item_type":"packaging","quantity":1,"price":23}]}
+2025-01-23 17:49:23,472 - INFO - Request method: OPTIONS, URL: http://127.0.0.1:5000/api/create_gift_set
+2025-01-23 17:49:23,477 - INFO - Request method: POST, URL: http://127.0.0.1:5000/api/create_gift_set
+2025-01-23 17:49:23,477 - INFO - Body: {"name":"пнпоеное","description":"","gift_selling_price":700,"items":[{"item_id":2,"item_type":"product","quantity":1,"price":507.6},{"item_id":5,"item_type":"product","quantity":1,"price":81},{"item_id":1,"item_type":"packaging","quantity":1,"price":23}]}
+2025-01-23 17:55:26,671 - INFO - Request method: OPTIONS, URL: http://127.0.0.1:5000/api/create_gift_set
+2025-01-23 17:55:48,526 - INFO - Request method: POST, URL: http://127.0.0.1:5000/api/create_gift_set
+2025-01-23 17:55:48,526 - INFO - Body: {"name":"пнпоеное","description":"","gift_selling_price":700,"items":[{"item_id":2,"item_type":"product","quantity":1,"price":507.6},{"item_id":5,"item_type":"product","quantity":1,"price":81},{"item_id":1,"item_type":"packaging","quantity":1,"price":23}]}
+2025-01-23 17:58:25,313 - INFO - Request method: OPTIONS, URL: http://127.0.0.1:5000/api/create_gift_set
+2025-01-23 17:58:25,321 - INFO - Request method: POST, URL: http://127.0.0.1:5000/api/create_gift_set
+2025-01-23 17:58:25,321 - INFO - Body: {"name":"пнпоеное","description":"","gift_selling_price":700,"items":[{"item_id":2,"item_type":"product","quantity":1,"price":507.6},{"item_id":5,"item_type":"product","quantity":1,"price":81},{"item_id":1,"item_type":"packaging","quantity":1,"price":23}]}
+2025-01-23 17:59:57,295 - INFO - Request method: OPTIONS, URL: http://127.0.0.1:5000/api/create_gift_set
+2025-01-23 18:00:02,044 - INFO - Request method: POST, URL: http://127.0.0.1:5000/api/create_gift_set
+2025-01-23 18:00:02,044 - INFO - Body: {"name":"пнпоеное","description":"","gift_selling_price":700,"items":[{"item_id":2,"item_type":"product","quantity":1,"price":507.6},{"item_id":5,"item_type":"product","quantity":1,"price":81},{"item_id":1,"item_type":"packaging","quantity":1,"price":23}]}
+2025-01-23 18:01:34,734 - INFO - Request method: OPTIONS, URL: http://127.0.0.1:5000/api/create_gift_set
+2025-01-23 18:01:34,734 - INFO - Request method: POST, URL: http://127.0.0.1:5000/api/create_gift_set
+2025-01-23 18:01:34,734 - INFO - Body: {"name":"пнпоеное","description":"","gift_selling_price":700,"items":[{"item_id":2,"item_type":"product","quantity":1,"price":507.6},{"item_id":5,"item_type":"product","quantity":1,"price":81},{"item_id":1,"item_type":"packaging","quantity":1,"price":23}]}
+2025-01-23 18:04:15,161 - INFO - Request method: OPTIONS, URL: http://127.0.0.1:5000/api/create_gift_set
+2025-01-23 18:04:15,170 - INFO - Request method: POST, URL: http://127.0.0.1:5000/api/create_gift_set
+2025-01-23 18:04:15,171 - INFO - Body: {"name":"пнпоеное","description":"","gift_selling_price":700,"items":[{"item_id":2,"item_type":"product","quantity":1,"price":507.6},{"item_id":5,"item_type":"product","quantity":1,"price":81},{"item_id":1,"item_type":"packaging","quantity":1,"price":23}]}
+2025-01-23 18:52:19,361 - INFO - Request method: OPTIONS, URL: http://127.0.0.1:5000/api/create_gift_set
+2025-01-23 18:52:19,364 - INFO - Request method: POST, URL: http://127.0.0.1:5000/api/create_gift_set
+2025-01-23 18:52:19,364 - INFO - Body: {"name":"еакпкерке","description":"акверекрнк","gift_selling_price":670,"items":[{"item_id":3,"item_type":"product","quantity":1,"price":65.49},{"item_id":2,"item_type":"product","quantity":1,"price":507.6},{"item_id":3,"item_type":"packaging","quantity":1,"price":8}]}
+2025-01-23 18:53:51,750 - INFO - Request method: OPTIONS, URL: http://127.0.0.1:5000/api/create_gift_set
+2025-01-23 18:53:51,753 - INFO - Request method: POST, URL: http://127.0.0.1:5000/api/create_gift_set
+2025-01-23 18:53:51,753 - INFO - Body: {"name":"еакпкерке","description":"акверекрнк","gift_selling_price":670,"items":[{"item_id":3,"item_type":"product","quantity":1,"price":65.49},{"item_id":2,"item_type":"product","quantity":1,"price":507.6},{"item_id":3,"item_type":"packaging","quantity":1,"price":8}]}
+2025-01-23 18:54:24,160 - INFO - Request method: OPTIONS, URL: http://127.0.0.1:5000/api/create_gift_set
+2025-01-23 18:54:24,165 - INFO - Request method: POST, URL: http://127.0.0.1:5000/api/create_gift_set
+2025-01-23 18:54:24,166 - INFO - Body: {"name":"еакпкерке","description":"акверекрнк","gift_selling_price":670,"items":[{"item_id":3,"item_type":"product","quantity":1,"price":65.49},{"item_id":2,"item_type":"product","quantity":1,"price":507.6},{"item_id":3,"item_type":"packaging","quantity":1,"price":8}]}
+2025-01-23 18:57:48,459 - INFO - Request method: GET, URL: http://127.0.0.1:5000/
+2025-01-23 18:57:48,832 - INFO - Request method: GET, URL: http://127.0.0.1:5000/favicon.ico
+2025-01-23 18:57:58,232 - INFO - Request method: GET, URL: http://127.0.0.1:5000/api/get_all_gift_sets
+2025-01-23 19:02:43,871 - INFO - Request method: OPTIONS, URL: http://127.0.0.1:5000/api/create_gift_set
+2025-01-23 19:02:43,874 - INFO - Request method: POST, URL: http://127.0.0.1:5000/api/create_gift_set
+2025-01-23 19:02:43,875 - INFO - Body: {"name":"еакпкрпорпорпо","description":"акверекрнк","gift_selling_price":670,"items":[{"item_id":3,"item_type":"product","quantity":1,"price":65.49},{"item_id":2,"item_type":"product","quantity":1,"price":507.6},{"item_id":3,"item_type":"packaging","quantity":1,"price":8}]}
+2025-01-23 19:06:58,229 - INFO - Request method: OPTIONS, URL: http://127.0.0.1:5000/api/create_gift_set
+2025-01-23 19:06:58,231 - INFO - Request method: POST, URL: http://127.0.0.1:5000/api/create_gift_set
+2025-01-23 19:06:58,231 - INFO - Body: {"name":"еакпкрпорпорпо","description":"акверекрнк","gift_selling_price":670,"items":[{"item_id":3,"item_type":"product","quantity":1,"price":65.49},{"item_id":2,"item_type":"product","quantity":1,"price":507.6},{"item_id":3,"item_type":"packaging","quantity":1,"price":8}]}
+2025-01-23 19:07:25,336 - INFO - Request method: GET, URL: http://127.0.0.1:5000/api/get_all_packaging_materials
+2025-01-23 19:07:25,340 - INFO - Request method: GET, URL: http://127.0.0.1:5000/api/get_all_customers
+2025-01-23 19:07:25,342 - INFO - Request method: GET, URL: http://127.0.0.1:5000/api/categories
+2025-01-23 19:07:25,345 - INFO - Request method: GET, URL: http://127.0.0.1:5000/api/suppliers/list
+2025-01-23 19:07:25,353 - INFO - Request method: GET, URL: http://127.0.0.1:5000/api/products
+2025-01-23 19:07:41,382 - INFO - Request method: OPTIONS, URL: http://127.0.0.1:5000/api/create_gift_set
+2025-01-23 19:07:41,386 - INFO - Request method: POST, URL: http://127.0.0.1:5000/api/create_gift_set
+2025-01-23 19:07:41,386 - INFO - Body: {"name":"аепрпп","description":"","gift_selling_price":698,"items":[{"item_id":1,"item_type":"product","quantity":1,"price":507.6},{"item_id":1,"item_type":"packaging","quantity":1,"price":23}]}
+2025-01-23 19:09:13,828 - INFO - Request method: GET, URL: http://127.0.0.1:5000/api/get_all_gift_sets
+2025-01-23 19:10:34,807 - INFO - Request method: GET, URL: http://127.0.0.1:5000/api/get_all_gift_sets
+2025-01-23 19:10:36,363 - INFO - Request method: GET, URL: http://127.0.0.1:5000/api/get_all_gift_sets
+2025-01-23 19:10:53,110 - INFO - Request method: GET, URL: http://127.0.0.1:5000/api/get_all_gift_sets
+2025-01-23 19:16:41,888 - INFO - Request method: GET, URL: http://127.0.0.1:5000/api/get_all_gift_sets
