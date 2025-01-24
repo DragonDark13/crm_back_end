@@ -466,6 +466,7 @@ class GiftSet(db.Model):
             {
                 "product_id": item.product_id,
                 "name": item.product.name,
+                "type": 'product',
                 "quantity": item.quantity,
                 "price": item.product.purchase_price_per_item
             }
@@ -474,6 +475,7 @@ class GiftSet(db.Model):
         packagings = [
             {
                 "packaging_id": item.packaging_id,
+                "type": 'packaging',
                 "name": item.packaging.name,
                 "quantity": item.quantity,
                 "price": item.packaging.purchase_price_per_unit
