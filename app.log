@@ -1,381 +1,714 @@
 2025-01-02 10:01:12,961 - INFO - Request method: GET, URL: http://127.0.0.1:5000/api/suppliers
-2025-01-02 10:01:12,962 - INFO - Headers: Host: 127.0.0.1:5000
-Connection: keep-alive
-Sec-Ch-Ua-Platform: "Windows"
-User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36
-Accept: application/json, text/plain, */*
-Sec-Ch-Ua: "Google Chrome";v="131", "Chromium";v="131", "Not_A Brand";v="24"
-Sec-Ch-Ua-Mobile: ?0
-Origin: http://localhost:5173
-Sec-Fetch-Site: cross-site
-Sec-Fetch-Mode: cors
-Sec-Fetch-Dest: empty
-Referer: http://localhost:5173/
-Accept-Encoding: gzip, deflate, br, zstd
-Accept-Language: en-GB,en;q=0.9,uk-UA;q=0.8,uk;q=0.7,en-US;q=0.6,ru;q=0.5
-
+2025-01-02 10:01:12,962 - INFO - Headers: Host: 127.0.0.1:5000
+
+Connection: keep-alive
+
+Sec-Ch-Ua-Platform: "Windows"
+
+User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36
+
+Accept: application/json, text/plain, */*
+
+Sec-Ch-Ua: "Google Chrome";v="131", "Chromium";v="131", "Not_A Brand";v="24"
+
+Sec-Ch-Ua-Mobile: ?0
+
+Origin: http://localhost:5173
+
+Sec-Fetch-Site: cross-site
+
+Sec-Fetch-Mode: cors
+
+Sec-Fetch-Dest: empty
+
+Referer: http://localhost:5173/
+
+Accept-Encoding: gzip, deflate, br, zstd
+
+Accept-Language: en-GB,en;q=0.9,uk-UA;q=0.8,uk;q=0.7,en-US;q=0.6,ru;q=0.5
+
+
+
 
 2025-01-02 10:01:12,963 - INFO - Request method: GET, URL: http://127.0.0.1:5000/api/categories
-2025-01-02 10:01:12,964 - INFO - Headers: Host: 127.0.0.1:5000
-Connection: keep-alive
-Sec-Ch-Ua-Platform: "Windows"
-User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36
-Accept: application/json, text/plain, */*
-Sec-Ch-Ua: "Google Chrome";v="131", "Chromium";v="131", "Not_A Brand";v="24"
-Sec-Ch-Ua-Mobile: ?0
-Origin: http://localhost:5173
-Sec-Fetch-Site: cross-site
-Sec-Fetch-Mode: cors
-Sec-Fetch-Dest: empty
-Referer: http://localhost:5173/
-Accept-Encoding: gzip, deflate, br, zstd
-Accept-Language: en-GB,en;q=0.9,uk-UA;q=0.8,uk;q=0.7,en-US;q=0.6,ru;q=0.5
-
+2025-01-02 10:01:12,964 - INFO - Headers: Host: 127.0.0.1:5000
+
+Connection: keep-alive
+
+Sec-Ch-Ua-Platform: "Windows"
+
+User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36
+
+Accept: application/json, text/plain, */*
+
+Sec-Ch-Ua: "Google Chrome";v="131", "Chromium";v="131", "Not_A Brand";v="24"
+
+Sec-Ch-Ua-Mobile: ?0
+
+Origin: http://localhost:5173
+
+Sec-Fetch-Site: cross-site
+
+Sec-Fetch-Mode: cors
+
+Sec-Fetch-Dest: empty
+
+Referer: http://localhost:5173/
+
+Accept-Encoding: gzip, deflate, br, zstd
+
+Accept-Language: en-GB,en;q=0.9,uk-UA;q=0.8,uk;q=0.7,en-US;q=0.6,ru;q=0.5
+
+
+
 
 2025-01-02 10:01:12,966 - INFO - Request method: GET, URL: http://127.0.0.1:5000/api/customers
-2025-01-02 10:01:12,966 - INFO - Headers: Host: 127.0.0.1:5000
-Connection: keep-alive
-Sec-Ch-Ua-Platform: "Windows"
-User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36
-Accept: application/json, text/plain, */*
-Sec-Ch-Ua: "Google Chrome";v="131", "Chromium";v="131", "Not_A Brand";v="24"
-Sec-Ch-Ua-Mobile: ?0
-Origin: http://localhost:5173
-Sec-Fetch-Site: cross-site
-Sec-Fetch-Mode: cors
-Sec-Fetch-Dest: empty
-Referer: http://localhost:5173/
-Accept-Encoding: gzip, deflate, br, zstd
-Accept-Language: en-GB,en;q=0.9,uk-UA;q=0.8,uk;q=0.7,en-US;q=0.6,ru;q=0.5
-
+2025-01-02 10:01:12,966 - INFO - Headers: Host: 127.0.0.1:5000
+
+Connection: keep-alive
+
+Sec-Ch-Ua-Platform: "Windows"
+
+User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36
+
+Accept: application/json, text/plain, */*
+
+Sec-Ch-Ua: "Google Chrome";v="131", "Chromium";v="131", "Not_A Brand";v="24"
+
+Sec-Ch-Ua-Mobile: ?0
+
+Origin: http://localhost:5173
+
+Sec-Fetch-Site: cross-site
+
+Sec-Fetch-Mode: cors
+
+Sec-Fetch-Dest: empty
+
+Referer: http://localhost:5173/
+
+Accept-Encoding: gzip, deflate, br, zstd
+
+Accept-Language: en-GB,en;q=0.9,uk-UA;q=0.8,uk;q=0.7,en-US;q=0.6,ru;q=0.5
+
+
+
 
 2025-01-02 10:01:12,974 - INFO - Request method: GET, URL: http://127.0.0.1:5000/api/products
-2025-01-02 10:01:12,974 - INFO - Headers: Host: 127.0.0.1:5000
-Connection: keep-alive
-Sec-Ch-Ua-Platform: "Windows"
-User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36
-Accept: application/json, text/plain, */*
-Sec-Ch-Ua: "Google Chrome";v="131", "Chromium";v="131", "Not_A Brand";v="24"
-Sec-Ch-Ua-Mobile: ?0
-Origin: http://localhost:5173
-Sec-Fetch-Site: cross-site
-Sec-Fetch-Mode: cors
-Sec-Fetch-Dest: empty
-Referer: http://localhost:5173/
-Accept-Encoding: gzip, deflate, br, zstd
-Accept-Language: en-GB,en;q=0.9,uk-UA;q=0.8,uk;q=0.7,en-US;q=0.6,ru;q=0.5
-
+2025-01-02 10:01:12,974 - INFO - Headers: Host: 127.0.0.1:5000
+
+Connection: keep-alive
+
+Sec-Ch-Ua-Platform: "Windows"
+
+User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36
+
+Accept: application/json, text/plain, */*
+
+Sec-Ch-Ua: "Google Chrome";v="131", "Chromium";v="131", "Not_A Brand";v="24"
+
+Sec-Ch-Ua-Mobile: ?0
+
+Origin: http://localhost:5173
+
+Sec-Fetch-Site: cross-site
+
+Sec-Fetch-Mode: cors
+
+Sec-Fetch-Dest: empty
+
+Referer: http://localhost:5173/
+
+Accept-Encoding: gzip, deflate, br, zstd
+
+Accept-Language: en-GB,en;q=0.9,uk-UA;q=0.8,uk;q=0.7,en-US;q=0.6,ru;q=0.5
+
+
+
 
 2025-01-02 10:01:12,978 - INFO - Request method: GET, URL: http://127.0.0.1:5000/api/suppliers
-2025-01-02 10:01:12,980 - INFO - Headers: Host: 127.0.0.1:5000
-Connection: keep-alive
-Sec-Ch-Ua-Platform: "Windows"
-User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36
-Accept: application/json, text/plain, */*
-Sec-Ch-Ua: "Google Chrome";v="131", "Chromium";v="131", "Not_A Brand";v="24"
-Sec-Ch-Ua-Mobile: ?0
-Origin: http://localhost:5173
-Sec-Fetch-Site: cross-site
-Sec-Fetch-Mode: cors
-Sec-Fetch-Dest: empty
-Referer: http://localhost:5173/
-Accept-Encoding: gzip, deflate, br, zstd
-Accept-Language: en-GB,en;q=0.9,uk-UA;q=0.8,uk;q=0.7,en-US;q=0.6,ru;q=0.5
-
+2025-01-02 10:01:12,980 - INFO - Headers: Host: 127.0.0.1:5000
+
+Connection: keep-alive
+
+Sec-Ch-Ua-Platform: "Windows"
+
+User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36
+
+Accept: application/json, text/plain, */*
+
+Sec-Ch-Ua: "Google Chrome";v="131", "Chromium";v="131", "Not_A Brand";v="24"
+
+Sec-Ch-Ua-Mobile: ?0
+
+Origin: http://localhost:5173
+
+Sec-Fetch-Site: cross-site
+
+Sec-Fetch-Mode: cors
+
+Sec-Fetch-Dest: empty
+
+Referer: http://localhost:5173/
+
+Accept-Encoding: gzip, deflate, br, zstd
+
+Accept-Language: en-GB,en;q=0.9,uk-UA;q=0.8,uk;q=0.7,en-US;q=0.6,ru;q=0.5
+
+
+
 
 2025-01-02 10:01:12,988 - INFO - Request method: GET, URL: http://127.0.0.1:5000/api/customers
-2025-01-02 10:01:12,988 - INFO - Headers: Host: 127.0.0.1:5000
-Connection: keep-alive
-Sec-Ch-Ua-Platform: "Windows"
-User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36
-Accept: application/json, text/plain, */*
-Sec-Ch-Ua: "Google Chrome";v="131", "Chromium";v="131", "Not_A Brand";v="24"
-Sec-Ch-Ua-Mobile: ?0
-Origin: http://localhost:5173
-Sec-Fetch-Site: cross-site
-Sec-Fetch-Mode: cors
-Sec-Fetch-Dest: empty
-Referer: http://localhost:5173/
-Accept-Encoding: gzip, deflate, br, zstd
-Accept-Language: en-GB,en;q=0.9,uk-UA;q=0.8,uk;q=0.7,en-US;q=0.6,ru;q=0.5
-
+2025-01-02 10:01:12,988 - INFO - Headers: Host: 127.0.0.1:5000
+
+Connection: keep-alive
+
+Sec-Ch-Ua-Platform: "Windows"
+
+User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36
+
+Accept: application/json, text/plain, */*
+
+Sec-Ch-Ua: "Google Chrome";v="131", "Chromium";v="131", "Not_A Brand";v="24"
+
+Sec-Ch-Ua-Mobile: ?0
+
+Origin: http://localhost:5173
+
+Sec-Fetch-Site: cross-site
+
+Sec-Fetch-Mode: cors
+
+Sec-Fetch-Dest: empty
+
+Referer: http://localhost:5173/
+
+Accept-Encoding: gzip, deflate, br, zstd
+
+Accept-Language: en-GB,en;q=0.9,uk-UA;q=0.8,uk;q=0.7,en-US;q=0.6,ru;q=0.5
+
+
+
 
 2025-01-02 10:01:12,995 - INFO - Request method: GET, URL: http://127.0.0.1:5000/api/categories
-2025-01-02 10:01:12,996 - INFO - Headers: Host: 127.0.0.1:5000
-Connection: keep-alive
-Sec-Ch-Ua-Platform: "Windows"
-User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36
-Accept: application/json, text/plain, */*
-Sec-Ch-Ua: "Google Chrome";v="131", "Chromium";v="131", "Not_A Brand";v="24"
-Sec-Ch-Ua-Mobile: ?0
-Origin: http://localhost:5173
-Sec-Fetch-Site: cross-site
-Sec-Fetch-Mode: cors
-Sec-Fetch-Dest: empty
-Referer: http://localhost:5173/
-Accept-Encoding: gzip, deflate, br, zstd
-Accept-Language: en-GB,en;q=0.9,uk-UA;q=0.8,uk;q=0.7,en-US;q=0.6,ru;q=0.5
-
+2025-01-02 10:01:12,996 - INFO - Headers: Host: 127.0.0.1:5000
+
+Connection: keep-alive
+
+Sec-Ch-Ua-Platform: "Windows"
+
+User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36
+
+Accept: application/json, text/plain, */*
+
+Sec-Ch-Ua: "Google Chrome";v="131", "Chromium";v="131", "Not_A Brand";v="24"
+
+Sec-Ch-Ua-Mobile: ?0
+
+Origin: http://localhost:5173
+
+Sec-Fetch-Site: cross-site
+
+Sec-Fetch-Mode: cors
+
+Sec-Fetch-Dest: empty
+
+Referer: http://localhost:5173/
+
+Accept-Encoding: gzip, deflate, br, zstd
+
+Accept-Language: en-GB,en;q=0.9,uk-UA;q=0.8,uk;q=0.7,en-US;q=0.6,ru;q=0.5
+
+
+
 
 2025-01-02 10:01:12,996 - INFO - Request method: GET, URL: http://127.0.0.1:5000/api/suppliers
-2025-01-02 10:01:12,996 - INFO - Headers: Host: 127.0.0.1:5000
-Connection: keep-alive
-Sec-Ch-Ua-Platform: "Windows"
-User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36
-Accept: application/json, text/plain, */*
-Sec-Ch-Ua: "Google Chrome";v="131", "Chromium";v="131", "Not_A Brand";v="24"
-Sec-Ch-Ua-Mobile: ?0
-Origin: http://localhost:5173
-Sec-Fetch-Site: cross-site
-Sec-Fetch-Mode: cors
-Sec-Fetch-Dest: empty
-Referer: http://localhost:5173/
-Accept-Encoding: gzip, deflate, br, zstd
-Accept-Language: en-GB,en;q=0.9,uk-UA;q=0.8,uk;q=0.7,en-US;q=0.6,ru;q=0.5
-
+2025-01-02 10:01:12,996 - INFO - Headers: Host: 127.0.0.1:5000
+
+Connection: keep-alive
+
+Sec-Ch-Ua-Platform: "Windows"
+
+User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36
+
+Accept: application/json, text/plain, */*
+
+Sec-Ch-Ua: "Google Chrome";v="131", "Chromium";v="131", "Not_A Brand";v="24"
+
+Sec-Ch-Ua-Mobile: ?0
+
+Origin: http://localhost:5173
+
+Sec-Fetch-Site: cross-site
+
+Sec-Fetch-Mode: cors
+
+Sec-Fetch-Dest: empty
+
+Referer: http://localhost:5173/
+
+Accept-Encoding: gzip, deflate, br, zstd
+
+Accept-Language: en-GB,en;q=0.9,uk-UA;q=0.8,uk;q=0.7,en-US;q=0.6,ru;q=0.5
+
+
+
 
 2025-01-02 10:01:13,012 - INFO - Request method: GET, URL: http://127.0.0.1:5000/api/categories
-2025-01-02 10:01:13,012 - INFO - Headers: Host: 127.0.0.1:5000
-Connection: keep-alive
-Sec-Ch-Ua-Platform: "Windows"
-User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36
-Accept: application/json, text/plain, */*
-Sec-Ch-Ua: "Google Chrome";v="131", "Chromium";v="131", "Not_A Brand";v="24"
-Sec-Ch-Ua-Mobile: ?0
-Origin: http://localhost:5173
-Sec-Fetch-Site: cross-site
-Sec-Fetch-Mode: cors
-Sec-Fetch-Dest: empty
-Referer: http://localhost:5173/
-Accept-Encoding: gzip, deflate, br, zstd
-Accept-Language: en-GB,en;q=0.9,uk-UA;q=0.8,uk;q=0.7,en-US;q=0.6,ru;q=0.5
-
+2025-01-02 10:01:13,012 - INFO - Headers: Host: 127.0.0.1:5000
+
+Connection: keep-alive
+
+Sec-Ch-Ua-Platform: "Windows"
+
+User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36
+
+Accept: application/json, text/plain, */*
+
+Sec-Ch-Ua: "Google Chrome";v="131", "Chromium";v="131", "Not_A Brand";v="24"
+
+Sec-Ch-Ua-Mobile: ?0
+
+Origin: http://localhost:5173
+
+Sec-Fetch-Site: cross-site
+
+Sec-Fetch-Mode: cors
+
+Sec-Fetch-Dest: empty
+
+Referer: http://localhost:5173/
+
+Accept-Encoding: gzip, deflate, br, zstd
+
+Accept-Language: en-GB,en;q=0.9,uk-UA;q=0.8,uk;q=0.7,en-US;q=0.6,ru;q=0.5
+
+
+
 
 2025-01-02 10:01:13,019 - INFO - Request method: GET, URL: http://127.0.0.1:5000/api/suppliers
-2025-01-02 10:01:13,020 - INFO - Headers: Host: 127.0.0.1:5000
-Connection: keep-alive
-Sec-Ch-Ua-Platform: "Windows"
-User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36
-Accept: application/json, text/plain, */*
-Sec-Ch-Ua: "Google Chrome";v="131", "Chromium";v="131", "Not_A Brand";v="24"
-Sec-Ch-Ua-Mobile: ?0
-Origin: http://localhost:5173
-Sec-Fetch-Site: cross-site
-Sec-Fetch-Mode: cors
-Sec-Fetch-Dest: empty
-Referer: http://localhost:5173/
-Accept-Encoding: gzip, deflate, br, zstd
-Accept-Language: en-GB,en;q=0.9,uk-UA;q=0.8,uk;q=0.7,en-US;q=0.6,ru;q=0.5
-
+2025-01-02 10:01:13,020 - INFO - Headers: Host: 127.0.0.1:5000
+
+Connection: keep-alive
+
+Sec-Ch-Ua-Platform: "Windows"
+
+User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36
+
+Accept: application/json, text/plain, */*
+
+Sec-Ch-Ua: "Google Chrome";v="131", "Chromium";v="131", "Not_A Brand";v="24"
+
+Sec-Ch-Ua-Mobile: ?0
+
+Origin: http://localhost:5173
+
+Sec-Fetch-Site: cross-site
+
+Sec-Fetch-Mode: cors
+
+Sec-Fetch-Dest: empty
+
+Referer: http://localhost:5173/
+
+Accept-Encoding: gzip, deflate, br, zstd
+
+Accept-Language: en-GB,en;q=0.9,uk-UA;q=0.8,uk;q=0.7,en-US;q=0.6,ru;q=0.5
+
+
+
 
 2025-01-02 10:01:13,024 - INFO - Request method: GET, URL: http://127.0.0.1:5000/api/categories
-2025-01-02 10:01:13,025 - INFO - Headers: Host: 127.0.0.1:5000
-Connection: keep-alive
-Sec-Ch-Ua-Platform: "Windows"
-User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36
-Accept: application/json, text/plain, */*
-Sec-Ch-Ua: "Google Chrome";v="131", "Chromium";v="131", "Not_A Brand";v="24"
-Sec-Ch-Ua-Mobile: ?0
-Origin: http://localhost:5173
-Sec-Fetch-Site: cross-site
-Sec-Fetch-Mode: cors
-Sec-Fetch-Dest: empty
-Referer: http://localhost:5173/
-Accept-Encoding: gzip, deflate, br, zstd
-Accept-Language: en-GB,en;q=0.9,uk-UA;q=0.8,uk;q=0.7,en-US;q=0.6,ru;q=0.5
-
+2025-01-02 10:01:13,025 - INFO - Headers: Host: 127.0.0.1:5000
+
+Connection: keep-alive
+
+Sec-Ch-Ua-Platform: "Windows"
+
+User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36
+
+Accept: application/json, text/plain, */*
+
+Sec-Ch-Ua: "Google Chrome";v="131", "Chromium";v="131", "Not_A Brand";v="24"
+
+Sec-Ch-Ua-Mobile: ?0
+
+Origin: http://localhost:5173
+
+Sec-Fetch-Site: cross-site
+
+Sec-Fetch-Mode: cors
+
+Sec-Fetch-Dest: empty
+
+Referer: http://localhost:5173/
+
+Accept-Encoding: gzip, deflate, br, zstd
+
+Accept-Language: en-GB,en;q=0.9,uk-UA;q=0.8,uk;q=0.7,en-US;q=0.6,ru;q=0.5
+
+
+
 
 2025-01-02 10:01:13,036 - INFO - Request method: GET, URL: http://127.0.0.1:5000/api/products
-2025-01-02 10:01:13,037 - INFO - Headers: Host: 127.0.0.1:5000
-Connection: keep-alive
-Sec-Ch-Ua-Platform: "Windows"
-User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36
-Accept: application/json, text/plain, */*
-Sec-Ch-Ua: "Google Chrome";v="131", "Chromium";v="131", "Not_A Brand";v="24"
-Sec-Ch-Ua-Mobile: ?0
-Origin: http://localhost:5173
-Sec-Fetch-Site: cross-site
-Sec-Fetch-Mode: cors
-Sec-Fetch-Dest: empty
-Referer: http://localhost:5173/
-Accept-Encoding: gzip, deflate, br, zstd
-Accept-Language: en-GB,en;q=0.9,uk-UA;q=0.8,uk;q=0.7,en-US;q=0.6,ru;q=0.5
-
+2025-01-02 10:01:13,037 - INFO - Headers: Host: 127.0.0.1:5000
+
+Connection: keep-alive
+
+Sec-Ch-Ua-Platform: "Windows"
+
+User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36
+
+Accept: application/json, text/plain, */*
+
+Sec-Ch-Ua: "Google Chrome";v="131", "Chromium";v="131", "Not_A Brand";v="24"
+
+Sec-Ch-Ua-Mobile: ?0
+
+Origin: http://localhost:5173
+
+Sec-Fetch-Site: cross-site
+
+Sec-Fetch-Mode: cors
+
+Sec-Fetch-Dest: empty
+
+Referer: http://localhost:5173/
+
+Accept-Encoding: gzip, deflate, br, zstd
+
+Accept-Language: en-GB,en;q=0.9,uk-UA;q=0.8,uk;q=0.7,en-US;q=0.6,ru;q=0.5
+
+
+
 
 2025-01-02 10:02:19,612 - INFO - Request method: OPTIONS, URL: http://127.0.0.1:5000/api/login
-2025-01-02 10:02:19,612 - INFO - Headers: Host: 127.0.0.1:5000
-Connection: keep-alive
-Accept: */*
-Access-Control-Request-Method: POST
-Access-Control-Request-Headers: content-type
-Origin: http://localhost:5173
-User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36
-Sec-Fetch-Mode: cors
-Sec-Fetch-Site: cross-site
-Sec-Fetch-Dest: empty
-Referer: http://localhost:5173/
-Accept-Encoding: gzip, deflate, br, zstd
-Accept-Language: en-GB,en;q=0.9,uk-UA;q=0.8,uk;q=0.7,en-US;q=0.6,ru;q=0.5
-
+2025-01-02 10:02:19,612 - INFO - Headers: Host: 127.0.0.1:5000
+
+Connection: keep-alive
+
+Accept: */*
+
+Access-Control-Request-Method: POST
+
+Access-Control-Request-Headers: content-type
+
+Origin: http://localhost:5173
+
+User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36
+
+Sec-Fetch-Mode: cors
+
+Sec-Fetch-Site: cross-site
+
+Sec-Fetch-Dest: empty
+
+Referer: http://localhost:5173/
+
+Accept-Encoding: gzip, deflate, br, zstd
+
+Accept-Language: en-GB,en;q=0.9,uk-UA;q=0.8,uk;q=0.7,en-US;q=0.6,ru;q=0.5
+
+
+
 
 2025-01-02 10:02:19,612 - INFO - Request method: POST, URL: http://127.0.0.1:5000/api/login
-2025-01-02 10:02:19,612 - INFO - Headers: Host: 127.0.0.1:5000
-Connection: keep-alive
-Content-Length: 51
-Sec-Ch-Ua-Platform: "Windows"
-User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36
-Accept: application/json, text/plain, */*
-Sec-Ch-Ua: "Google Chrome";v="131", "Chromium";v="131", "Not_A Brand";v="24"
-Content-Type: application/json
-Sec-Ch-Ua-Mobile: ?0
-Origin: http://localhost:5173
-Sec-Fetch-Site: cross-site
-Sec-Fetch-Mode: cors
-Sec-Fetch-Dest: empty
-Referer: http://localhost:5173/
-Accept-Encoding: gzip, deflate, br, zstd
-Accept-Language: en-GB,en;q=0.9,uk-UA;q=0.8,uk;q=0.7,en-US;q=0.6,ru;q=0.5
-
+2025-01-02 10:02:19,612 - INFO - Headers: Host: 127.0.0.1:5000
+
+Connection: keep-alive
+
+Content-Length: 51
+
+Sec-Ch-Ua-Platform: "Windows"
+
+User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36
+
+Accept: application/json, text/plain, */*
+
+Sec-Ch-Ua: "Google Chrome";v="131", "Chromium";v="131", "Not_A Brand";v="24"
+
+Content-Type: application/json
+
+Sec-Ch-Ua-Mobile: ?0
+
+Origin: http://localhost:5173
+
+Sec-Fetch-Site: cross-site
+
+Sec-Fetch-Mode: cors
+
+Sec-Fetch-Dest: empty
+
+Referer: http://localhost:5173/
+
+Accept-Encoding: gzip, deflate, br, zstd
+
+Accept-Language: en-GB,en;q=0.9,uk-UA;q=0.8,uk;q=0.7,en-US;q=0.6,ru;q=0.5
+
+
+
 
 2025-01-02 10:02:19,612 - INFO - Body: {"username":"manager","password":"managerpassword"}
 2025-01-02 10:02:19,776 - INFO - Request method: GET, URL: http://127.0.0.1:5000/api/suppliers
-2025-01-02 10:02:19,776 - INFO - Headers: Host: 127.0.0.1:5000
-Connection: keep-alive
-Sec-Ch-Ua-Platform: "Windows"
-User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36
-Accept: application/json, text/plain, */*
-Sec-Ch-Ua: "Google Chrome";v="131", "Chromium";v="131", "Not_A Brand";v="24"
-Sec-Ch-Ua-Mobile: ?0
-Origin: http://localhost:5173
-Sec-Fetch-Site: cross-site
-Sec-Fetch-Mode: cors
-Sec-Fetch-Dest: empty
-Referer: http://localhost:5173/
-Accept-Encoding: gzip, deflate, br, zstd
-Accept-Language: en-GB,en;q=0.9,uk-UA;q=0.8,uk;q=0.7,en-US;q=0.6,ru;q=0.5
-
+2025-01-02 10:02:19,776 - INFO - Headers: Host: 127.0.0.1:5000
+
+Connection: keep-alive
+
+Sec-Ch-Ua-Platform: "Windows"
+
+User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36
+
+Accept: application/json, text/plain, */*
+
+Sec-Ch-Ua: "Google Chrome";v="131", "Chromium";v="131", "Not_A Brand";v="24"
+
+Sec-Ch-Ua-Mobile: ?0
+
+Origin: http://localhost:5173
+
+Sec-Fetch-Site: cross-site
+
+Sec-Fetch-Mode: cors
+
+Sec-Fetch-Dest: empty
+
+Referer: http://localhost:5173/
+
+Accept-Encoding: gzip, deflate, br, zstd
+
+Accept-Language: en-GB,en;q=0.9,uk-UA;q=0.8,uk;q=0.7,en-US;q=0.6,ru;q=0.5
+
+
+
 
 2025-01-02 10:02:19,778 - INFO - Request method: GET, URL: http://127.0.0.1:5000/api/categories
-2025-01-02 10:02:19,779 - INFO - Headers: Host: 127.0.0.1:5000
-Connection: keep-alive
-Sec-Ch-Ua-Platform: "Windows"
-User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36
-Accept: application/json, text/plain, */*
-Sec-Ch-Ua: "Google Chrome";v="131", "Chromium";v="131", "Not_A Brand";v="24"
-Sec-Ch-Ua-Mobile: ?0
-Origin: http://localhost:5173
-Sec-Fetch-Site: cross-site
-Sec-Fetch-Mode: cors
-Sec-Fetch-Dest: empty
-Referer: http://localhost:5173/
-Accept-Encoding: gzip, deflate, br, zstd
-Accept-Language: en-GB,en;q=0.9,uk-UA;q=0.8,uk;q=0.7,en-US;q=0.6,ru;q=0.5
-
+2025-01-02 10:02:19,779 - INFO - Headers: Host: 127.0.0.1:5000
+
+Connection: keep-alive
+
+Sec-Ch-Ua-Platform: "Windows"
+
+User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36
+
+Accept: application/json, text/plain, */*
+
+Sec-Ch-Ua: "Google Chrome";v="131", "Chromium";v="131", "Not_A Brand";v="24"
+
+Sec-Ch-Ua-Mobile: ?0
+
+Origin: http://localhost:5173
+
+Sec-Fetch-Site: cross-site
+
+Sec-Fetch-Mode: cors
+
+Sec-Fetch-Dest: empty
+
+Referer: http://localhost:5173/
+
+Accept-Encoding: gzip, deflate, br, zstd
+
+Accept-Language: en-GB,en;q=0.9,uk-UA;q=0.8,uk;q=0.7,en-US;q=0.6,ru;q=0.5
+
+
+
 
 2025-01-02 10:02:19,783 - INFO - Request method: GET, URL: http://127.0.0.1:5000/api/suppliers
-2025-01-02 10:02:19,783 - INFO - Headers: Host: 127.0.0.1:5000
-Connection: keep-alive
-Sec-Ch-Ua-Platform: "Windows"
-User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36
-Accept: application/json, text/plain, */*
-Sec-Ch-Ua: "Google Chrome";v="131", "Chromium";v="131", "Not_A Brand";v="24"
-Sec-Ch-Ua-Mobile: ?0
-Origin: http://localhost:5173
-Sec-Fetch-Site: cross-site
-Sec-Fetch-Mode: cors
-Sec-Fetch-Dest: empty
-Referer: http://localhost:5173/
-Accept-Encoding: gzip, deflate, br, zstd
-Accept-Language: en-GB,en;q=0.9,uk-UA;q=0.8,uk;q=0.7,en-US;q=0.6,ru;q=0.5
-
+2025-01-02 10:02:19,783 - INFO - Headers: Host: 127.0.0.1:5000
+
+Connection: keep-alive
+
+Sec-Ch-Ua-Platform: "Windows"
+
+User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36
+
+Accept: application/json, text/plain, */*
+
+Sec-Ch-Ua: "Google Chrome";v="131", "Chromium";v="131", "Not_A Brand";v="24"
+
+Sec-Ch-Ua-Mobile: ?0
+
+Origin: http://localhost:5173
+
+Sec-Fetch-Site: cross-site
+
+Sec-Fetch-Mode: cors
+
+Sec-Fetch-Dest: empty
+
+Referer: http://localhost:5173/
+
+Accept-Encoding: gzip, deflate, br, zstd
+
+Accept-Language: en-GB,en;q=0.9,uk-UA;q=0.8,uk;q=0.7,en-US;q=0.6,ru;q=0.5
+
+
+
 
 2025-01-02 10:02:19,783 - INFO - Request method: GET, URL: http://127.0.0.1:5000/api/categories
-2025-01-02 10:02:19,783 - INFO - Headers: Host: 127.0.0.1:5000
-Connection: keep-alive
-Sec-Ch-Ua-Platform: "Windows"
-User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36
-Accept: application/json, text/plain, */*
-Sec-Ch-Ua: "Google Chrome";v="131", "Chromium";v="131", "Not_A Brand";v="24"
-Sec-Ch-Ua-Mobile: ?0
-Origin: http://localhost:5173
-Sec-Fetch-Site: cross-site
-Sec-Fetch-Mode: cors
-Sec-Fetch-Dest: empty
-Referer: http://localhost:5173/
-Accept-Encoding: gzip, deflate, br, zstd
-Accept-Language: en-GB,en;q=0.9,uk-UA;q=0.8,uk;q=0.7,en-US;q=0.6,ru;q=0.5
-
+2025-01-02 10:02:19,783 - INFO - Headers: Host: 127.0.0.1:5000
+
+Connection: keep-alive
+
+Sec-Ch-Ua-Platform: "Windows"
+
+User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36
+
+Accept: application/json, text/plain, */*
+
+Sec-Ch-Ua: "Google Chrome";v="131", "Chromium";v="131", "Not_A Brand";v="24"
+
+Sec-Ch-Ua-Mobile: ?0
+
+Origin: http://localhost:5173
+
+Sec-Fetch-Site: cross-site
+
+Sec-Fetch-Mode: cors
+
+Sec-Fetch-Dest: empty
+
+Referer: http://localhost:5173/
+
+Accept-Encoding: gzip, deflate, br, zstd
+
+Accept-Language: en-GB,en;q=0.9,uk-UA;q=0.8,uk;q=0.7,en-US;q=0.6,ru;q=0.5
+
+
+
 
 2025-01-02 10:03:04,092 - INFO - Request method: OPTIONS, URL: http://127.0.0.1:5000/api/product/44
-2025-01-02 10:03:04,092 - INFO - Headers: Host: 127.0.0.1:5000
-Connection: keep-alive
-Accept: */*
-Access-Control-Request-Method: PUT
-Access-Control-Request-Headers: content-type
-Origin: http://localhost:5173
-User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36
-Sec-Fetch-Mode: cors
-Sec-Fetch-Site: cross-site
-Sec-Fetch-Dest: empty
-Referer: http://localhost:5173/
-Accept-Encoding: gzip, deflate, br, zstd
-Accept-Language: en-GB,en;q=0.9,uk-UA;q=0.8,uk;q=0.7,en-US;q=0.6,ru;q=0.5
-
+2025-01-02 10:03:04,092 - INFO - Headers: Host: 127.0.0.1:5000
+
+Connection: keep-alive
+
+Accept: */*
+
+Access-Control-Request-Method: PUT
+
+Access-Control-Request-Headers: content-type
+
+Origin: http://localhost:5173
+
+User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36
+
+Sec-Fetch-Mode: cors
+
+Sec-Fetch-Site: cross-site
+
+Sec-Fetch-Dest: empty
+
+Referer: http://localhost:5173/
+
+Accept-Encoding: gzip, deflate, br, zstd
+
+Accept-Language: en-GB,en;q=0.9,uk-UA;q=0.8,uk;q=0.7,en-US;q=0.6,ru;q=0.5
+
+
+
 
 2025-01-02 10:03:04,107 - INFO - Request method: PUT, URL: http://127.0.0.1:5000/api/product/44
-2025-01-02 10:03:04,108 - INFO - Headers: Host: 127.0.0.1:5000
-Connection: keep-alive
-Content-Length: 282
-Sec-Ch-Ua-Platform: "Windows"
-User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36
-Accept: application/json, text/plain, */*
-Sec-Ch-Ua: "Google Chrome";v="131", "Chromium";v="131", "Not_A Brand";v="24"
-Content-Type: application/json
-Sec-Ch-Ua-Mobile: ?0
-Origin: http://localhost:5173
-Sec-Fetch-Site: cross-site
-Sec-Fetch-Mode: cors
-Sec-Fetch-Dest: empty
-Referer: http://localhost:5173/
-Accept-Encoding: gzip, deflate, br, zstd
-Accept-Language: en-GB,en;q=0.9,uk-UA;q=0.8,uk;q=0.7,en-US;q=0.6,ru;q=0.5
-
+2025-01-02 10:03:04,108 - INFO - Headers: Host: 127.0.0.1:5000
+
+Connection: keep-alive
+
+Content-Length: 282
+
+Sec-Ch-Ua-Platform: "Windows"
+
+User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36
+
+Accept: application/json, text/plain, */*
+
+Sec-Ch-Ua: "Google Chrome";v="131", "Chromium";v="131", "Not_A Brand";v="24"
+
+Content-Type: application/json
+
+Sec-Ch-Ua-Mobile: ?0
+
+Origin: http://localhost:5173
+
+Sec-Fetch-Site: cross-site
+
+Sec-Fetch-Mode: cors
+
+Sec-Fetch-Dest: empty
+
+Referer: http://localhost:5173/
+
+Accept-Encoding: gzip, deflate, br, zstd
+
+Accept-Language: en-GB,en;q=0.9,uk-UA;q=0.8,uk;q=0.7,en-US;q=0.6,ru;q=0.5
+
+
+
 
 2025-01-02 10:03:04,108 - INFO - Body: {"id":44,"name":"тестовий товар","supplier_id":1,"available_quantity":7,"sold_quantity":3,"total_quantity":10,"purchase_total_price":140,"purchase_price_per_item":20,"category_ids":[1,2],"created_date":"2024-12-18","selling_price_per_item":40,"selling_total_price":260}
 2025-01-02 10:03:43,599 - INFO - Request method: OPTIONS, URL: http://127.0.0.1:5000/api/product/44
-2025-01-02 10:03:43,599 - INFO - Headers: Host: 127.0.0.1:5000
-Connection: keep-alive
-Accept: */*
-Access-Control-Request-Method: PUT
-Access-Control-Request-Headers: content-type
-Origin: http://localhost:5173
-User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36
-Sec-Fetch-Mode: cors
-Sec-Fetch-Site: cross-site
-Sec-Fetch-Dest: empty
-Referer: http://localhost:5173/
-Accept-Encoding: gzip, deflate, br, zstd
-Accept-Language: en-GB,en;q=0.9,uk-UA;q=0.8,uk;q=0.7,en-US;q=0.6,ru;q=0.5
-
+2025-01-02 10:03:43,599 - INFO - Headers: Host: 127.0.0.1:5000
+
+Connection: keep-alive
+
+Accept: */*
+
+Access-Control-Request-Method: PUT
+
+Access-Control-Request-Headers: content-type
+
+Origin: http://localhost:5173
+
+User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36
+
+Sec-Fetch-Mode: cors
+
+Sec-Fetch-Site: cross-site
+
+Sec-Fetch-Dest: empty
+
+Referer: http://localhost:5173/
+
+Accept-Encoding: gzip, deflate, br, zstd
+
+Accept-Language: en-GB,en;q=0.9,uk-UA;q=0.8,uk;q=0.7,en-US;q=0.6,ru;q=0.5
+
+
+
 
 2025-01-02 10:03:43,604 - INFO - Request method: PUT, URL: http://127.0.0.1:5000/api/product/44
-2025-01-02 10:03:43,604 - INFO - Headers: Host: 127.0.0.1:5000
-Connection: keep-alive
-Content-Length: 282
-Sec-Ch-Ua-Platform: "Windows"
-User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36
-Accept: application/json, text/plain, */*
-Sec-Ch-Ua: "Google Chrome";v="131", "Chromium";v="131", "Not_A Brand";v="24"
-Content-Type: application/json
-Sec-Ch-Ua-Mobile: ?0
-Origin: http://localhost:5173
-Sec-Fetch-Site: cross-site
-Sec-Fetch-Mode: cors
-Sec-Fetch-Dest: empty
-Referer: http://localhost:5173/
-Accept-Encoding: gzip, deflate, br, zstd
-Accept-Language: en-GB,en;q=0.9,uk-UA;q=0.8,uk;q=0.7,en-US;q=0.6,ru;q=0.5
-
+2025-01-02 10:03:43,604 - INFO - Headers: Host: 127.0.0.1:5000
+
+Connection: keep-alive
+
+Content-Length: 282
+
+Sec-Ch-Ua-Platform: "Windows"
+
+User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36
+
+Accept: application/json, text/plain, */*
+
+Sec-Ch-Ua: "Google Chrome";v="131", "Chromium";v="131", "Not_A Brand";v="24"
+
+Content-Type: application/json
+
+Sec-Ch-Ua-Mobile: ?0
+
+Origin: http://localhost:5173
+
+Sec-Fetch-Site: cross-site
+
+Sec-Fetch-Mode: cors
+
+Sec-Fetch-Dest: empty
+
+Referer: http://localhost:5173/
+
+Accept-Encoding: gzip, deflate, br, zstd
+
+Accept-Language: en-GB,en;q=0.9,uk-UA;q=0.8,uk;q=0.7,en-US;q=0.6,ru;q=0.5
+
+
+
 
 2025-01-02 10:03:43,605 - INFO - Body: {"id":44,"name":"тестовий товар","supplier_id":1,"available_quantity":7,"sold_quantity":3,"total_quantity":10,"purchase_total_price":140,"purchase_price_per_item":20,"category_ids":[1,2],"created_date":"2024-12-18","selling_price_per_item":40,"selling_total_price":260}
 2025-01-02 10:04:36,824 - INFO - Request method: OPTIONS, URL: http://127.0.0.1:5000/api/product/44
@@ -6748,6 +7081,25 @@ Accept-Language: en-GB,en;q=0.9,uk-UA;q=0.8,uk;q=0.7,en-US;q=0.6,ru;q=0.5
 2025-01-18 13:19:41,083 - INFO - Request method: GET, URL: http://127.0.0.1:5000/api/categories
 2025-01-18 13:19:41,090 - INFO - Request method: GET, URL: http://127.0.0.1:5000/api/suppliers/list
 2025-01-18 13:19:41,095 - INFO - Request method: GET, URL: http://127.0.0.1:5000/api/products
+2025-01-20 14:31:29,520 - INFO - Request method: GET, URL: http://127.0.0.1:5000/api/suppliers/list
+2025-01-20 14:31:29,524 - INFO - Request method: GET, URL: http://127.0.0.1:5000/api/categories
+2025-01-20 14:31:29,527 - INFO - Request method: GET, URL: http://127.0.0.1:5000/api/get_all_packaging_materials
+2025-01-20 14:31:29,535 - INFO - Request method: GET, URL: http://127.0.0.1:5000/api/get_all_customers
+2025-01-20 14:31:29,542 - INFO - Request method: GET, URL: http://127.0.0.1:5000/api/products
+2025-01-20 14:31:29,568 - INFO - Request method: GET, URL: http://127.0.0.1:5000/api/categories
+2025-01-20 14:31:29,590 - INFO - Request method: GET, URL: http://127.0.0.1:5000/api/suppliers/list
+2025-01-20 14:31:37,965 - INFO - Request method: OPTIONS, URL: http://127.0.0.1:5000/api/login
+2025-01-20 14:31:37,970 - INFO - Request method: POST, URL: http://127.0.0.1:5000/api/login
+2025-01-20 14:31:37,971 - INFO - Body: {"username":"manager","password":"managerpassword"}
+2025-01-20 14:31:38,319 - INFO - Request method: GET, URL: http://127.0.0.1:5000/api/suppliers/list
+2025-01-20 14:31:38,323 - INFO - Request method: GET, URL: http://127.0.0.1:5000/api/categories
+2025-01-20 14:31:48,545 - INFO - Request method: GET, URL: http://127.0.0.1:5000/api/get_all_sales_history
+2025-01-20 14:31:49,219 - INFO - Request method: GET, URL: http://127.0.0.1:5000/api/suppliers/list
+2025-01-20 14:31:49,221 - INFO - Request method: GET, URL: http://127.0.0.1:5000/api/categories
+2025-01-20 14:31:50,224 - INFO - Request method: GET, URL: http://127.0.0.1:5000/api/get_all_purchase_history
+2025-01-20 14:31:52,655 - INFO - Request method: GET, URL: http://127.0.0.1:5000/api/gel_all_investments
+2025-01-20 14:31:57,128 - INFO - Request method: GET, URL: http://127.0.0.1:5000/api/suppliers/list
+2025-01-20 14:31:57,131 - INFO - Request method: GET, URL: http://127.0.0.1:5000/api/categories
 2025-01-18 13:20:16,556 - INFO - Request method: GET, URL: http://127.0.0.1:5000/api/get_all_sales_history
 2025-01-18 13:20:16,558 - INFO - Request method: GET, URL: http://127.0.0.1:5000/api/get_all_packaging_materials
 2025-01-18 13:20:16,562 - INFO - Request method: GET, URL: http://127.0.0.1:5000/api/get_all_customers

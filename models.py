@@ -1,7 +1,7 @@
 from flask_sqlalchemy import SQLAlchemy
 from flask_login import UserMixin
-from sqlalchemy import Column, Integer, String, DateTime, ForeignKey, Float, Date, DECIMAL, Table, create_engine
-from sqlalchemy.orm import relationship, declarative_base, sessionmaker, scoped_session
+from sqlalchemy import Column, Integer, String, DateTime, ForeignKey, Float, Date, DECIMAL, Table
+from sqlalchemy.orm import relationship
 from datetime import datetime
 from werkzeug.security import generate_password_hash, check_password_hash
 

@@ -1,10 +1,5 @@
 from sqlalchemy import inspect
 
-import csv
-from datetime import datetime
-from decimal import Decimal
-from sqlalchemy.exc import IntegrityError
-
 # Функція для завантаження продуктів у базу даних
 from database import db_session, engine
 from models import Product, Supplier, Base

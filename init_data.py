@@ -1,10 +1,8 @@
 from datetime import datetime
 import logging
-from decimal import Decimal
-
 from sqlalchemy.exc import IntegrityError
 
-from models import StockHistory, PurchaseHistory, SaleHistory, Category, Supplier, Product, User, Customer, Base
+from models import  Category, Supplier, Product, Base
 
 # Ініціалізуємо базу даних
 from database import db_session
