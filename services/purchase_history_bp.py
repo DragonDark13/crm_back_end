@@ -3,7 +3,6 @@ from datetime import datetime, date
 from flask import Blueprint
 from sqlalchemy import select, func
 
-from database import db_session
 from models import PurchaseHistory, Supplier, Product, Category, product_categories_table, PackagingMaterial, \
     OtherInvestment, PackagingPurchaseHistory, PackagingMaterialSupplier
 
@@ -17,6 +16,8 @@ def get_purchase_history_data():
     :param session: Поточна сесія бази даних.
     :return: Список словників із даними про історію закупівель.
     """
+    from postgreSQLConnect import db_session
+
     product_purchase_history_query = (
         select(
             PurchaseHistory.id.label('purchase_id'),

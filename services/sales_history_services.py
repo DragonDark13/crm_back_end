@@ -2,7 +2,6 @@ from flask import Flask, jsonify, request, Blueprint
 from sqlalchemy.orm import joinedload
 from datetime import datetime
 
-from database import db_session
 from models import db, SaleHistory, Product, Customer, PackagingSaleHistory
 
 sales_history_services_bp = Blueprint('sales_history', __name__)
@@ -10,6 +9,8 @@ sales_history_services_bp = Blueprint('sales_history', __name__)
 
 @sales_history_services_bp.route('/api/get_all_sales_history', methods=['GET'])
 def get_sales_history():
+    from postgreSQLConnect import db_session
+
     query = db_session.query(SaleHistory).join(Product).join(Customer)
 
     # Отримуємо всі записи без сортування

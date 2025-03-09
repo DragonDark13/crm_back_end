@@ -1,7 +1,6 @@
 from flask import Blueprint, jsonify, request
 from sqlalchemy.exc import SQLAlchemyError
 
-from database import db_session
 from models import PackagingMaterial, PackagingPurchaseHistory, PackagingMaterialSupplier, PackagingStockHistory, \
     PackagingSaleHistory
 
@@ -10,7 +9,7 @@ package_bp = Blueprint('packages', __name__)
 
 @package_bp.route('/api/get_all_packaging_materials', methods=['GET'])
 def get_packaging_materials():
-    from database import db_session  # Assuming `db_session` is the SQLAlchemy session
+    from postgreSQLConnect import db_session
 
     # Отримуємо всі матеріали з бази даних
     materials = db_session.query(PackagingMaterial).all()  # Corrected query
@@ -25,13 +24,15 @@ def get_packaging_materials():
 
 @package_bp.route('/api/packaging_materials/purchase', methods=['POST'])
 def purchase_packaging_material():
+    from postgreSQLConnect import db_session
+
     data = request.json
     name = data.get('name')
     supplier_id = data.get('supplier_id')
     quantity_purchased = data.get('quantity_purchased')
     purchase_price_per_unit = data.get('purchase_price_per_unit')
     total_purchase_cost = data.get('total_purchase_cost')
-    from database import db_session  # Assuming `db_session` is the SQLAlchemy session
+    
 
     if not all([name, supplier_id, quantity_purchased, purchase_price_per_unit]):
         return jsonify({'error': 'Missing required fields'}), 400
@@ -79,7 +80,7 @@ def purchase_packaging_material():
 
 @package_bp.route('/api/get_all_packaging_suppliers', methods=['GET'])
 def get_all_suppliers():
-    from database import db_session  # Assuming `db_session` is the SQLAlchemy session
+    from postgreSQLConnect import db_session
 
     # Fetch all suppliers
     suppliers = db_session.query(PackagingMaterialSupplier).all()
@@ -92,7 +93,7 @@ def add_supplier():
     data = request.json
     name = data.get('name')
     contact_info = data.get('contact_info')
-    from database import db_session  # Assuming `db_session` is the SQLAlchemy session
+    from postgreSQLConnect import db_session
 
     if not name:
         return jsonify({"error": "Supplier name is required"}), 400
@@ -111,8 +112,7 @@ def purchase_current_packaging_material():
     quantity = data.get('quantity')
     purchase_price_per_unit = data.get('purchase_price_per_unit')
     total_purchase_cost = data.get('total_purchase_cost')
-
-    from database import db_session  # Assuming `db_session` is the SQLAlchemy session
+    from postgreSQLConnect import db_session
 
     if not material_id or not quantity or not purchase_price_per_unit:
         return jsonify({'error': 'Required fields are missing'}), 400
@@ -157,7 +157,7 @@ def update_packaging_status():
     data = request.json
     material_id = data.get('material_id')
     quantity_used = data.get('quantity_used')
-    from database import db_session  # Assuming `db_session` is the SQLAlchemy session
+    
 
     if not material_id or not quantity_used:
         return jsonify({'error': 'Required fields are missing'}), 400
@@ -191,7 +191,7 @@ def update_packaging_status():
 
 @package_bp.route('/api/materials/<int:packaging_material_id>/history', methods=['GET'])
 def get_packaging_material_history(packaging_material_id):
-    from database import db_session  # Assuming `db_session` is the SQLAlchemy session
+    
 
     # Отримуємо всі історії продажів для конкретного пакування
     sales_history = db_session.query(PackagingSaleHistory).filter(

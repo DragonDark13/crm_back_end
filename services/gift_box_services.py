@@ -1,5 +1,4 @@
 from flask import request, jsonify, Blueprint
-from database import db_session
 from models import GiftSet, GiftSetProduct, GiftSetPackaging, Product, PackagingMaterial, GiftSetSalesHistory
 
 gift_box_services_bp = Blueprint('gift_box_services', __name__)
@@ -8,6 +7,7 @@ gift_box_services_bp = Blueprint('gift_box_services', __name__)
 @gift_box_services_bp.route('/api/create_gift_set', methods=['POST'])
 def create_gift_set():
     data = request.json
+    from postgreSQLConnect import db_session
 
     # Валідація вхідних даних
     if 'name' not in data or 'items' not in data:
@@ -119,6 +119,7 @@ def get_gift_set(gift_set_id):
 def update_gift_set(gift_set_id):
     try:
         data = request.json
+        from postgreSQLConnect import db_session
 
         # Отримуємо набір з бази даних
         gift_set = db_session.query(GiftSet).filter(GiftSet.id == gift_set_id).one_or_none()
@@ -223,6 +224,8 @@ def update_gift_set(gift_set_id):
 @gift_box_services_bp.route('/api/remove_gift_set/<int:gift_set_id>', methods=['DELETE'])
 def dismantle_gift_set(gift_set_id):
     # Знаходимо подарунковий набір
+    from postgreSQLConnect import db_session
+
     gift_set = db_session.query(GiftSet).get(gift_set_id)
     if not gift_set:
         return jsonify({"error": "Gift set not found"}), 404
@@ -259,6 +262,8 @@ def dismantle_gift_set(gift_set_id):
 @gift_box_services_bp.route('/api/sell_gift_set/<int:gift_set_id>', methods=['POST'])
 def sell_gift_set(gift_set_id):
     gift_set = GiftSet.query.get(gift_set_id)
+    from postgreSQLConnect import db_session
+
     if not gift_set:
         return jsonify({"error": "Gift set not found"}), 404
 
@@ -309,6 +314,7 @@ def get_gift_sets():
     name_filter = request.args.get('name', '').lower()
     min_price = request.args.get('min_price', type=float, default=0)
     max_price = request.args.get('max_price', type=float, default=float('inf'))
+    from postgreSQLConnect import db_session
 
     # Пошук наборів подарунків за заданими фільтрами
     gift_sets_query = db_session.query(GiftSet).filter(

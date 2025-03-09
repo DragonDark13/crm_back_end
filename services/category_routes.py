@@ -4,14 +4,14 @@ from sqlalchemy.orm import Session
 from models import Category, Product, product_categories_table
 
 # Create a Blueprint for categories
+
 category_bp = Blueprint('categories', __name__)
 
 
 @category_bp.route('/api/categories', methods=['GET'])
-
 def get_all_categories():
     """Retrieve all categories."""
-    from database import db_session  # Assuming `db_session` is the SQLAlchemy session
+    from postgreSQLConnect import db_session
 
     with db_session() as session:
         categories = session.query(Category).all()
@@ -21,9 +21,9 @@ def get_all_categories():
 
 @category_bp.route('/api/categories', methods=['POST'])
 def create_category():
-    from database import db_session  # Assuming `db_session` is the SQLAlchemy session
-
     """Create a new category."""
+    from postgreSQLConnect import db_session
+
     data = request.get_json()
     try:
         with db_session() as session:
@@ -40,9 +40,9 @@ def create_category():
 
 @category_bp.route('/api/product/<int:product_id>/categories', methods=['POST'])
 def assign_categories_to_product(product_id):
-    from database import db_session  # Assuming `db_session` is the SQLAlchemy session
-
     """Assign categories to a product."""
+    from postgreSQLConnect import db_session
+
     data = request.get_json()
     try:
         with db_session() as session:
@@ -67,8 +67,6 @@ def assign_categories_to_product(product_id):
 
 @category_bp.route('/api/product/<int:product_id>/categories', methods=['GET'])
 def get_product_categories(product_id):
-    from database import db_session  # Assuming `db_session` is the SQLAlchemy session
-
     """Retrieve categories of a product."""
     try:
         with db_session() as session:

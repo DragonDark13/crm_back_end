@@ -6,13 +6,14 @@ from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import joinedload
 
 # Create Blueprint for customers
+
 customer_bp = Blueprint('customer', __name__)
 
 
 # Create customer
 @customer_bp.route('/api/customer_create', methods=['POST'])
 def create_customer():
-    from database import db_session  # Assuming `db_session` is the SQLAlchemy session
+    from postgreSQLConnect import db_session
 
     data = request.get_json()
     required_fields = ['name']
@@ -50,7 +51,7 @@ def create_customer():
 # Get all customers
 @customer_bp.route('/api/get_all_customers', methods=['GET'])
 def get_all_customers():
-    from database import db_session  # Assuming `db_session` is the SQLAlchemy session
+    from postgreSQLConnect import db_session
 
     customers = db_session.query(Customer).all()
     customer_list = [customer.to_dict() for customer in customers]
@@ -60,7 +61,7 @@ def get_all_customers():
 # Get customer details by ID
 @customer_bp.route('/api/customers_details/<int:customer_id>', methods=['GET'])
 def get_customer_details(customer_id):
-    from database import db_session  # Assuming `db_session` is the SQLAlchemy session
+    from postgreSQLConnect import db_session
 
     try:
         customer = db_session.query(Customer).filter_by(id=customer_id).one()
@@ -78,7 +79,7 @@ def get_customer_details(customer_id):
 @customer_bp.route('/update_customers/<int:customer_id>', methods=['PUT'])
 def edit_customer(customer_id: int):
     customer_data = request.get_json()
-    from database import db_session  # Assuming `db_session` is the SQLAlchemy session
+    from postgreSQLConnect import db_session
 
     if not customer_data:
         abort(400, description="Invalid data provided")
@@ -111,7 +112,7 @@ def update_customer(session: Session, customer_id: int, customer_data: dict):
 
 @customer_bp.route('/api/delete_customers/<int:customer_id>', methods=['DELETE'])
 def delete_customer_route(customer_id: int):
-    from database import db_session  # Assuming `db_session` is the SQLAlchemy session
+    from postgreSQLConnect import db_session
 
     success = delete_customer(db_session, customer_id)
 

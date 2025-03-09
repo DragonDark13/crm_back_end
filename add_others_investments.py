@@ -3,9 +3,9 @@ from datetime import datetime
 from sqlalchemy.exc import IntegrityError
 
 import csv
-from database import db_session
 
 from models import OtherInvestment
+from postgreSQLConnect import db_session
 
 
 def load_other_investments_from_csv(file_path, created_date):

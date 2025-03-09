@@ -1,15 +1,14 @@
 from sqlalchemy import inspect
 
 # Функція для завантаження продуктів у базу даних
-from database import db_session, engine
-from models import Product, Supplier, Base
 
 from datetime import datetime
 from decimal import Decimal
 import csv
 from sqlalchemy.exc import IntegrityError
-from models import Product, Supplier, PurchaseHistory, StockHistory
-from database import db_session
+from models import Product, Supplier, PurchaseHistory, StockHistory, Base
+from postgreSQLConnect import engine, db_session
+from app import app  # Імпортуємо Flask застосунок
 
 
 def ensure_table_exists(table_name):
@@ -149,6 +148,8 @@ files_data = [
 ]
 
 # Цикл для виклику функції load_products_from_csv для кожного файлу
-for file_path, date_str in files_data:
-    created_date = datetime.strptime(date_str, "%d.%m.%Y")
-    load_products_from_csv(file_path, created_date)
+if __name__ == "__main__":
+    with app.app_context():
+        for file_path, date_str in files_data:
+            created_date = datetime.strptime(date_str, "%d.%m.%Y")
+            load_products_from_csv(file_path, created_date)

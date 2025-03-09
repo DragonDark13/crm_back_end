@@ -23,88 +23,67 @@ from services.purchase_history_bp import purchase_history_bp
 from services.sales_history_services import sales_history_services_bp
 from services.supplier_routes import supplier_bp
 
-# Create a logger
+# Load environment variables
+load_dotenv()
+
+# Logger setup
 logger = logging.getLogger("app_logger")
-logger.setLevel(logging.INFO)  # Set the desired logging level
-
-# Create a file handler
+logger.setLevel(logging.INFO)
 file_handler = logging.FileHandler("app.log")
-file_handler.setLevel(logging.INFO)
-
-# Create a console handler
 console_handler = logging.StreamHandler()
-console_handler.setLevel(logging.INFO)
-
-# Create a formatter and set it for both handlers
 formatter = logging.Formatter('%(asctime)s - %(levelname)s - %(message)s')
 file_handler.setFormatter(formatter)
 console_handler.setFormatter(formatter)
-
-# Add the handlers to the logger
 logger.addHandler(file_handler)
 logger.addHandler(console_handler)
 
-load_dotenv()  # Завантажує змінні середовища з .env або .flaskenv
-
-print("SECRET_KEY:", os.getenv('SECRET_KEY'))
-print("SECURITY_PASSWORD_SALT:", os.getenv('SECURITY_PASSWORD_SALT'))
-
+# Flask app initialization
 app = Flask(__name__)
-app.config['JWT_SECRET_KEY'] = os.getenv('SECRET_KEY')  # Make sure this key is the same across the app
-app.config['SECRET_KEY'] = os.getenv('SECRET_KEY')
-app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///shop_crm.db'  # Update the URI for SQLAlchemy
-app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False  # Disable track modifications to save resources
 CORS(app)
 
-# Initialize the database
-db.init_app(app)
+# Configure database (PostgreSQL)
+app.config['SQLALCHEMY_DATABASE_URI'] = os.getenv('DATABASE_URL',
+                                                  'postgresql://postgres:admin@localhost:5432/shop_crm_post')
+app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
-# Initialize LoginManager
+# JWT Configuration
+app.config['SECRET_KEY'] = os.getenv('SECRET_KEY')
+app.config['JWT_SECRET_KEY'] = os.getenv('JWT_SECRET_KEY')
+app.config['JWT_ACCESS_TOKEN_EXPIRES'] = timedelta(hours=1)
+
+# Initialize extensions
+db.init_app(app)
+jwt = JWTManager(app)
 login_manager = LoginManager()
 login_manager.init_app(app)
-
-# JWT setup
-app.config['JWT_SECRET_KEY'] = os.getenv('JWT_SECRET_KEY')  # Set a secure secret key for JWT
-app.config['JWT_ACCESS_TOKEN_EXPIRES'] = timedelta(hours=1)  # Token expires in 1 hour
-
-jwt = JWTManager(app)
-
-
-# Session setup
-# engine = create_engine('sqlite:///shop_crm.db', echo=True)
-# Session = sessionmaker(bind=engine)
-# db_session = scoped_session(Session)
 
 
 @login_manager.user_loader
 def load_user(user_id):
-    return User.query.get(user_id)  # Use SQLAlchemy to get the user by ID
+    return User.query.get(user_id)
 
 
 @app.route('/api/protected', methods=['GET'])
 @jwt_required()
 def protected():
-    current_user = get_jwt_identity()  # Get user info from the JWT
+    current_user = get_jwt_identity()
     return jsonify(logged_in_as=current_user), 200
 
 
 @app.route('/api/products', methods=['GET'])
 def get_products():
-    """Get all products with categories"""
     product_list, status_code = ProductService.get_all_products()
     return jsonify(product_list), status_code
 
 
 @app.route('/api/product/<int:product_id>', methods=['GET'])
 def get_product(product_id):
-    """Get product by ID"""
     product_data, status_code = ProductService.get_product_by_id(product_id)
     return jsonify(product_data), status_code
 
 
 @app.route('/api/product', methods=['POST'])
 def create_and_purchase_product():
-    """Create a new product and process purchase"""
     data = request.get_json()
     result, status_code = ProductService.create_product(data)
     return jsonify(result), status_code
@@ -126,78 +105,62 @@ app.register_blueprint(gift_box_services_bp)
 
 @app.route('/update_server', methods=['POST'])
 def webhook():
-    if request.method == 'POST':
-        logging.info('POST request received on /update_server')
-        try:
-            subprocess.run(['git', 'fetch', 'origin'], cwd='/home/aleksandrForUpwork/crm_back_end')
-            subprocess.run(['git', 'pull', 'origin', 'main'], cwd='/home/aleksandrForUpwork/crm_back_end',
-                           capture_output=True, text=True)
-
-            return 'Updated PythonAnywhere successfully', 200
-        except Exception as e:
-            return 'Internal Server Error', 500
-    else:
-        return 'Method Not Allowed', 405
+    logging.info('POST request received on /update_server')
+    try:
+        subprocess.run(['git', 'fetch', 'origin'], cwd='/home/aleksandrForUpwork/crm_back_end')
+        subprocess.run(['git', 'pull', 'origin', 'main'], cwd='/home/aleksandrForUpwork/crm_back_end',
+                       capture_output=True, text=True)
+        return 'Updated PythonAnywhere successfully', 200
+    except Exception as e:
+        return 'Internal Server Error', 500
 
 
 # Function to create standard roles and users
 def create_roles_and_users():
-    db.create_all()  # Creates tables in the database
-
-    # Create standard roles
-    guest_role = Role.query.filter_by(name='guest').first()
-    if not guest_role:
-        guest_role = Role(name='guest', description='Read-only access')
-        db.session.add(guest_role)
-        db.session.commit()
-
-    manager_role = Role.query.filter_by(name='manager').first()
-    if not manager_role:
-        manager_role = Role(name='manager', description='Full access to manage resources')
-        db.session.add(manager_role)
-        db.session.commit()
-
-    # Create standard users
-    if not User.query.filter_by(username='guest').first():
-        guest_user = User(username='guest', email='guest@example.com')
-        guest_user.set_password('guestpassword')  # Hash password
-        guest_user.fs_uniquifier = str(uuid.uuid4())  # Set fs_uniquifier to a unique UUID
-        db.session.add(guest_user)
-        db.session.commit()
-        guest_user.roles.append(guest_role)
-        db.session.commit()
-
-    if not User.query.filter_by(username='manager').first():
-        manager_user = User(username='manager', email='manager@example.com')
-        manager_user.set_password('managerpassword')  # Хешуємо пароль лише один раз
-        manager_user.fs_uniquifier = str(uuid.uuid4())  # Встановлюємо унікальний UUID для fs_uniquifier
-        db.session.add(manager_user)
-        db.session.commit()
-        manager_user.roles.append(manager_role)
-        db.session.commit()
+    with app.app_context():
+        db.create_all()
+        guest_role = Role.query.filter_by(name='guest').first()
+        if not guest_role:
+            guest_role = Role(name='guest', description='Read-only access')
+            db.session.add(guest_role)
+            db.session.commit()
+        manager_role = Role.query.filter_by(name='manager').first()
+        if not manager_role:
+            manager_role = Role(name='manager', description='Full access')
+            db.session.add(manager_role)
+            db.session.commit()
+        if not User.query.filter_by(username='guest').first():
+            guest_user = User(username='guest', email='guest@example.com')
+            guest_user.set_password('guestpassword')
+            guest_user.fs_uniquifier = str(uuid.uuid4())
+            db.session.add(guest_user)
+            guest_user.roles.append(guest_role)
+            db.session.commit()
+        if not User.query.filter_by(username='manager').first():
+            manager_user = User(username='manager', email='manager@example.com')
+            manager_user.set_password('managerpassword')
+            manager_user.fs_uniquifier = str(uuid.uuid4())
+            db.session.add(manager_user)
+            manager_user.roles.append(manager_role)
+            db.session.commit()
 
 
-# Call the function to create roles and users on app startup
+# Initialize database with roles and users
 with app.app_context():
     create_roles_and_users()
 
 
-# Login route
 @app.route('/api/login', methods=['POST'])
 def login():
     username = request.json.get('username')
     password = request.json.get('password')
-
     user = User.query.filter_by(username=username).first()
-
-    if user and user.verify_password(password):  # Verify password
+    if user and user.verify_password(password):
         access_token = create_access_token(identity={'username': user.username, 'id': user.id})
         return jsonify(message="Login successful", token=access_token), 200
-
     return jsonify(message="Invalid credentials"), 401
 
 
-# Logout route
 @app.route('/api/logout', methods=['POST'])
 @jwt_required()
 def logout():

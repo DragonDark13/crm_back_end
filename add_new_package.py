@@ -3,8 +3,8 @@ from datetime import datetime
 import csv
 from sqlalchemy.exc import IntegrityError
 
-from database import db_session
 from models import PackagingMaterial, PackagingMaterialSupplier, PackagingPurchaseHistory, PackagingStockHistory
+from postgreSQLConnect import db_session
 
 
 def import_packaging_materials_from_csv(file_path, purchase_date, db_session):

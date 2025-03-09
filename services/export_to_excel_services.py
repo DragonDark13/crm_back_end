@@ -4,14 +4,14 @@ from io import BytesIO
 import pandas as pd
 from datetime import datetime
 
-from database import db_session
-from models import Product, Supplier, Category
-
+from models import Product
 export_to_excel_bp = Blueprint('export_to_excel', __name__)
 
 
 @export_to_excel_bp.route('/api/export-products-excel', methods=['POST'])
 def export_products():
+    from postgreSQLConnect import db_session
+
     # Отримання списку ID продуктів з фронтенду
     data = request.get_json()
     product_ids = data.get("product_ids", [])
