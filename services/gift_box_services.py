@@ -1,5 +1,6 @@
 from flask import request, jsonify, Blueprint
-from models import GiftSet, GiftSetProduct, GiftSetPackaging, Product, PackagingMaterial, GiftSetSalesHistory
+from models import GiftSet, GiftSetProduct, GiftSetPackaging, Product, PackagingMaterial, GiftSetSalesHistory, \
+    GiftSetSalesHistoryProduct, GiftSetSalesHistoryPackaging
 
 gift_box_services_bp = Blueprint('gift_box_services', __name__)
 
@@ -261,8 +262,9 @@ def dismantle_gift_set(gift_set_id):
 
 @gift_box_services_bp.route('/api/sell_gift_set/<int:gift_set_id>', methods=['POST'])
 def sell_gift_set(gift_set_id):
-    gift_set = GiftSet.query.get(gift_set_id)
     from postgreSQLConnect import db_session
+
+    gift_set = db_session.query(GiftSet).get(gift_set_id)
 
     if not gift_set:
         return jsonify({"error": "Gift set not found"}), 404
@@ -278,28 +280,49 @@ def sell_gift_set(gift_set_id):
         customer_name=customer_name
     )
     db_session.add(sales_record)
-    db_session.commit()
 
     # Зміна кількості зарезервованих і проданих товарів та пакувань
-    for gift_set_product in gift_set.products:
+    for gift_set_product in gift_set.gift_set_products:
         product = gift_set_product.product
+        # Перевіряємо чи об'єкт прив'язаний до поточної сесії
+        if not db_session.is_modified(product, False):
+            # Зливаємо об'єкт із поточною сесією
+            product = db_session.merge(product)
+        # Перевірка чи об'єкт прив'язаний до іншої сесії
         product.reserved_quantity -= gift_set_product.quantity  # Зменшуємо кількість зарезервовану
         product.sold_quantity += gift_set_product.quantity  # Збільшуємо кількість продану
         product.available_quantity -= gift_set_product.quantity  # Зменшуємо кількість в наявності
 
-        # Додаємо запис про цей товар у історію продажів
-        sales_record.products.append(gift_set_product)
+        # Додаємо запис про цей товар у історію продажів через зворотний зв'язок
+        sales_product = GiftSetSalesHistoryProduct(
+            gift_set_product=gift_set_product,
+            quantity=gift_set_product.quantity
+        )
 
-    for gift_set_packaging in gift_set.packagings:
+        # Додаємо цей товар до списку sales_history_products
+        sales_record.sales_history_products.append(sales_product)
+
+    db_session.commit()
+
+    # Записуємо історію продажів пакувань
+    for gift_set_packaging in gift_set.gift_set_packagings:
         packaging = gift_set_packaging.packaging
         packaging.reserved_quantity -= gift_set_packaging.quantity  # Зменшуємо кількість зарезервовану
+        # Перевіряємо, чи є значення в полях і, якщо вони None, ініціалізуємо їх.
+        if packaging.sold_quantity is None:
+            packaging.sold_quantity = 0  # Якщо sold_quantity дорівнює None, ініціалізуємо його як 0
         packaging.sold_quantity += gift_set_packaging.quantity  # Збільшуємо кількість продану
         packaging.available_quantity -= gift_set_packaging.quantity  # Зменшуємо кількість в наявності
 
-        # Додаємо запис про це пакування у історію продажів
-        sales_record.packagings.append(gift_set_packaging)
+        # Додаємо запис про це пакування в історію продажів
+        sales_packaging = GiftSetSalesHistoryPackaging(
+            gift_set_packaging=gift_set_packaging,
+            quantity=gift_set_packaging.quantity
+        )
+        sales_record.sales_history_packagings.append(sales_packaging)
 
     # Записуємо зміни в базу даних
+    gift_set.is_sold = True
     db_session.commit()
 
     return jsonify({
@@ -319,7 +342,8 @@ def get_gift_sets():
     # Пошук наборів подарунків за заданими фільтрами
     gift_sets_query = db_session.query(GiftSet).filter(
         GiftSet.total_price >= min_price,
-        GiftSet.total_price <= max_price
+        GiftSet.total_price <= max_price,
+        GiftSet.is_sold == False  # ��ише не продані набори подарунків
     )
 
     if name_filter:

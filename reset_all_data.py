@@ -1,5 +1,5 @@
 # Видалення таблиць (якщо потрібно)
-from database import engine
+from postgreSQLConnect import engine
 from models import Base
 
 Base.metadata.drop_all(engine)

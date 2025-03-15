@@ -7850,3 +7850,609 @@ Accept-Language: en-GB,en;q=0.9,uk-UA;q=0.8,uk;q=0.7,en-US;q=0.6,ru;q=0.5
 2025-03-09 08:56:33,224 - INFO - Request method: GET, URL: http://127.0.0.1:5000/api/categories
 2025-03-09 08:56:39,669 - INFO - Request method: GET, URL: http://127.0.0.1:5000/api/get_all_sales_history
 2025-03-09 08:56:39,669 - INFO - Request method: GET, URL: http://127.0.0.1:5000/api/get_all_sales_history
+2025-03-09 08:58:29,723 - INFO - Request method: GET, URL: http://127.0.0.1:5000/api/get_all_gift_sets
+2025-03-09 08:58:33,506 - INFO - Request method: GET, URL: http://127.0.0.1:5000/api/suppliers/list
+2025-03-09 08:58:33,506 - INFO - Request method: GET, URL: http://127.0.0.1:5000/api/suppliers/list
+2025-03-09 08:58:33,509 - INFO - Request method: GET, URL: http://127.0.0.1:5000/api/categories
+2025-03-09 08:58:33,509 - INFO - Request method: GET, URL: http://127.0.0.1:5000/api/categories
+2025-03-09 08:58:34,239 - INFO - Request method: GET, URL: http://127.0.0.1:5000/api/get_all_gift_sets
+2025-03-09 08:58:34,239 - INFO - Request method: GET, URL: http://127.0.0.1:5000/api/get_all_gift_sets
+2025-03-09 08:58:34,960 - INFO - Request method: GET, URL: http://127.0.0.1:5000/api/suppliers/list
+2025-03-09 08:58:34,960 - INFO - Request method: GET, URL: http://127.0.0.1:5000/api/suppliers/list
+2025-03-09 08:58:34,962 - INFO - Request method: GET, URL: http://127.0.0.1:5000/api/categories
+2025-03-09 08:58:34,962 - INFO - Request method: GET, URL: http://127.0.0.1:5000/api/categories
+2025-03-09 08:58:36,409 - INFO - Request method: GET, URL: http://127.0.0.1:5000/api/get_all_gift_sets
+2025-03-09 08:58:36,409 - INFO - Request method: GET, URL: http://127.0.0.1:5000/api/get_all_gift_sets
+2025-03-09 08:58:38,111 - INFO - Request method: GET, URL: http://127.0.0.1:5000/api/suppliers/list
+2025-03-09 08:58:38,111 - INFO - Request method: GET, URL: http://127.0.0.1:5000/api/suppliers/list
+2025-03-09 08:58:38,114 - INFO - Request method: GET, URL: http://127.0.0.1:5000/api/categories
+2025-03-09 08:58:38,114 - INFO - Request method: GET, URL: http://127.0.0.1:5000/api/categories
+2025-03-09 10:12:33,061 - INFO - Request method: GET, URL: http://127.0.0.1:5000/api/suppliers/list
+2025-03-09 10:12:33,061 - INFO - Request method: GET, URL: http://127.0.0.1:5000/api/suppliers/list
+2025-03-09 10:12:33,063 - INFO - Request method: GET, URL: http://127.0.0.1:5000/api/categories
+2025-03-09 10:12:33,063 - INFO - Request method: GET, URL: http://127.0.0.1:5000/api/categories
+2025-03-09 10:12:33,069 - INFO - Request method: GET, URL: http://127.0.0.1:5000/api/get_all_packaging_materials
+2025-03-09 10:12:33,069 - INFO - Request method: GET, URL: http://127.0.0.1:5000/api/get_all_packaging_materials
+2025-03-09 10:12:33,073 - INFO - Request method: GET, URL: http://127.0.0.1:5000/api/get_all_customers
+2025-03-09 10:12:33,073 - INFO - Request method: GET, URL: http://127.0.0.1:5000/api/get_all_customers
+2025-03-09 10:12:33,084 - INFO - Request method: GET, URL: http://127.0.0.1:5000/api/products
+2025-03-09 10:12:33,084 - INFO - Request method: GET, URL: http://127.0.0.1:5000/api/products
+2025-03-09 10:12:33,092 - INFO - Request method: GET, URL: http://127.0.0.1:5000/api/suppliers/list
+2025-03-09 10:12:33,092 - INFO - Request method: GET, URL: http://127.0.0.1:5000/api/suppliers/list
+2025-03-09 10:12:33,118 - INFO - Request method: GET, URL: http://127.0.0.1:5000/api/categories
+2025-03-09 10:12:33,118 - INFO - Request method: GET, URL: http://127.0.0.1:5000/api/categories
+2025-03-09 10:17:18,748 - INFO - Request method: GET, URL: http://127.0.0.1:5000/api/get_all_gift_sets
+2025-03-09 10:17:18,748 - INFO - Request method: GET, URL: http://127.0.0.1:5000/api/get_all_gift_sets
+2025-03-09 10:18:29,313 - INFO - Request method: OPTIONS, URL: http://127.0.0.1:5000/api/create_gift_set
+2025-03-09 10:18:29,313 - INFO - Request method: OPTIONS, URL: http://127.0.0.1:5000/api/create_gift_set
+2025-03-09 10:18:29,318 - INFO - Request method: POST, URL: http://127.0.0.1:5000/api/create_gift_set
+2025-03-09 10:18:29,318 - INFO - Request method: POST, URL: http://127.0.0.1:5000/api/create_gift_set
+2025-03-09 10:18:29,319 - INFO - Body: {"name":"test","description":"test 1","gift_selling_price":1299,"items":[{"item_id":106,"item_type":"product","quantity":1,"price":500},{"item_id":66,"item_type":"product","quantity":3,"price":27},{"item_id":6,"item_type":"packaging","quantity":1,"price":188}]}
+2025-03-09 10:18:29,319 - INFO - Body: {"name":"test","description":"test 1","gift_selling_price":1299,"items":[{"item_id":106,"item_type":"product","quantity":1,"price":500},{"item_id":66,"item_type":"product","quantity":3,"price":27},{"item_id":6,"item_type":"packaging","quantity":1,"price":188}]}
+2025-03-09 10:18:36,539 - INFO - Request method: GET, URL: http://127.0.0.1:5000/api/get_all_gift_sets
+2025-03-09 10:18:36,539 - INFO - Request method: GET, URL: http://127.0.0.1:5000/api/get_all_gift_sets
+2025-03-09 10:18:36,541 - INFO - Request method: GET, URL: http://127.0.0.1:5000/api/get_all_packaging_materials
+2025-03-09 10:18:36,541 - INFO - Request method: GET, URL: http://127.0.0.1:5000/api/get_all_packaging_materials
+2025-03-09 10:18:36,546 - INFO - Request method: GET, URL: http://127.0.0.1:5000/api/get_all_customers
+2025-03-09 10:18:36,546 - INFO - Request method: GET, URL: http://127.0.0.1:5000/api/get_all_customers
+2025-03-09 10:18:36,554 - INFO - Request method: GET, URL: http://127.0.0.1:5000/api/categories
+2025-03-09 10:18:36,554 - INFO - Request method: GET, URL: http://127.0.0.1:5000/api/categories
+2025-03-09 10:18:36,558 - INFO - Request method: GET, URL: http://127.0.0.1:5000/api/suppliers/list
+2025-03-09 10:18:36,558 - INFO - Request method: GET, URL: http://127.0.0.1:5000/api/suppliers/list
+2025-03-09 10:18:36,561 - INFO - Request method: GET, URL: http://127.0.0.1:5000/api/products
+2025-03-09 10:18:36,561 - INFO - Request method: GET, URL: http://127.0.0.1:5000/api/products
+2025-03-09 10:31:09,026 - INFO - Request method: GET, URL: http://127.0.0.1:5000/api/get_all_gift_sets
+2025-03-09 10:31:09,026 - INFO - Request method: GET, URL: http://127.0.0.1:5000/api/get_all_gift_sets
+2025-03-09 10:31:16,266 - INFO - Request method: GET, URL: http://127.0.0.1:5000/api/get_all_gift_sets
+2025-03-09 10:31:16,266 - INFO - Request method: GET, URL: http://127.0.0.1:5000/api/get_all_gift_sets
+2025-03-09 10:31:16,272 - INFO - Request method: GET, URL: http://127.0.0.1:5000/api/get_all_packaging_materials
+2025-03-09 10:31:16,272 - INFO - Request method: GET, URL: http://127.0.0.1:5000/api/get_all_packaging_materials
+2025-03-09 10:31:16,302 - INFO - Request method: GET, URL: http://127.0.0.1:5000/api/get_all_customers
+2025-03-09 10:31:16,302 - INFO - Request method: GET, URL: http://127.0.0.1:5000/api/get_all_customers
+2025-03-09 10:31:16,395 - INFO - Request method: GET, URL: http://127.0.0.1:5000/api/categories
+2025-03-09 10:31:16,395 - INFO - Request method: GET, URL: http://127.0.0.1:5000/api/categories
+2025-03-09 10:31:16,435 - INFO - Request method: GET, URL: http://127.0.0.1:5000/api/suppliers/list
+2025-03-09 10:31:16,435 - INFO - Request method: GET, URL: http://127.0.0.1:5000/api/suppliers/list
+2025-03-09 10:31:16,499 - INFO - Request method: GET, URL: http://127.0.0.1:5000/api/products
+2025-03-09 10:31:16,499 - INFO - Request method: GET, URL: http://127.0.0.1:5000/api/products
+2025-03-09 10:50:05,068 - INFO - Request method: GET, URL: http://127.0.0.1:5000/api/get_all_gift_sets
+2025-03-09 10:50:05,068 - INFO - Request method: GET, URL: http://127.0.0.1:5000/api/get_all_gift_sets
+2025-03-09 10:50:05,070 - INFO - Request method: GET, URL: http://127.0.0.1:5000/api/get_all_packaging_materials
+2025-03-09 10:50:05,070 - INFO - Request method: GET, URL: http://127.0.0.1:5000/api/get_all_packaging_materials
+2025-03-09 10:50:05,075 - INFO - Request method: GET, URL: http://127.0.0.1:5000/api/get_all_customers
+2025-03-09 10:50:05,075 - INFO - Request method: GET, URL: http://127.0.0.1:5000/api/get_all_customers
+2025-03-09 10:50:05,078 - INFO - Request method: GET, URL: http://127.0.0.1:5000/api/categories
+2025-03-09 10:50:05,082 - INFO - Request method: GET, URL: http://127.0.0.1:5000/api/suppliers/list
+2025-03-09 10:50:05,078 - INFO - Request method: GET, URL: http://127.0.0.1:5000/api/categories
+2025-03-09 10:50:05,082 - INFO - Request method: GET, URL: http://127.0.0.1:5000/api/suppliers/list
+2025-03-09 10:50:05,088 - INFO - Request method: GET, URL: http://127.0.0.1:5000/api/products
+2025-03-09 10:50:05,088 - INFO - Request method: GET, URL: http://127.0.0.1:5000/api/products
+2025-03-09 10:50:07,915 - INFO - Request method: GET, URL: http://127.0.0.1:5000/api/get_all_sales_history
+2025-03-09 10:50:07,915 - INFO - Request method: GET, URL: http://127.0.0.1:5000/api/get_all_sales_history
+2025-03-09 10:50:09,066 - INFO - Request method: GET, URL: http://127.0.0.1:5000/api/suppliers/list
+2025-03-09 10:50:09,066 - INFO - Request method: GET, URL: http://127.0.0.1:5000/api/suppliers/list
+2025-03-09 10:50:09,068 - INFO - Request method: GET, URL: http://127.0.0.1:5000/api/categories
+2025-03-09 10:50:09,068 - INFO - Request method: GET, URL: http://127.0.0.1:5000/api/categories
+2025-03-09 10:50:11,959 - INFO - Request method: GET, URL: http://127.0.0.1:5000/api/get_all_customers
+2025-03-09 10:50:11,959 - INFO - Request method: GET, URL: http://127.0.0.1:5000/api/get_all_customers
+2025-03-09 10:50:11,961 - INFO - Request method: GET, URL: http://127.0.0.1:5000/api/get_all_packaging_materials
+2025-03-09 10:50:11,961 - INFO - Request method: GET, URL: http://127.0.0.1:5000/api/get_all_packaging_materials
+2025-03-09 10:55:51,936 - INFO - Request method: GET, URL: http://127.0.0.1:5000/api/get_all_customers
+2025-03-09 10:55:51,936 - INFO - Request method: GET, URL: http://127.0.0.1:5000/api/get_all_customers
+2025-03-09 10:55:51,940 - INFO - Request method: GET, URL: http://127.0.0.1:5000/api/get_all_packaging_materials
+2025-03-09 10:55:51,940 - INFO - Request method: GET, URL: http://127.0.0.1:5000/api/get_all_packaging_materials
+2025-03-09 10:56:17,318 - INFO - Request method: OPTIONS, URL: http://127.0.0.1:5000/api/customer_create
+2025-03-09 10:56:17,318 - INFO - Request method: OPTIONS, URL: http://127.0.0.1:5000/api/customer_create
+2025-03-09 10:56:17,324 - INFO - Request method: POST, URL: http://127.0.0.1:5000/api/customer_create
+2025-03-09 10:56:17,324 - INFO - Request method: POST, URL: http://127.0.0.1:5000/api/customer_create
+2025-03-09 10:56:17,324 - INFO - Body: {"contact_info":"","id":0,"sales":[],"name":"test","email":"","phone_number":"","address":"test"}
+2025-03-09 10:56:17,324 - INFO - Body: {"contact_info":"","id":0,"sales":[],"name":"test","email":"","phone_number":"","address":"test"}
+2025-03-09 10:56:17,349 - INFO - Request method: GET, URL: http://127.0.0.1:5000/api/get_all_customers
+2025-03-09 10:56:17,349 - INFO - Request method: GET, URL: http://127.0.0.1:5000/api/get_all_customers
+2025-03-09 10:56:58,572 - INFO - Request method: OPTIONS, URL: http://127.0.0.1:5000/api/sell_gift_set/1
+2025-03-09 10:56:58,572 - INFO - Request method: OPTIONS, URL: http://127.0.0.1:5000/api/sell_gift_set/1
+2025-03-09 10:56:58,605 - INFO - Request method: POST, URL: http://127.0.0.1:5000/api/sell_gift_set/1
+2025-03-09 10:56:58,605 - INFO - Request method: POST, URL: http://127.0.0.1:5000/api/sell_gift_set/1
+2025-03-09 10:56:58,606 - INFO - Body: {"customer_name":1}
+2025-03-09 10:56:58,606 - INFO - Body: {"customer_name":1}
+2025-03-09 10:57:36,514 - INFO - Request method: OPTIONS, URL: http://127.0.0.1:5000/api/sell_gift_set/1
+2025-03-09 10:57:36,514 - INFO - Request method: OPTIONS, URL: http://127.0.0.1:5000/api/sell_gift_set/1
+2025-03-09 10:57:36,530 - INFO - Request method: POST, URL: http://127.0.0.1:5000/api/sell_gift_set/1
+2025-03-09 10:57:36,530 - INFO - Request method: POST, URL: http://127.0.0.1:5000/api/sell_gift_set/1
+2025-03-09 10:57:36,531 - INFO - Body: {"customer_name":1}
+2025-03-09 10:57:36,531 - INFO - Body: {"customer_name":1}
+2025-03-09 11:10:19,431 - INFO - Request method: GET, URL: http://127.0.0.1:5000/api/get_all_gift_sets
+2025-03-09 11:10:19,431 - INFO - Request method: GET, URL: http://127.0.0.1:5000/api/get_all_gift_sets
+2025-03-09 11:10:19,446 - INFO - Request method: GET, URL: http://127.0.0.1:5000/api/get_all_packaging_materials
+2025-03-09 11:10:19,446 - INFO - Request method: GET, URL: http://127.0.0.1:5000/api/get_all_packaging_materials
+2025-03-09 11:10:19,446 - INFO - Request method: GET, URL: http://127.0.0.1:5000/api/get_all_customers
+2025-03-09 11:10:19,446 - INFO - Request method: GET, URL: http://127.0.0.1:5000/api/get_all_customers
+2025-03-09 11:10:19,458 - INFO - Request method: GET, URL: http://127.0.0.1:5000/api/categories
+2025-03-09 11:10:19,458 - INFO - Request method: GET, URL: http://127.0.0.1:5000/api/categories
+2025-03-09 11:10:19,473 - INFO - Request method: GET, URL: http://127.0.0.1:5000/api/suppliers/list
+2025-03-09 11:10:19,473 - INFO - Request method: GET, URL: http://127.0.0.1:5000/api/suppliers/list
+2025-03-09 11:10:19,545 - INFO - Request method: GET, URL: http://127.0.0.1:5000/api/products
+2025-03-09 11:10:19,545 - INFO - Request method: GET, URL: http://127.0.0.1:5000/api/products
+2025-03-09 11:10:21,057 - INFO - Request method: GET, URL: http://127.0.0.1:5000/api/suppliers/list
+2025-03-09 11:10:21,057 - INFO - Request method: GET, URL: http://127.0.0.1:5000/api/suppliers/list
+2025-03-09 11:10:21,097 - INFO - Request method: GET, URL: http://127.0.0.1:5000/api/categories
+2025-03-09 11:10:21,097 - INFO - Request method: GET, URL: http://127.0.0.1:5000/api/categories
+2025-03-09 11:10:21,114 - INFO - Request method: GET, URL: http://127.0.0.1:5000/api/get_all_packaging_materials
+2025-03-09 11:10:21,114 - INFO - Request method: GET, URL: http://127.0.0.1:5000/api/get_all_packaging_materials
+2025-03-09 11:10:21,119 - INFO - Request method: GET, URL: http://127.0.0.1:5000/api/get_all_customers
+2025-03-09 11:10:21,119 - INFO - Request method: GET, URL: http://127.0.0.1:5000/api/get_all_customers
+2025-03-09 11:10:21,134 - INFO - Request method: GET, URL: http://127.0.0.1:5000/api/suppliers/list
+2025-03-09 11:10:21,134 - INFO - Request method: GET, URL: http://127.0.0.1:5000/api/suppliers/list
+2025-03-09 11:10:21,146 - INFO - Request method: GET, URL: http://127.0.0.1:5000/api/products
+2025-03-09 11:10:21,146 - INFO - Request method: GET, URL: http://127.0.0.1:5000/api/products
+2025-03-09 11:10:21,167 - INFO - Request method: GET, URL: http://127.0.0.1:5000/api/categories
+2025-03-09 11:10:21,167 - INFO - Request method: GET, URL: http://127.0.0.1:5000/api/categories
+2025-03-09 11:14:26,773 - INFO - Request method: GET, URL: http://127.0.0.1:5000/api/get_all_gift_sets
+2025-03-09 11:14:26,775 - INFO - Request method: GET, URL: http://127.0.0.1:5000/api/get_all_packaging_materials
+2025-03-09 11:14:26,778 - INFO - Request method: GET, URL: http://127.0.0.1:5000/api/get_all_customers
+2025-03-09 11:14:26,780 - INFO - Request method: GET, URL: http://127.0.0.1:5000/api/categories
+2025-03-09 11:14:26,783 - INFO - Request method: GET, URL: http://127.0.0.1:5000/api/suppliers/list
+2025-03-09 11:14:26,785 - INFO - Request method: GET, URL: http://127.0.0.1:5000/api/products
+2025-03-09 11:59:18,883 - INFO - Request method: GET, URL: http://127.0.0.1:5000/api/get_all_gift_sets
+2025-03-09 11:59:18,887 - INFO - Request method: GET, URL: http://127.0.0.1:5000/api/get_all_packaging_materials
+2025-03-09 11:59:18,891 - INFO - Request method: GET, URL: http://127.0.0.1:5000/api/get_all_customers
+2025-03-09 11:59:18,893 - INFO - Request method: GET, URL: http://127.0.0.1:5000/api/categories
+2025-03-09 11:59:18,895 - INFO - Request method: GET, URL: http://127.0.0.1:5000/api/suppliers/list
+2025-03-09 11:59:18,898 - INFO - Request method: GET, URL: http://127.0.0.1:5000/api/products
+2025-03-09 11:59:42,849 - INFO - Request method: OPTIONS, URL: http://127.0.0.1:5000/api/sell_gift_set/1
+2025-03-09 11:59:42,855 - INFO - Request method: POST, URL: http://127.0.0.1:5000/api/sell_gift_set/1
+2025-03-09 11:59:42,856 - INFO - Body: {"customer_name":null,"selling_price":1,"sale_date":1299}
+2025-03-09 12:01:03,394 - INFO - Request method: OPTIONS, URL: http://127.0.0.1:5000/api/sell_gift_set/1
+2025-03-09 12:01:03,406 - INFO - Request method: POST, URL: http://127.0.0.1:5000/api/sell_gift_set/1
+2025-03-09 12:01:03,408 - INFO - Body: {"customer_name":null,"selling_price":1,"sale_date":1299}
+2025-03-09 12:07:54,003 - INFO - Request method: GET, URL: http://127.0.0.1:5000/api/get_all_gift_sets
+2025-03-09 12:07:54,008 - INFO - Request method: GET, URL: http://127.0.0.1:5000/api/get_all_packaging_materials
+2025-03-09 12:07:54,010 - INFO - Request method: GET, URL: http://127.0.0.1:5000/api/get_all_customers
+2025-03-09 12:07:54,014 - INFO - Request method: GET, URL: http://127.0.0.1:5000/api/categories
+2025-03-09 12:07:54,018 - INFO - Request method: GET, URL: http://127.0.0.1:5000/api/suppliers/list
+2025-03-09 12:07:54,021 - INFO - Request method: GET, URL: http://127.0.0.1:5000/api/products
+2025-03-09 12:09:35,256 - INFO - Request method: GET, URL: http://127.0.0.1:5000/api/get_all_gift_sets
+2025-03-09 12:09:35,261 - INFO - Request method: GET, URL: http://127.0.0.1:5000/api/get_all_packaging_materials
+2025-03-09 12:09:35,265 - INFO - Request method: GET, URL: http://127.0.0.1:5000/api/get_all_customers
+2025-03-09 12:09:35,269 - INFO - Request method: GET, URL: http://127.0.0.1:5000/api/categories
+2025-03-09 12:09:35,272 - INFO - Request method: GET, URL: http://127.0.0.1:5000/api/suppliers/list
+2025-03-09 12:09:35,278 - INFO - Request method: GET, URL: http://127.0.0.1:5000/api/products
+2025-03-09 12:09:38,210 - INFO - Request method: GET, URL: http://127.0.0.1:5000/api/get_all_gift_sets
+2025-03-09 12:09:38,214 - INFO - Request method: GET, URL: http://127.0.0.1:5000/api/get_all_packaging_materials
+2025-03-09 12:09:38,218 - INFO - Request method: GET, URL: http://127.0.0.1:5000/api/get_all_customers
+2025-03-09 12:09:38,222 - INFO - Request method: GET, URL: http://127.0.0.1:5000/api/categories
+2025-03-09 12:09:38,226 - INFO - Request method: GET, URL: http://127.0.0.1:5000/api/suppliers/list
+2025-03-09 12:09:38,230 - INFO - Request method: GET, URL: http://127.0.0.1:5000/api/products
+2025-03-09 12:10:21,536 - INFO - Request method: OPTIONS, URL: http://127.0.0.1:5000/api/sell_gift_set/1
+2025-03-09 12:10:21,543 - INFO - Request method: POST, URL: http://127.0.0.1:5000/api/sell_gift_set/1
+2025-03-09 12:10:21,544 - INFO - Body: {"customer_name":null,"sale_date":null}
+2025-03-09 12:11:08,648 - INFO - Request method: OPTIONS, URL: http://127.0.0.1:5000/api/sell_gift_set/1
+2025-03-09 12:11:08,666 - INFO - Request method: POST, URL: http://127.0.0.1:5000/api/sell_gift_set/1
+2025-03-09 12:11:08,667 - INFO - Body: {"customer_name":null,"sale_date":null}
+2025-03-09 12:11:10,639 - INFO - Request method: POST, URL: http://127.0.0.1:5000/api/sell_gift_set/1
+2025-03-09 12:11:10,640 - INFO - Body: {"customer_name":null,"sale_date":null}
+2025-03-09 12:14:55,842 - INFO - Request method: OPTIONS, URL: http://127.0.0.1:5000/api/sell_gift_set/1
+2025-03-09 12:14:55,849 - INFO - Request method: POST, URL: http://127.0.0.1:5000/api/sell_gift_set/1
+2025-03-09 12:14:55,849 - INFO - Body: {"customer_name":null,"sale_date":null}
+2025-03-09 12:14:56,386 - INFO - Request method: GET, URL: http://127.0.0.1:5000/api/get_all_gift_sets
+2025-03-09 12:14:56,391 - INFO - Request method: GET, URL: http://127.0.0.1:5000/api/get_all_packaging_materials
+2025-03-09 12:14:56,396 - INFO - Request method: GET, URL: http://127.0.0.1:5000/api/get_all_customers
+2025-03-09 12:14:56,400 - INFO - Request method: GET, URL: http://127.0.0.1:5000/api/categories
+2025-03-09 12:14:56,403 - INFO - Request method: GET, URL: http://127.0.0.1:5000/api/suppliers/list
+2025-03-09 12:14:56,408 - INFO - Request method: GET, URL: http://127.0.0.1:5000/api/products
+2025-03-09 12:14:56,659 - INFO - Request method: GET, URL: http://127.0.0.1:5000/api/get_all_gift_sets
+2025-03-09 12:14:59,685 - INFO - Request method: GET, URL: http://127.0.0.1:5000/api/get_all_gift_sets
+2025-03-09 12:14:59,689 - INFO - Request method: GET, URL: http://127.0.0.1:5000/api/get_all_packaging_materials
+2025-03-09 12:14:59,693 - INFO - Request method: GET, URL: http://127.0.0.1:5000/api/get_all_customers
+2025-03-09 12:14:59,695 - INFO - Request method: GET, URL: http://127.0.0.1:5000/api/categories
+2025-03-09 12:14:59,700 - INFO - Request method: GET, URL: http://127.0.0.1:5000/api/suppliers/list
+2025-03-09 12:14:59,726 - INFO - Request method: GET, URL: http://127.0.0.1:5000/api/products
+2025-03-09 12:19:47,367 - INFO - Request method: GET, URL: http://127.0.0.1:5000/api/get_all_gift_sets
+2025-03-09 12:19:47,371 - INFO - Request method: GET, URL: http://127.0.0.1:5000/api/get_all_packaging_materials
+2025-03-09 12:19:47,376 - INFO - Request method: GET, URL: http://127.0.0.1:5000/api/get_all_customers
+2025-03-09 12:19:47,380 - INFO - Request method: GET, URL: http://127.0.0.1:5000/api/categories
+2025-03-09 12:19:47,384 - INFO - Request method: GET, URL: http://127.0.0.1:5000/api/suppliers/list
+2025-03-09 12:19:47,386 - INFO - Request method: GET, URL: http://127.0.0.1:5000/api/products
+2025-03-09 12:21:30,997 - INFO - Request method: GET, URL: http://127.0.0.1:5000/api/get_all_gift_sets
+2025-03-09 12:21:35,005 - INFO - Request method: GET, URL: http://127.0.0.1:5000/api/suppliers/list
+2025-03-09 12:21:35,009 - INFO - Request method: GET, URL: http://127.0.0.1:5000/api/categories
+2025-03-09 12:21:35,016 - INFO - Request method: GET, URL: http://127.0.0.1:5000/api/get_all_packaging_materials
+2025-03-09 12:21:35,019 - INFO - Request method: GET, URL: http://127.0.0.1:5000/api/get_all_customers
+2025-03-09 12:21:35,025 - INFO - Request method: GET, URL: http://127.0.0.1:5000/api/products
+2025-03-09 12:21:35,032 - INFO - Request method: GET, URL: http://127.0.0.1:5000/api/suppliers/list
+2025-03-09 12:21:35,036 - INFO - Request method: GET, URL: http://127.0.0.1:5000/api/categories
+2025-03-09 12:21:40,865 - INFO - Request method: GET, URL: http://127.0.0.1:5000/api/get_all_gift_sets
+2025-03-09 12:21:40,869 - INFO - Request method: GET, URL: http://127.0.0.1:5000/api/get_all_packaging_materials
+2025-03-09 12:21:40,873 - INFO - Request method: GET, URL: http://127.0.0.1:5000/api/get_all_customers
+2025-03-09 12:21:40,876 - INFO - Request method: GET, URL: http://127.0.0.1:5000/api/categories
+2025-03-09 12:21:40,882 - INFO - Request method: GET, URL: http://127.0.0.1:5000/api/suppliers/list
+2025-03-09 12:21:40,886 - INFO - Request method: GET, URL: http://127.0.0.1:5000/api/products
+2025-03-09 12:23:48,139 - INFO - Request method: OPTIONS, URL: http://127.0.0.1:5000/api/sell_gift_set/1
+2025-03-09 12:23:48,149 - INFO - Request method: POST, URL: http://127.0.0.1:5000/api/sell_gift_set/1
+2025-03-09 12:23:48,150 - INFO - Body: {"customer_name":1,"selling_price":1299,"sale_date":"2025-03-09"}
+2025-03-09 17:39:12,702 - INFO - Request method: GET, URL: http://127.0.0.1:5000/api/suppliers/list
+2025-03-09 17:39:12,703 - INFO - Request method: GET, URL: http://127.0.0.1:5000/api/categories
+2025-03-09 17:39:12,706 - INFO - Request method: GET, URL: http://127.0.0.1:5000/api/get_all_packaging_materials
+2025-03-09 17:39:12,708 - INFO - Request method: GET, URL: http://127.0.0.1:5000/api/get_all_customers
+2025-03-09 17:39:12,712 - INFO - Request method: GET, URL: http://127.0.0.1:5000/api/products
+2025-03-09 17:39:12,897 - INFO - Request method: GET, URL: http://127.0.0.1:5000/api/suppliers/list
+2025-03-09 17:39:13,032 - INFO - Request method: GET, URL: http://127.0.0.1:5000/api/categories
+2025-03-09 17:41:18,072 - INFO - Request method: GET, URL: http://127.0.0.1:5000/api/get_all_gift_sets
+2025-03-09 17:41:18,075 - INFO - Request method: GET, URL: http://127.0.0.1:5000/api/get_all_packaging_materials
+2025-03-09 17:41:18,077 - INFO - Request method: GET, URL: http://127.0.0.1:5000/api/get_all_customers
+2025-03-09 17:41:18,079 - INFO - Request method: GET, URL: http://127.0.0.1:5000/api/categories
+2025-03-09 17:41:18,084 - INFO - Request method: GET, URL: http://127.0.0.1:5000/api/suppliers/list
+2025-03-09 17:41:18,086 - INFO - Request method: GET, URL: http://127.0.0.1:5000/api/products
+2025-03-09 17:43:47,171 - INFO - Request method: OPTIONS, URL: http://127.0.0.1:5000/api/sell_gift_set/1
+2025-03-09 17:43:47,182 - INFO - Request method: POST, URL: http://127.0.0.1:5000/api/sell_gift_set/1
+2025-03-09 17:43:47,183 - INFO - Body: {"customer_name":1,"selling_price":1299,"sale_date":"2025-03-09"}
+2025-03-09 17:53:04,669 - INFO - Request method: OPTIONS, URL: http://127.0.0.1:5000/api/sell_gift_set/1
+2025-03-09 17:53:04,686 - INFO - Request method: POST, URL: http://127.0.0.1:5000/api/sell_gift_set/1
+2025-03-09 17:53:04,687 - INFO - Body: {"customer_name":1,"selling_price":1299,"sale_date":"2025-03-09"}
+2025-03-09 17:55:44,234 - INFO - Request method: OPTIONS, URL: http://127.0.0.1:5000/api/sell_gift_set/1
+2025-03-09 17:55:44,247 - INFO - Request method: POST, URL: http://127.0.0.1:5000/api/sell_gift_set/1
+2025-03-09 17:55:44,248 - INFO - Body: {"customer_name":1,"selling_price":1299,"sale_date":"2025-03-09"}
+2025-03-09 17:57:57,841 - INFO - Request method: OPTIONS, URL: http://127.0.0.1:5000/api/sell_gift_set/1
+2025-03-09 17:57:57,862 - INFO - Request method: POST, URL: http://127.0.0.1:5000/api/sell_gift_set/1
+2025-03-09 17:57:57,863 - INFO - Body: {"customer_name":1,"selling_price":1299,"sale_date":"2025-03-09"}
+2025-03-09 18:31:43,303 - INFO - Request method: OPTIONS, URL: http://127.0.0.1:5000/api/sell_gift_set/1
+2025-03-09 18:31:43,316 - INFO - Request method: POST, URL: http://127.0.0.1:5000/api/sell_gift_set/1
+2025-03-09 18:31:43,318 - INFO - Body: {"customer_name":1,"selling_price":1299,"sale_date":"2025-03-09"}
+2025-03-09 18:44:48,286 - INFO - Request method: OPTIONS, URL: http://127.0.0.1:5000/api/sell_gift_set/1
+2025-03-09 18:44:48,300 - INFO - Request method: POST, URL: http://127.0.0.1:5000/api/sell_gift_set/1
+2025-03-09 18:44:48,301 - INFO - Body: {"customer_name":1,"selling_price":1299,"sale_date":"2025-03-09"}
+2025-03-09 18:47:48,812 - INFO - Request method: OPTIONS, URL: http://127.0.0.1:5000/api/sell_gift_set/1
+2025-03-09 18:47:48,827 - INFO - Request method: POST, URL: http://127.0.0.1:5000/api/sell_gift_set/1
+2025-03-09 18:47:48,827 - INFO - Body: {"customer_name":1,"selling_price":1299,"sale_date":"2025-03-09"}
+2025-03-09 18:54:51,724 - INFO - Request method: OPTIONS, URL: http://127.0.0.1:5000/api/sell_gift_set/1
+2025-03-09 18:54:51,736 - INFO - Request method: POST, URL: http://127.0.0.1:5000/api/sell_gift_set/1
+2025-03-09 18:54:51,737 - INFO - Body: {"customer_name":1,"selling_price":1299,"sale_date":"2025-03-09"}
+2025-03-09 18:55:07,784 - INFO - Request method: OPTIONS, URL: http://127.0.0.1:5000/api/sell_gift_set/1
+2025-03-09 18:55:07,796 - INFO - Request method: POST, URL: http://127.0.0.1:5000/api/sell_gift_set/1
+2025-03-09 18:55:07,797 - INFO - Body: {"customer_name":1,"selling_price":1299,"sale_date":"2025-03-09"}
+2025-03-09 18:55:34,592 - INFO - Request method: OPTIONS, URL: http://127.0.0.1:5000/api/sell_gift_set/1
+2025-03-09 18:55:34,608 - INFO - Request method: POST, URL: http://127.0.0.1:5000/api/sell_gift_set/1
+2025-03-09 18:55:34,608 - INFO - Body: {"customer_name":1,"selling_price":1299,"sale_date":"2025-03-09"}
+2025-03-09 18:58:35,096 - INFO - Request method: OPTIONS, URL: http://127.0.0.1:5000/api/sell_gift_set/1
+2025-03-09 18:58:35,112 - INFO - Request method: POST, URL: http://127.0.0.1:5000/api/sell_gift_set/1
+2025-03-09 18:58:35,112 - INFO - Body: {"customer_name":1,"selling_price":1299,"sale_date":"2025-03-09"}
+2025-03-09 19:02:29,231 - INFO - Request method: OPTIONS, URL: http://127.0.0.1:5000/api/sell_gift_set/1
+2025-03-09 19:02:29,245 - INFO - Request method: POST, URL: http://127.0.0.1:5000/api/sell_gift_set/1
+2025-03-09 19:02:29,246 - INFO - Body: {"customer_name":1,"selling_price":1299,"sale_date":"2025-03-09"}
+2025-03-09 19:03:45,678 - INFO - Request method: OPTIONS, URL: http://127.0.0.1:5000/api/sell_gift_set/1
+2025-03-09 19:03:45,691 - INFO - Request method: POST, URL: http://127.0.0.1:5000/api/sell_gift_set/1
+2025-03-09 19:03:45,692 - INFO - Body: {"customer_name":1,"selling_price":1299,"sale_date":"2025-03-09"}
+2025-03-09 19:06:21,089 - INFO - Request method: OPTIONS, URL: http://127.0.0.1:5000/api/sell_gift_set/1
+2025-03-09 19:06:21,089 - INFO - Request method: POST, URL: http://127.0.0.1:5000/api/sell_gift_set/1
+2025-03-09 19:06:21,089 - INFO - Body: {"customer_name":1,"selling_price":1299,"sale_date":"2025-03-09"}
+2025-03-09 19:08:18,222 - INFO - Request method: OPTIONS, URL: http://127.0.0.1:5000/api/sell_gift_set/1
+2025-03-09 19:08:22,129 - INFO - Request method: POST, URL: http://127.0.0.1:5000/api/sell_gift_set/1
+2025-03-09 19:08:22,129 - INFO - Body: {"customer_name":1,"selling_price":1299,"sale_date":"2025-03-09"}
+2025-03-09 19:16:30,598 - INFO - Request method: OPTIONS, URL: http://127.0.0.1:5000/api/sell_gift_set/1
+2025-03-09 19:16:30,614 - INFO - Request method: POST, URL: http://127.0.0.1:5000/api/sell_gift_set/1
+2025-03-09 19:16:30,614 - INFO - Body: {"customer_name":1,"selling_price":1299,"sale_date":"2025-03-09"}
+2025-03-09 19:16:40,775 - INFO - Request method: OPTIONS, URL: http://127.0.0.1:5000/api/sell_gift_set/1
+2025-03-09 19:16:40,791 - INFO - Request method: POST, URL: http://127.0.0.1:5000/api/sell_gift_set/1
+2025-03-09 19:16:40,792 - INFO - Body: {"customer_name":1,"selling_price":1299,"sale_date":"2025-03-09"}
+2025-03-09 19:17:11,938 - INFO - Request method: OPTIONS, URL: http://127.0.0.1:5000/api/sell_gift_set/1
+2025-03-09 19:17:11,957 - INFO - Request method: POST, URL: http://127.0.0.1:5000/api/sell_gift_set/1
+2025-03-09 19:17:11,958 - INFO - Body: {"customer_name":1,"selling_price":1299,"sale_date":"2025-03-09"}
+2025-03-09 19:19:37,043 - INFO - Request method: OPTIONS, URL: http://127.0.0.1:5000/api/sell_gift_set/1
+2025-03-09 19:19:37,056 - INFO - Request method: POST, URL: http://127.0.0.1:5000/api/sell_gift_set/1
+2025-03-09 19:19:37,057 - INFO - Body: {"customer_name":1,"selling_price":1299,"sale_date":"2025-03-09"}
+2025-03-09 19:24:24,354 - INFO - Request method: OPTIONS, URL: http://127.0.0.1:5000/api/sell_gift_set/1
+2025-03-09 19:24:24,365 - INFO - Request method: POST, URL: http://127.0.0.1:5000/api/sell_gift_set/1
+2025-03-09 19:24:24,366 - INFO - Body: {"customer_name":1,"selling_price":1299,"sale_date":"2025-03-09"}
+2025-03-09 19:27:28,844 - INFO - Request method: OPTIONS, URL: http://127.0.0.1:5000/api/sell_gift_set/1
+2025-03-09 19:27:28,855 - INFO - Request method: POST, URL: http://127.0.0.1:5000/api/sell_gift_set/1
+2025-03-09 19:27:28,856 - INFO - Body: {"customer_name":1,"selling_price":1299,"sale_date":"2025-03-09"}
+2025-03-09 19:29:16,801 - INFO - Request method: OPTIONS, URL: http://127.0.0.1:5000/api/sell_gift_set/1
+2025-03-09 19:29:16,814 - INFO - Request method: POST, URL: http://127.0.0.1:5000/api/sell_gift_set/1
+2025-03-09 19:29:16,814 - INFO - Body: {"customer_name":1,"selling_price":1299,"sale_date":"2025-03-09"}
+2025-03-09 19:40:28,142 - INFO - Request method: OPTIONS, URL: http://127.0.0.1:5000/api/sell_gift_set/1
+2025-03-09 19:40:28,156 - INFO - Request method: POST, URL: http://127.0.0.1:5000/api/sell_gift_set/1
+2025-03-09 19:40:28,157 - INFO - Body: {"customer_name":1,"selling_price":1299,"sale_date":"2025-03-09"}
+2025-03-09 19:41:09,932 - INFO - Request method: OPTIONS, URL: http://127.0.0.1:5000/api/sell_gift_set/1
+2025-03-09 19:41:35,394 - INFO - Request method: POST, URL: http://127.0.0.1:5000/api/sell_gift_set/1
+2025-03-09 19:41:35,394 - INFO - Body: {"customer_name":1,"selling_price":1299,"sale_date":"2025-03-09"}
+2025-03-09 19:42:55,397 - INFO - Request method: OPTIONS, URL: http://127.0.0.1:5000/api/sell_gift_set/1
+2025-03-09 19:42:55,402 - INFO - Request method: POST, URL: http://127.0.0.1:5000/api/sell_gift_set/1
+2025-03-09 19:42:55,402 - INFO - Body: {"customer_name":1,"selling_price":1299,"sale_date":"2025-03-09"}
+2025-03-09 19:48:13,332 - INFO - Request method: OPTIONS, URL: http://127.0.0.1:5000/api/sell_gift_set/1
+2025-03-09 19:48:13,348 - INFO - Request method: POST, URL: http://127.0.0.1:5000/api/sell_gift_set/1
+2025-03-09 19:48:13,348 - INFO - Body: {"customer_name":1,"selling_price":1299,"sale_date":"2025-03-09"}
+2025-03-09 19:52:04,466 - INFO - Request method: OPTIONS, URL: http://127.0.0.1:5000/api/sell_gift_set/1
+2025-03-09 19:52:04,481 - INFO - Request method: POST, URL: http://127.0.0.1:5000/api/sell_gift_set/1
+2025-03-09 19:52:04,481 - INFO - Body: {"customer_name":1,"selling_price":1299,"sale_date":"2025-03-09"}
+2025-03-09 19:53:31,939 - INFO - Request method: OPTIONS, URL: http://127.0.0.1:5000/api/sell_gift_set/1
+2025-03-09 19:53:47,438 - INFO - Request method: POST, URL: http://127.0.0.1:5000/api/sell_gift_set/1
+2025-03-09 19:53:47,438 - INFO - Body: {"customer_name":1,"selling_price":1299,"sale_date":"2025-03-09"}
+2025-03-09 19:55:30,906 - INFO - Request method: OPTIONS, URL: http://127.0.0.1:5000/api/sell_gift_set/1
+2025-03-09 19:55:30,918 - INFO - Request method: POST, URL: http://127.0.0.1:5000/api/sell_gift_set/1
+2025-03-09 19:55:30,919 - INFO - Body: {"customer_name":1,"selling_price":1299,"sale_date":"2025-03-09"}
+2025-03-09 19:57:58,345 - INFO - Request method: GET, URL: http://127.0.0.1:5000/api/sell_gift_set/1
+2025-03-09 19:57:58,346 - INFO - Request method: GET, URL: http://127.0.0.1:5000/api/sell_gift_set/1
+2025-03-09 19:58:01,314 - INFO - Request method: GET, URL: http://127.0.0.1:5000/api/get_all_gift_sets
+2025-03-09 19:58:01,320 - INFO - Request method: GET, URL: http://127.0.0.1:5000/api/get_all_packaging_materials
+2025-03-09 19:58:01,325 - INFO - Request method: GET, URL: http://127.0.0.1:5000/api/get_all_customers
+2025-03-09 19:58:01,334 - INFO - Request method: GET, URL: http://127.0.0.1:5000/api/categories
+2025-03-09 19:58:01,342 - INFO - Request method: GET, URL: http://127.0.0.1:5000/api/suppliers/list
+2025-03-09 19:58:01,350 - INFO - Request method: GET, URL: http://127.0.0.1:5000/api/products
+2025-03-09 19:58:37,541 - INFO - Request method: OPTIONS, URL: http://127.0.0.1:5000/api/sell_gift_set/1
+2025-03-09 19:58:37,570 - INFO - Request method: POST, URL: http://127.0.0.1:5000/api/sell_gift_set/1
+2025-03-09 19:58:37,571 - INFO - Body: {"customer_name":1,"selling_price":1299,"sale_date":"2025-03-09"}
+2025-03-09 20:01:24,963 - INFO - Request method: OPTIONS, URL: http://127.0.0.1:5000/api/sell_gift_set/1
+2025-03-09 20:01:24,980 - INFO - Request method: POST, URL: http://127.0.0.1:5000/api/sell_gift_set/1
+2025-03-09 20:01:24,981 - INFO - Body: {"customer_name":1,"selling_price":1299,"sale_date":"2025-03-09"}
+2025-03-09 20:07:12,237 - INFO - Request method: GET, URL: http://127.0.0.1:5000/api/sell_gift_set/1
+2025-03-09 20:07:12,965 - INFO - Request method: GET, URL: http://127.0.0.1:5000/favicon.ico
+2025-03-09 20:07:21,812 - INFO - Request method: OPTIONS, URL: http://127.0.0.1:5000/api/sell_gift_set/1
+2025-03-09 20:07:21,830 - INFO - Request method: POST, URL: http://127.0.0.1:5000/api/sell_gift_set/1
+2025-03-09 20:07:21,832 - INFO - Body: {"customer_name":1,"selling_price":1299,"sale_date":"2025-03-09"}
+2025-03-09 20:10:20,287 - INFO - Request method: OPTIONS, URL: http://127.0.0.1:5000/api/sell_gift_set/1
+2025-03-09 20:10:20,305 - INFO - Request method: POST, URL: http://127.0.0.1:5000/api/sell_gift_set/1
+2025-03-09 20:10:20,307 - INFO - Body: {"customer_name":1,"selling_price":1299,"sale_date":"2025-03-09"}
+2025-03-09 20:11:17,054 - INFO - Request method: GET, URL: http://127.0.0.1:5000/api/get_all_gift_sets
+2025-03-09 20:11:17,060 - INFO - Request method: GET, URL: http://127.0.0.1:5000/api/get_all_packaging_materials
+2025-03-09 20:11:17,069 - INFO - Request method: GET, URL: http://127.0.0.1:5000/api/get_all_customers
+2025-03-09 20:11:17,081 - INFO - Request method: GET, URL: http://127.0.0.1:5000/api/categories
+2025-03-09 20:11:17,096 - INFO - Request method: GET, URL: http://127.0.0.1:5000/api/suppliers/list
+2025-03-09 20:11:17,112 - INFO - Request method: GET, URL: http://127.0.0.1:5000/api/products
+2025-03-09 20:20:00,844 - INFO - Request method: GET, URL: http://127.0.0.1:5000/api/get_all_customers
+2025-03-09 20:20:00,848 - INFO - Request method: GET, URL: http://127.0.0.1:5000/api/products
+2025-03-09 20:20:00,851 - INFO - Request method: GET, URL: http://127.0.0.1:5000/api/suppliers/list
+2025-03-09 20:20:00,853 - INFO - Request method: GET, URL: http://127.0.0.1:5000/api/categories
+2025-03-09 20:20:00,856 - INFO - Request method: GET, URL: http://127.0.0.1:5000/api/get_all_packaging_materials
+2025-03-09 20:20:01,554 - INFO - Request method: GET, URL: http://127.0.0.1:5000/api/categories
+2025-03-09 20:20:01,621 - INFO - Request method: GET, URL: http://127.0.0.1:5000/api/suppliers/list
+2025-03-09 20:20:11,000 - INFO - Request method: OPTIONS, URL: http://127.0.0.1:5000/api/login
+2025-03-09 20:20:11,018 - INFO - Request method: POST, URL: http://127.0.0.1:5000/api/login
+2025-03-09 20:20:11,019 - INFO - Body: {"username":"manager","password":"managerpassword"}
+2025-03-09 20:20:11,499 - INFO - Request method: GET, URL: http://127.0.0.1:5000/api/suppliers/list
+2025-03-09 20:20:11,508 - INFO - Request method: GET, URL: http://127.0.0.1:5000/api/categories
+2025-03-09 20:20:13,277 - INFO - Request method: GET, URL: http://127.0.0.1:5000/api/get_all_gift_sets
+2025-03-09 20:20:48,662 - INFO - Request method: OPTIONS, URL: http://127.0.0.1:5000/api/create_gift_set
+2025-03-09 20:20:48,673 - INFO - Request method: POST, URL: http://127.0.0.1:5000/api/create_gift_set
+2025-03-09 20:20:48,674 - INFO - Body: {"name":"test1","description":"test1","gift_selling_price":1200,"items":[{"item_id":106,"item_type":"product","quantity":1,"price":500},{"item_id":101,"item_type":"product","quantity":1,"price":400},{"item_id":1,"item_type":"packaging","quantity":1,"price":23}]}
+2025-03-09 20:20:52,932 - INFO - Request method: GET, URL: http://127.0.0.1:5000/api/get_all_gift_sets
+2025-03-09 20:20:52,946 - INFO - Request method: GET, URL: http://127.0.0.1:5000/api/get_all_packaging_materials
+2025-03-09 20:20:52,971 - INFO - Request method: GET, URL: http://127.0.0.1:5000/api/get_all_customers
+2025-03-09 20:20:53,002 - INFO - Request method: GET, URL: http://127.0.0.1:5000/api/categories
+2025-03-09 20:20:53,051 - INFO - Request method: GET, URL: http://127.0.0.1:5000/api/suppliers/list
+2025-03-09 20:20:53,081 - INFO - Request method: GET, URL: http://127.0.0.1:5000/api/products
+2025-03-09 20:21:10,423 - INFO - Request method: OPTIONS, URL: http://127.0.0.1:5000/api/customer_create
+2025-03-09 20:21:10,433 - INFO - Request method: POST, URL: http://127.0.0.1:5000/api/customer_create
+2025-03-09 20:21:10,434 - INFO - Body: {"contact_info":"","id":0,"sales":[],"name":"test","email":"","phone_number":"","address":""}
+2025-03-09 20:21:10,474 - INFO - Request method: GET, URL: http://127.0.0.1:5000/api/get_all_customers
+2025-03-09 20:21:16,779 - INFO - Request method: OPTIONS, URL: http://127.0.0.1:5000/api/sell_gift_set/1
+2025-03-09 20:21:16,796 - INFO - Request method: POST, URL: http://127.0.0.1:5000/api/sell_gift_set/1
+2025-03-09 20:21:16,797 - INFO - Body: {"customer_name":1,"selling_price":1200,"sale_date":"2025-03-09"}
+2025-03-09 20:25:56,909 - INFO - Request method: GET, URL: http://127.0.0.1:5000/api/categories
+2025-03-09 20:25:56,942 - INFO - Request method: GET, URL: http://127.0.0.1:5000/api/suppliers/list
+2025-03-09 20:26:07,298 - INFO - Request method: GET, URL: http://127.0.0.1:5000/api/get_all_gift_sets
+2025-03-10 08:25:13,084 - INFO - Request method: GET, URL: http://127.0.0.1:5000/api/get_all_gift_sets
+2025-03-10 08:25:13,105 - INFO - Request method: GET, URL: http://127.0.0.1:5000/api/suppliers/list
+2025-03-10 08:25:13,113 - INFO - Request method: GET, URL: http://127.0.0.1:5000/api/products
+2025-03-10 08:25:13,351 - INFO - Request method: GET, URL: http://127.0.0.1:5000/api/get_all_customers
+2025-03-10 08:25:13,433 - INFO - Request method: GET, URL: http://127.0.0.1:5000/api/categories
+2025-03-10 08:25:13,560 - INFO - Request method: GET, URL: http://127.0.0.1:5000/api/get_all_packaging_materials
+2025-03-10 17:31:03,957 - INFO - Request method: GET, URL: http://127.0.0.1:5000/api/get_all_gift_sets
+2025-03-10 17:31:03,989 - INFO - Request method: GET, URL: http://127.0.0.1:5000/api/get_all_packaging_materials
+2025-03-10 17:31:04,037 - INFO - Request method: GET, URL: http://127.0.0.1:5000/api/get_all_customers
+2025-03-10 17:31:04,056 - INFO - Request method: GET, URL: http://127.0.0.1:5000/api/categories
+2025-03-10 17:31:04,070 - INFO - Request method: GET, URL: http://127.0.0.1:5000/api/suppliers/list
+2025-03-10 17:31:04,118 - INFO - Request method: GET, URL: http://127.0.0.1:5000/api/products
+2025-03-10 17:31:28,649 - INFO - Request method: GET, URL: http://127.0.0.1:5000/api/get_all_gift_sets
+2025-03-10 17:31:28,659 - INFO - Request method: GET, URL: http://127.0.0.1:5000/api/get_all_packaging_materials
+2025-03-10 17:31:28,671 - INFO - Request method: GET, URL: http://127.0.0.1:5000/api/get_all_customers
+2025-03-10 17:31:28,688 - INFO - Request method: GET, URL: http://127.0.0.1:5000/api/categories
+2025-03-10 17:31:28,737 - INFO - Request method: GET, URL: http://127.0.0.1:5000/api/suppliers/list
+2025-03-10 17:31:28,746 - INFO - Request method: GET, URL: http://127.0.0.1:5000/api/products
+2025-03-10 17:32:40,501 - INFO - Request method: GET, URL: http://127.0.0.1:5000/api/get_all_gift_sets
+2025-03-10 17:32:40,547 - INFO - Request method: GET, URL: http://127.0.0.1:5000/api/get_all_customers
+2025-03-10 17:32:40,560 - INFO - Request method: GET, URL: http://127.0.0.1:5000/api/get_all_packaging_materials
+2025-03-10 17:32:40,610 - INFO - Request method: GET, URL: http://127.0.0.1:5000/api/categories
+2025-03-10 17:32:40,640 - INFO - Request method: GET, URL: http://127.0.0.1:5000/api/suppliers/list
+2025-03-10 17:32:40,652 - INFO - Request method: GET, URL: http://127.0.0.1:5000/api/products
+2025-03-10 17:32:46,092 - INFO - Request method: GET, URL: http://127.0.0.1:5000/api/get_all_gift_sets
+2025-03-10 17:32:46,102 - INFO - Request method: GET, URL: http://127.0.0.1:5000/api/get_all_packaging_materials
+2025-03-10 17:32:46,112 - INFO - Request method: GET, URL: http://127.0.0.1:5000/api/get_all_customers
+2025-03-10 17:32:46,132 - INFO - Request method: GET, URL: http://127.0.0.1:5000/api/products
+2025-03-10 17:32:46,142 - INFO - Request method: GET, URL: http://127.0.0.1:5000/api/categories
+2025-03-10 17:32:46,171 - INFO - Request method: GET, URL: http://127.0.0.1:5000/api/suppliers/list
+2025-03-10 17:32:46,631 - INFO - Request method: GET, URL: http://127.0.0.1:5000/api/get_all_customers
+2025-03-10 17:32:46,754 - INFO - Request method: GET, URL: http://127.0.0.1:5000/api/categories
+2025-03-10 17:32:46,818 - INFO - Request method: GET, URL: http://127.0.0.1:5000/api/suppliers/list
+2025-03-10 17:32:46,955 - INFO - Request method: GET, URL: http://127.0.0.1:5000/api/products
+2025-03-10 17:32:46,975 - INFO - Request method: GET, URL: http://127.0.0.1:5000/api/get_all_gift_sets
+2025-03-10 17:32:47,771 - INFO - Request method: GET, URL: http://127.0.0.1:5000/api/suppliers/list
+2025-03-10 17:32:47,776 - INFO - Request method: GET, URL: http://127.0.0.1:5000/api/categories
+2025-03-10 17:32:47,851 - INFO - Request method: GET, URL: http://127.0.0.1:5000/api/get_all_packaging_materials
+2025-03-10 17:33:13,817 - INFO - Request method: GET, URL: http://127.0.0.1:5000/api/get_all_purchase_history
+2025-03-10 17:33:16,771 - INFO - Request method: GET, URL: http://127.0.0.1:5000/api/gel_all_investments
+2025-03-10 17:33:19,573 - INFO - Request method: GET, URL: http://127.0.0.1:5000/api/suppliers/list
+2025-03-10 17:33:19,581 - INFO - Request method: GET, URL: http://127.0.0.1:5000/api/categories
+2025-03-12 18:12:09,939 - INFO - Request method: GET, URL: http://127.0.0.1:5000/api/suppliers/list
+2025-03-12 18:12:09,942 - INFO - Request method: GET, URL: http://127.0.0.1:5000/api/categories
+2025-03-12 18:12:09,944 - INFO - Request method: GET, URL: http://127.0.0.1:5000/api/get_all_packaging_materials
+2025-03-12 18:12:09,946 - INFO - Request method: GET, URL: http://127.0.0.1:5000/api/get_all_customers
+2025-03-12 18:12:09,948 - INFO - Request method: GET, URL: http://127.0.0.1:5000/api/products
+2025-03-12 18:12:10,147 - INFO - Request method: GET, URL: http://127.0.0.1:5000/api/suppliers/list
+2025-03-12 18:12:10,325 - INFO - Request method: GET, URL: http://127.0.0.1:5000/api/categories
+2025-03-12 18:17:16,662 - INFO - Request method: GET, URL: http://127.0.0.1:5000/api/suppliers/list
+2025-03-12 18:17:16,666 - INFO - Request method: GET, URL: http://127.0.0.1:5000/api/categories
+2025-03-12 18:17:16,670 - INFO - Request method: GET, URL: http://127.0.0.1:5000/api/get_all_packaging_materials
+2025-03-12 18:17:16,677 - INFO - Request method: GET, URL: http://127.0.0.1:5000/api/get_all_customers
+2025-03-12 18:17:16,683 - INFO - Request method: GET, URL: http://127.0.0.1:5000/api/products
+2025-03-12 18:17:16,692 - INFO - Request method: GET, URL: http://127.0.0.1:5000/api/suppliers/list
+2025-03-12 18:17:16,695 - INFO - Request method: GET, URL: http://127.0.0.1:5000/api/categories
+2025-03-12 18:28:43,576 - INFO - Request method: GET, URL: http://127.0.0.1:5000/api/suppliers/list
+2025-03-12 18:28:43,580 - INFO - Request method: GET, URL: http://127.0.0.1:5000/api/categories
+2025-03-12 18:28:43,583 - INFO - Request method: GET, URL: http://127.0.0.1:5000/api/get_all_packaging_materials
+2025-03-12 18:28:43,590 - INFO - Request method: GET, URL: http://127.0.0.1:5000/api/get_all_customers
+2025-03-12 18:28:43,599 - INFO - Request method: GET, URL: http://127.0.0.1:5000/api/products
+2025-03-12 18:28:43,605 - INFO - Request method: GET, URL: http://127.0.0.1:5000/api/suppliers/list
+2025-03-12 18:28:43,773 - INFO - Request method: GET, URL: http://127.0.0.1:5000/api/categories
+2025-03-12 18:29:23,974 - INFO - Request method: GET, URL: http://127.0.0.1:5000/api/suppliers/list
+2025-03-12 18:29:23,979 - INFO - Request method: GET, URL: http://127.0.0.1:5000/api/categories
+2025-03-12 18:29:23,983 - INFO - Request method: GET, URL: http://127.0.0.1:5000/api/get_all_packaging_materials
+2025-03-12 18:29:23,990 - INFO - Request method: GET, URL: http://127.0.0.1:5000/api/get_all_customers
+2025-03-12 18:29:23,995 - INFO - Request method: GET, URL: http://127.0.0.1:5000/api/products
+2025-03-12 18:29:24,000 - INFO - Request method: GET, URL: http://127.0.0.1:5000/api/suppliers/list
+2025-03-12 18:29:24,019 - INFO - Request method: GET, URL: http://127.0.0.1:5000/api/categories
+2025-03-12 18:30:59,750 - INFO - Request method: GET, URL: http://127.0.0.1:5000/api/suppliers/list
+2025-03-12 18:30:59,754 - INFO - Request method: GET, URL: http://127.0.0.1:5000/api/categories
+2025-03-12 18:37:38,203 - INFO - Request method: GET, URL: http://127.0.0.1:5000/api/get_all_packaging_materials
+2025-03-12 18:37:38,207 - INFO - Request method: GET, URL: http://127.0.0.1:5000/api/get_all_customers
+2025-03-12 18:37:38,211 - INFO - Request method: GET, URL: http://127.0.0.1:5000/api/categories
+2025-03-12 18:37:38,217 - INFO - Request method: GET, URL: http://127.0.0.1:5000/api/suppliers/list
+2025-03-12 18:37:38,224 - INFO - Request method: GET, URL: http://127.0.0.1:5000/api/products
+2025-03-12 18:37:59,091 - INFO - Request method: OPTIONS, URL: http://127.0.0.1:5000/api/login
+2025-03-12 18:37:59,098 - INFO - Request method: POST, URL: http://127.0.0.1:5000/api/login
+2025-03-12 18:37:59,099 - INFO - Body: {"username":"sds","password":"wwwww"}
+2025-03-12 18:38:04,245 - INFO - Request method: OPTIONS, URL: http://127.0.0.1:5000/api/login
+2025-03-12 18:38:04,251 - INFO - Request method: POST, URL: http://127.0.0.1:5000/api/login
+2025-03-12 18:38:04,251 - INFO - Body: {"username":"manager","password":"managerpassword"}
+2025-03-12 18:38:05,057 - INFO - Request method: GET, URL: http://127.0.0.1:5000/api/categories
+2025-03-12 18:38:05,062 - INFO - Request method: GET, URL: http://127.0.0.1:5000/api/suppliers/list
+2025-03-12 18:38:13,429 - INFO - Request method: OPTIONS, URL: http://127.0.0.1:5000/api/logout
+2025-03-12 18:38:13,434 - INFO - Request method: POST, URL: http://127.0.0.1:5000/api/logout
+2025-03-12 18:38:13,435 - INFO - Body: {}
+2025-03-12 18:38:15,516 - INFO - Request method: POST, URL: http://127.0.0.1:5000/api/logout
+2025-03-12 18:38:15,517 - INFO - Body: {}
+2025-03-12 18:38:17,796 - INFO - Request method: POST, URL: http://127.0.0.1:5000/api/logout
+2025-03-12 18:38:17,797 - INFO - Body: {}
+2025-03-12 18:38:18,574 - INFO - Request method: OPTIONS, URL: http://127.0.0.1:5000/api/logout
+2025-03-12 18:38:18,580 - INFO - Request method: POST, URL: http://127.0.0.1:5000/api/logout
+2025-03-12 18:38:18,580 - INFO - Body: {}
+2025-03-12 18:38:44,255 - INFO - Request method: OPTIONS, URL: http://127.0.0.1:5000/api/logout
+2025-03-12 18:38:44,260 - INFO - Request method: POST, URL: http://127.0.0.1:5000/api/logout
+2025-03-12 18:38:44,261 - INFO - Body: {}
+2025-03-12 18:38:46,468 - INFO - Request method: GET, URL: http://127.0.0.1:5000/api/suppliers/list
+2025-03-12 18:38:46,471 - INFO - Request method: GET, URL: http://127.0.0.1:5000/api/categories
+2025-03-12 18:38:46,477 - INFO - Request method: GET, URL: http://127.0.0.1:5000/api/get_all_packaging_materials
+2025-03-12 18:38:46,481 - INFO - Request method: GET, URL: http://127.0.0.1:5000/api/get_all_customers
+2025-03-12 18:38:46,489 - INFO - Request method: GET, URL: http://127.0.0.1:5000/api/products
+2025-03-12 18:38:46,494 - INFO - Request method: GET, URL: http://127.0.0.1:5000/api/suppliers/list
+2025-03-12 18:38:46,503 - INFO - Request method: GET, URL: http://127.0.0.1:5000/api/categories
+2025-03-12 18:38:50,125 - INFO - Request method: OPTIONS, URL: http://127.0.0.1:5000/api/logout
+2025-03-12 18:38:50,130 - INFO - Request method: POST, URL: http://127.0.0.1:5000/api/logout
+2025-03-12 18:38:50,130 - INFO - Body: {}
+2025-03-12 18:38:51,247 - INFO - Request method: POST, URL: http://127.0.0.1:5000/api/logout
+2025-03-12 18:38:51,248 - INFO - Body: {}
+2025-03-12 18:39:17,670 - INFO - Request method: OPTIONS, URL: http://127.0.0.1:5000/api/logout
+2025-03-12 18:39:17,675 - INFO - Request method: POST, URL: http://127.0.0.1:5000/api/logout
+2025-03-12 18:39:17,676 - INFO - Body: {}
+2025-03-12 18:39:49,259 - INFO - Request method: GET, URL: http://127.0.0.1:5000/api/logout
+2025-03-12 18:39:49,960 - INFO - Request method: GET, URL: http://127.0.0.1:5000/favicon.ico
+2025-03-12 18:43:58,068 - INFO - Request method: GET, URL: http://127.0.0.1:5000/api/suppliers/list
+2025-03-12 18:43:58,072 - INFO - Request method: GET, URL: http://127.0.0.1:5000/api/categories
+2025-03-12 18:43:58,075 - INFO - Request method: GET, URL: http://127.0.0.1:5000/api/get_all_packaging_materials
+2025-03-12 18:43:58,081 - INFO - Request method: GET, URL: http://127.0.0.1:5000/api/get_all_customers
+2025-03-12 18:43:58,087 - INFO - Request method: GET, URL: http://127.0.0.1:5000/api/products
+2025-03-12 18:43:58,090 - INFO - Request method: GET, URL: http://127.0.0.1:5000/api/suppliers/list
+2025-03-12 18:43:58,093 - INFO - Request method: GET, URL: http://127.0.0.1:5000/api/categories
+2025-03-12 18:45:03,291 - INFO - Request method: OPTIONS, URL: http://127.0.0.1:5000/api/logout
+2025-03-12 18:45:03,301 - INFO - Request method: POST, URL: http://127.0.0.1:5000/api/logout
+2025-03-12 18:45:03,301 - INFO - Body: {}
+2025-03-12 18:45:43,235 - INFO - Request method: OPTIONS, URL: http://127.0.0.1:5000/api/logout
+2025-03-12 18:45:43,255 - INFO - Request method: POST, URL: http://127.0.0.1:5000/api/logout
+2025-03-12 18:45:43,255 - INFO - Body: {}
+2025-03-12 18:53:26,339 - INFO - Request method: GET, URL: http://127.0.0.1:5000/api/suppliers/list
+2025-03-12 18:53:26,342 - INFO - Request method: GET, URL: http://127.0.0.1:5000/api/categories
+2025-03-12 18:53:28,805 - INFO - Request method: OPTIONS, URL: http://127.0.0.1:5000/api/logout
+2025-03-12 18:53:28,810 - INFO - Request method: POST, URL: http://127.0.0.1:5000/api/logout
+2025-03-12 18:53:28,810 - INFO - Body: null
+2025-03-12 18:53:32,306 - INFO - Request method: GET, URL: http://127.0.0.1:5000/api/suppliers/list
+2025-03-12 18:53:32,309 - INFO - Request method: GET, URL: http://127.0.0.1:5000/api/categories
+2025-03-12 18:53:32,313 - INFO - Request method: GET, URL: http://127.0.0.1:5000/api/get_all_packaging_materials
+2025-03-12 18:53:32,316 - INFO - Request method: GET, URL: http://127.0.0.1:5000/api/get_all_customers
+2025-03-12 18:53:32,320 - INFO - Request method: GET, URL: http://127.0.0.1:5000/api/products
+2025-03-12 18:53:32,361 - INFO - Request method: GET, URL: http://127.0.0.1:5000/api/suppliers/list
+2025-03-12 18:53:32,537 - INFO - Request method: GET, URL: http://127.0.0.1:5000/api/categories
+2025-03-12 18:53:38,667 - INFO - Request method: OPTIONS, URL: http://127.0.0.1:5000/api/logout
+2025-03-12 18:53:38,672 - INFO - Request method: POST, URL: http://127.0.0.1:5000/api/logout
+2025-03-12 18:53:38,672 - INFO - Body: null
+2025-03-12 18:58:27,937 - INFO - Request method: GET, URL: http://127.0.0.1:5000/api/suppliers/list
+2025-03-12 18:58:27,941 - INFO - Request method: GET, URL: http://127.0.0.1:5000/api/categories
+2025-03-12 18:58:27,944 - INFO - Request method: GET, URL: http://127.0.0.1:5000/api/get_all_packaging_materials
+2025-03-12 18:58:27,946 - INFO - Request method: GET, URL: http://127.0.0.1:5000/api/get_all_customers
+2025-03-12 18:58:27,951 - INFO - Request method: GET, URL: http://127.0.0.1:5000/api/products
+2025-03-12 18:58:28,167 - INFO - Request method: GET, URL: http://127.0.0.1:5000/api/suppliers/list
+2025-03-12 18:58:28,338 - INFO - Request method: GET, URL: http://127.0.0.1:5000/api/categories
+2025-03-12 18:58:33,792 - INFO - Request method: OPTIONS, URL: http://127.0.0.1:5000/api/logout
+2025-03-12 18:58:33,798 - INFO - Request method: POST, URL: http://127.0.0.1:5000/api/logout
+2025-03-12 18:58:33,798 - INFO - Body: null
+2025-03-12 18:59:25,146 - INFO - Request method: OPTIONS, URL: http://127.0.0.1:5000/api/logout
+2025-03-12 18:59:25,161 - INFO - Request method: POST, URL: http://127.0.0.1:5000/api/logout
+2025-03-12 18:59:25,161 - INFO - Body: null
+2025-03-12 18:59:32,910 - INFO - Request method: OPTIONS, URL: http://127.0.0.1:5000/api/logout
+2025-03-12 18:59:32,926 - INFO - Request method: POST, URL: http://127.0.0.1:5000/api/logout
+2025-03-12 18:59:32,927 - INFO - Body: null
+2025-03-12 18:59:48,773 - INFO - Request method: OPTIONS, URL: http://127.0.0.1:5000/api/logout
+2025-03-12 18:59:48,793 - INFO - Request method: POST, URL: http://127.0.0.1:5000/api/logout
+2025-03-12 18:59:48,794 - INFO - Body: null
+2025-03-12 19:00:17,802 - INFO - Request method: OPTIONS, URL: http://127.0.0.1:5000/api/logout
+2025-03-12 19:00:17,846 - INFO - Request method: POST, URL: http://127.0.0.1:5000/api/logout
+2025-03-12 19:00:17,847 - INFO - Body: null
+2025-03-12 19:04:11,932 - INFO - Request method: OPTIONS, URL: http://127.0.0.1:5000/api/logout
+2025-03-12 19:04:11,946 - INFO - Request method: POST, URL: http://127.0.0.1:5000/api/logout
+2025-03-12 19:04:11,947 - INFO - Body: null
+2025-03-12 19:06:07,799 - INFO - Request method: OPTIONS, URL: http://127.0.0.1:5000/api/logout
+2025-03-12 19:06:07,814 - INFO - Request method: POST, URL: http://127.0.0.1:5000/api/logout
+2025-03-12 19:06:07,814 - INFO - Body: null
+2025-03-12 19:07:27,844 - INFO - Request method: OPTIONS, URL: http://127.0.0.1:5000/api/logout
+2025-03-12 19:07:27,844 - INFO - Request method: POST, URL: http://127.0.0.1:5000/api/logout
+2025-03-12 19:07:27,860 - INFO - Body: null
+2025-03-12 20:52:56,975 - INFO - Request method: GET, URL: http://127.0.0.1:5000/api/suppliers/list
+2025-03-12 20:52:56,985 - INFO - Request method: GET, URL: http://127.0.0.1:5000/api/categories
+2025-03-12 20:52:56,998 - INFO - Request method: GET, URL: http://127.0.0.1:5000/api/get_all_packaging_materials
+2025-03-12 20:52:57,010 - INFO - Request method: GET, URL: http://127.0.0.1:5000/api/get_all_customers
+2025-03-12 20:52:57,070 - INFO - Request method: GET, URL: http://127.0.0.1:5000/api/products
+2025-03-12 20:52:57,693 - INFO - Request method: GET, URL: http://127.0.0.1:5000/api/suppliers/list
+2025-03-12 20:52:58,021 - INFO - Request method: GET, URL: http://127.0.0.1:5000/api/categories
+2025-03-15 12:09:37,888 - INFO - Request method: GET, URL: http://127.0.0.1:5000/api/categories
+2025-03-15 12:09:37,902 - INFO - Request method: GET, URL: http://127.0.0.1:5000/api/suppliers/list
+2025-03-15 12:09:37,906 - INFO - Request method: GET, URL: http://127.0.0.1:5000/api/get_all_packaging_materials
+2025-03-15 12:09:37,910 - INFO - Request method: GET, URL: http://127.0.0.1:5000/api/get_all_customers
+2025-03-15 12:09:37,913 - INFO - Request method: GET, URL: http://127.0.0.1:5000/api/products
+2025-03-15 12:09:38,239 - INFO - Request method: GET, URL: http://127.0.0.1:5000/api/categories
+2025-03-15 12:09:38,645 - INFO - Request method: GET, URL: http://127.0.0.1:5000/api/suppliers/list
+2025-03-15 12:10:00,712 - INFO - Request method: OPTIONS, URL: http://127.0.0.1:5000/api/login
+2025-03-15 12:10:00,717 - INFO - Request method: POST, URL: http://127.0.0.1:5000/api/login
+2025-03-15 12:10:00,718 - INFO - Body: {"username":"manager","password":"аеееееееееее"}
+2025-03-15 12:10:08,091 - INFO - Request method: OPTIONS, URL: http://127.0.0.1:5000/api/login
+2025-03-15 12:10:08,102 - INFO - Request method: POST, URL: http://127.0.0.1:5000/api/login
+2025-03-15 12:10:08,102 - INFO - Body: {"username":"manager","password":"managerpassword"}
+2025-03-15 12:10:08,627 - INFO - Request method: GET, URL: http://127.0.0.1:5000/api/suppliers/list
+2025-03-15 12:10:08,631 - INFO - Request method: GET, URL: http://127.0.0.1:5000/api/categories
+2025-03-15 12:11:10,202 - INFO - Request method: GET, URL: http://127.0.0.1:5000/api/get_all_gift_sets
+2025-03-15 13:27:43,208 - INFO - Request method: GET, URL: http://127.0.0.1:5000/api/suppliers/list
+2025-03-15 13:27:43,210 - INFO - Request method: GET, URL: http://127.0.0.1:5000/api/categories
+2025-03-15 13:27:43,213 - INFO - Request method: GET, URL: http://127.0.0.1:5000/api/get_all_packaging_materials
+2025-03-15 13:27:43,215 - INFO - Request method: GET, URL: http://127.0.0.1:5000/api/get_all_customers
+2025-03-15 13:27:43,217 - INFO - Request method: GET, URL: http://127.0.0.1:5000/api/products
+2025-03-15 13:27:43,376 - INFO - Request method: GET, URL: http://127.0.0.1:5000/api/suppliers/list
+2025-03-15 13:27:43,598 - INFO - Request method: GET, URL: http://127.0.0.1:5000/api/categories
+2025-03-15 19:01:34,893 - INFO - Request method: GET, URL: http://127.0.0.1:5000/api/suppliers/list
+2025-03-15 19:01:34,897 - INFO - Request method: GET, URL: http://127.0.0.1:5000/api/categories
+2025-03-15 19:01:34,901 - INFO - Request method: GET, URL: http://127.0.0.1:5000/api/get_all_packaging_materials
+2025-03-15 19:01:34,910 - INFO - Request method: GET, URL: http://127.0.0.1:5000/api/get_all_customers
+2025-03-15 19:01:34,915 - INFO - Request method: GET, URL: http://127.0.0.1:5000/api/products
+2025-03-15 19:01:34,920 - INFO - Request method: GET, URL: http://127.0.0.1:5000/api/suppliers/list
+2025-03-15 19:01:34,960 - INFO - Request method: GET, URL: http://127.0.0.1:5000/api/categories
+2025-03-15 19:15:55,800 - INFO - Request method: GET, URL: http://127.0.0.1:5000/api/get_all_gift_sets
+2025-03-15 19:16:18,762 - INFO - Request method: OPTIONS, URL: http://127.0.0.1:5000/api/sell_gift_set/1
+2025-03-15 19:16:18,768 - INFO - Request method: POST, URL: http://127.0.0.1:5000/api/sell_gift_set/1
+2025-03-15 19:16:18,769 - INFO - Body: {"customer_name":1,"selling_price":1200,"sale_date":"2025-03-15"}
+2025-03-15 19:16:22,143 - INFO - Request method: GET, URL: http://127.0.0.1:5000/api/get_all_sales_history
+2025-03-15 19:16:24,576 - INFO - Request method: GET, URL: http://127.0.0.1:5000/api/suppliers/list
+2025-03-15 19:16:24,577 - INFO - Request method: GET, URL: http://127.0.0.1:5000/api/categories
+2025-03-15 19:16:34,598 - INFO - Request method: GET, URL: http://127.0.0.1:5000/api/suppliers/list
+2025-03-15 19:16:34,602 - INFO - Request method: GET, URL: http://127.0.0.1:5000/api/categories
+2025-03-15 19:16:34,613 - INFO - Request method: GET, URL: http://127.0.0.1:5000/api/get_all_packaging_materials
+2025-03-15 19:16:34,615 - INFO - Request method: GET, URL: http://127.0.0.1:5000/api/get_all_customers
+2025-03-15 19:16:34,621 - INFO - Request method: GET, URL: http://127.0.0.1:5000/api/products
+2025-03-15 19:16:34,629 - INFO - Request method: GET, URL: http://127.0.0.1:5000/api/suppliers/list
+2025-03-15 19:16:34,633 - INFO - Request method: GET, URL: http://127.0.0.1:5000/api/categories
+2025-03-15 19:29:46,755 - INFO - Request method: GET, URL: http://127.0.0.1:5000/api/get_all_gift_sets

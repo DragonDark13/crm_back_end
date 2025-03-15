@@ -42,8 +42,7 @@ app = Flask(__name__)
 CORS(app)
 
 # Configure database (PostgreSQL)
-app.config['SQLALCHEMY_DATABASE_URI'] = os.getenv('DATABASE_URL',
-                                                  'postgresql://postgres:admin@localhost:5432/shop_crm_post')
+app.config['SQLALCHEMY_DATABASE_URI'] = os.getenv('DATABASE_URL','postgresql://postgres:admin@localhost:5432/shop_crm_post')
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
 # JWT Configuration
@@ -164,6 +163,10 @@ def login():
 @app.route('/api/logout', methods=['POST'])
 @jwt_required()
 def logout():
+    current_user = get_jwt_identity()  # Це повинно повернути правильний ідентифікатор користувача
+    if not isinstance(current_user, str):
+        raise Exception("Subject must be a string")
+    print(f"User {current_user} logged out")
     return jsonify(message="Logout successful"), 200
 
 
