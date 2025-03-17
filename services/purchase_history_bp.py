@@ -2,6 +2,7 @@ from datetime import datetime, date
 
 from flask import Blueprint
 from sqlalchemy import select, func
+from sqlalchemy import String
 
 from models import PurchaseHistory, Supplier, Product, Category, product_categories_table, PackagingMaterial, \
     OtherInvestment, PackagingPurchaseHistory, PackagingMaterialSupplier
@@ -23,7 +24,8 @@ def get_purchase_history_data():
             PurchaseHistory.id.label('purchase_id'),
             Product.id.label('product_id'),
             Product.name.label('product_name'),
-            func.group_concat(Category.id, ', ').label('product_categories'),  # З'єднання ід категорій у рядок
+            func.string_agg(Category.id.cast(String), ', ').label('product_categories'),
+            # Використовуємо string_agg для PostgreSQL
             Supplier.id.label('supplier_id'),
             Supplier.name.label('supplier_name'),
             PurchaseHistory.quantity_purchase.label('quantity'),
@@ -33,16 +35,14 @@ def get_purchase_history_data():
         )
             .join(Product, PurchaseHistory.product_id == Product.id)
             .join(Supplier, PurchaseHistory.supplier_id == Supplier.id)
-            .join(product_categories_table,
-                  product_categories_table.c.product_id == Product.id)  # Зв'язок продуктів і категорій
-            .join(Category, product_categories_table.c.category_id == Category.id)
+            .outerjoin(product_categories_table, product_categories_table.c.product_id == Product.id)
+            .outerjoin(Category, product_categories_table.c.category_id == Category.id)
             .group_by(
             PurchaseHistory.id,
             Product.id,
             Supplier.id
-        )  # Групування, щоб уникнути дублювання
+        )
     )
-
     # 2. Історія всіх закупівель пакування
     packaging_purchase_history_query = (
         select(
@@ -85,13 +85,12 @@ def get_purchase_history_data():
     # Перетворення масивів в один уніфікований масив
     combined_data = []
 
-    # Функція для уніфікації дати
     def unify_date(date):
         if isinstance(date, datetime):
-            return date.date()  # Залишаємо тільки дату
+            return date.date()  # Повертає тільки дату
         elif isinstance(date, str):
-            return datetime.fromisoformat(date).date()  # Перетворюємо ISO-строку в дату
-        return date  # Якщо це вже дата
+            return datetime.fromisoformat(date).date()  # Перетворює ISO-строку в дату
+        return date  # Якщо це вже дата, повертаємо її без змін
 
     # Обробка продуктів
     for item in product_results:
@@ -144,5 +143,9 @@ def get_purchase_history_data():
         key=lambda x: x["date"],
         reverse=True  # Сортування у спадному порядку (останні дати на початку)
     )
+
+    # Приводимо дати до формату dd-mm-yyyy
+    for item in combined_data_sorted:
+        item["date"] = item["date"].strftime("%d-%m-%Y")  # Формат dd-mm-yyyy
 
     return combined_data_sorted

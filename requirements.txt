@@ -21,3 +21,4 @@ SQLAlchemy==2.0.37
 typing_extensions==4.12.2
 tzdata==2024.2
 werkzeug==2.2.2
+openpyxl
