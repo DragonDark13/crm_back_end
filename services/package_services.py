@@ -157,6 +157,7 @@ def update_packaging_status():
     data = request.json
     material_id = data.get('material_id')
     quantity_used = data.get('quantity_used')
+    from postgreSQLConnect import db_session
     
 
     if not material_id or not quantity_used:
@@ -191,6 +192,7 @@ def update_packaging_status():
 
 @package_bp.route('/api/materials/<int:packaging_material_id>/history', methods=['GET'])
 def get_packaging_material_history(packaging_material_id):
+    from postgreSQLConnect import db_session
     
 
     # Отримуємо всі історії продажів для конкретного пакування
@@ -221,6 +223,7 @@ from flask import jsonify
 
 @package_bp.route('/api/delete_all_materials', methods=['DELETE'])
 def delete_all_packaging_materials():
+    from postgreSQLConnect import db_session
     try:
         # Видалення всіх упаковочних матеріалів разом з пов'язаними даними
         db_session.query(PackagingMaterial).delete(synchronize_session=False)
