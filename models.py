@@ -139,6 +139,7 @@ class Customer(Base):
     email = Column(String, nullable=True)
     phone_number = Column(String, nullable=True)
     sales = relationship("SaleHistory", back_populates="customer", cascade="all, delete-orphan")
+    gift_set_sales = relationship('GiftSetSalesHistory', back_populates='customer')  # <-- змінено ім'я
 
     def to_dict(self, include_sales=False):
         customer_data = {
@@ -172,11 +173,12 @@ class SaleHistory(Base):
     payment = relationship("Payment", uselist=False, back_populates="sale", cascade="all, delete-orphan")
     profit = Column(DECIMAL(10, 2), default=0.00)
 
-    # Add packaging material fields
-    packaging_material_id = Column(Integer, ForeignKey('packaging_materials.id', ondelete='SET NULL'))
-    packaging_quantity = Column(Float, default=0)  # Quantity of packaging material used
-    total_packaging_cost = Column(Float, default=0)
-    packaging_material = relationship("PackagingMaterial")  # Link to the packaging material used in the sale
+    # Packaging material fields
+    packaging_material_id = Column(Integer, ForeignKey('packaging_materials.id', ondelete='SET NULL'), nullable=True)
+    packaging_quantity = Column(Float, default=0, nullable=True)  # Packaging quantity can be null or 0
+    total_packaging_cost = Column(Float, default=0, nullable=True)  # Packaging cost can be null or 0
+    packaging_material = relationship("PackagingMaterial")  # Link to packaging material if exists
+
     returns = relationship("ReturnHistory", back_populates="sale", cascade="all, delete-orphan")
     packaging_sale_history = relationship("PackagingSaleHistory", back_populates="sale", cascade="all, delete-orphan")
 
@@ -192,6 +194,7 @@ class SaleHistory(Base):
             'profit': float(self.profit),
             'packaging_material_id': self.packaging_material_id,
             'packaging_quantity': self.packaging_quantity,
+            'total_packaging_cost': self.total_packaging_cost
         }
         if include_customer and self.customer:
             result['customer'] = self.customer.to_dict()  # Add customer info if needed
@@ -534,7 +537,8 @@ class GiftSetSalesHistory(db.Model):
     sold_at = db.Column(db.DateTime, default=datetime.utcnow)
     sold_price = db.Column(db.Float, nullable=False)
     quantity = db.Column(db.Integer, nullable=False)
-    customer_name = db.Column(db.String(255), nullable=True)  # Необов'язкове поле для покупця
+    customer_id = Column(Integer, ForeignKey('customers.id'))
+    customer = relationship('Customer', back_populates='gift_set_sales')
 
     gift_set = db.relationship(
         'GiftSet',
@@ -575,7 +579,7 @@ class GiftSetSalesHistory(db.Model):
             "sold_at": self.sold_at.isoformat(),
             "sold_price": self.sold_price,
             "quantity": self.quantity,
-            "customer_name": self.customer_name,
+            "customer_name": self.customer_id,
             "products": products,
             "packagings": packagings
         }

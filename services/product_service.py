@@ -475,6 +475,7 @@ def record_sale(product_id):
         selling_price_per_item = Decimal(data['selling_price_per_item'])
         selling_total_price = Decimal(data['selling_total_price'])
 
+        # Default values for optional fields (packaging)
         total_packaging_cost = Decimal(data.get('total_packaging_cost', 0))  # Optional packaging material
         packaging_material_id = data.get('packaging_id', None)  # Optional packaging material
         packaging_quantity = data.get('packaging_quantity', 0)  # Default to 0 if not provided
@@ -498,6 +499,22 @@ def record_sale(product_id):
         else:
             sale_date = datetime.now()
 
+        if not product.id or not customer.id:
+            return jsonify({'error': 'Missing product or customer information'}), 400
+        if quantity_sold <= 0:
+            return jsonify({'error': 'Quantity sold must be greater than zero'}), 400
+        if selling_price_per_item <= 0:
+            return jsonify({'error': 'Selling price must be greater than zero'}), 400
+
+        # Конвертуємо порожній рядок у None
+        if packaging_material_id == "":
+            packaging_material_id = None
+
+        print(f"packaging_material_id: {packaging_material_id}")
+        if packaging_material_id is None:
+            print("No packaging material provided, setting as None.")
+
+        # Create SaleHistory entry
         sale_history = SaleHistory(
             product_id=product.id,
             customer_id=customer.id,
@@ -511,9 +528,12 @@ def record_sale(product_id):
             packaging_quantity=packaging_quantity,
             total_packaging_cost=total_packaging_cost
         )
-        db_session.add(sale_history)
 
-        # Запис у PackagingSaleHistory
+        print(f"Sale history object: {sale_history}")
+        db_session.add(sale_history)
+        db_session.commit()
+
+        # Record packaging material sale if packaging is provided
         if packaging_material_id:
             packaging_material = db_session.query(PackagingMaterial).filter(
                 PackagingMaterial.id == packaging_material_id).one()
@@ -526,13 +546,13 @@ def record_sale(product_id):
                 packaging_material.available_quantity -= packaging_quantity  # Deduct the packaging material
                 packaging_material.available_stock_cost -= total_packaging_cost
 
-                # Встановлюємо статус "used" якщо немає на складі
+                # Mark the packaging as 'used' if no stock left
                 if packaging_material.available_quantity == 0:
                     packaging_material.status = 'used'
 
                 db_session.add(packaging_material)
 
-                # Додати один запис у PackagingSaleHistory
+                # Add record to PackagingSaleHistory
                 packaging_sale_history = PackagingSaleHistory(
                     sale_id=sale_history.id,
                     packaging_material_id=packaging_material_id,

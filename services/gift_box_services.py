@@ -1,6 +1,6 @@
 from flask import request, jsonify, Blueprint
 from models import GiftSet, GiftSetProduct, GiftSetPackaging, Product, PackagingMaterial, GiftSetSalesHistory, \
-    GiftSetSalesHistoryProduct, GiftSetSalesHistoryPackaging
+    GiftSetSalesHistoryProduct, GiftSetSalesHistoryPackaging, Customer
 
 gift_box_services_bp = Blueprint('gift_box_services', __name__)
 
@@ -270,14 +270,15 @@ def sell_gift_set(gift_set_id):
         return jsonify({"error": "Gift set not found"}), 404
 
     data = request.json
-    customer_name = data.get('customer_name', None)  # Необов'язкове поле для покупця
+
+    customer = db_session.query(Customer).filter(Customer.id == data['customer_id']).one()
 
     # Створення запису в історії продажів
     sales_record = GiftSetSalesHistory(
         gift_set_id=gift_set.id,
-        sold_price=gift_set.total_price,
+        sold_price=data['selling_price'],
         quantity=1,  # Ми продаємо один набір (можна додати можливість продавати більше)
-        customer_name=customer_name
+        customer_id=customer.id,
     )
     db_session.add(sales_record)
 
@@ -356,3 +357,48 @@ def get_gift_sets():
     gift_sets_data = [gift_set.to_dict() for gift_set in gift_sets]
 
     return jsonify(gift_sets_data), 200
+
+
+@gift_box_services_bp.route('/api/get_all_gift_set_sales_history', methods=['GET'])
+def get_gift_set_sales_history():
+    from postgreSQLConnect import db_session
+
+    # Отримуємо всі записи історії продажів подарункових наборів
+    gift_set_sales_history = db_session.query(GiftSetSalesHistory).all()
+
+    # Підготовка даних для відповіді
+    sales_data = []
+    for sale in gift_set_sales_history:
+        products_data = [
+            {
+                "product_id": item.gift_set_product.product_id,
+                "name": item.gift_set_product.product.name,
+                "quantity": item.quantity,
+                "price": item.gift_set_product.product.selling_price_per_item
+            }
+            for item in sale.sales_history_products
+        ]
+
+        packagings_data = [
+            {
+                "packaging_id": item.gift_set_packaging.packaging_id,
+                "quantity": item.quantity,
+                "price": item.gift_set_packaging.packaging.purchase_price_per_unit
+            }
+            for item in sale.sales_history_packagings
+        ]
+
+        sale_data = {
+            "id": sale.id,
+            "gift_set_id": sale.gift_set_id,
+            "sold_at": sale.sold_at.isoformat(),
+            "sold_price": sale.sold_price,
+            "quantity": sale.quantity,
+            "customer_name": sale.customer_name,
+            "products": products_data,
+            "packagings": packagings_data
+        }
+
+        sales_data.append(sale_data)
+
+    return jsonify(sales_data)

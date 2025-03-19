@@ -32,7 +32,6 @@ def purchase_packaging_material():
     quantity_purchased = data.get('quantity_purchased')
     purchase_price_per_unit = data.get('purchase_price_per_unit')
     total_purchase_cost = data.get('total_purchase_cost')
-    
 
     if not all([name, supplier_id, quantity_purchased, purchase_price_per_unit]):
         return jsonify({'error': 'Missing required fields'}), 400
@@ -158,7 +157,6 @@ def update_packaging_status():
     material_id = data.get('material_id')
     quantity_used = data.get('quantity_used')
     from postgreSQLConnect import db_session
-    
 
     if not material_id or not quantity_used:
         return jsonify({'error': 'Required fields are missing'}), 400
@@ -193,7 +191,6 @@ def update_packaging_status():
 @package_bp.route('/api/materials/<int:packaging_material_id>/history', methods=['GET'])
 def get_packaging_material_history(packaging_material_id):
     from postgreSQLConnect import db_session
-    
 
     # Отримуємо всі історії продажів для конкретного пакування
     sales_history = db_session.query(PackagingSaleHistory).filter(
