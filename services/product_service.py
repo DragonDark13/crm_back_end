@@ -75,7 +75,8 @@ class ProductService:
         if missing_product_fields:
             return {'error': f"Missing required fields for product: {', '.join(missing_product_fields)}"}, 400
 
-        required_purchase_fields = ['quantity', 'purchase_price_per_item', 'purchase_total_price', 'supplier_id']
+        required_purchase_fields = ['available_quantity', 'purchase_price_per_item', 'purchase_total_price',
+                                    'supplier_id']
         missing_purchase_fields = [field for field in required_purchase_fields if field not in data]
 
         if missing_purchase_fields:
@@ -124,8 +125,8 @@ class ProductService:
             # Set purchase price and quantity values
             product.purchase_total_price = Decimal(data['purchase_total_price'])
             product.purchase_price_per_item = Decimal(data['purchase_price_per_item'])
-            product.total_quantity = data['quantity']
-            product.available_quantity = data['quantity']
+            product.total_quantity = data['available_quantity']
+            product.available_quantity = data['available_quantity']
             product.selling_price_per_item = Decimal(data.get('selling_price_per_item', 0))
 
             # Commit the product to the session
@@ -137,14 +138,14 @@ class ProductService:
                 purchase_price_per_item=Decimal(data['purchase_price_per_item']),
                 purchase_total_price=Decimal(data['purchase_total_price']),
                 supplier_id=supplier.id,
-                quantity_purchase=data['quantity'],
+                quantity_purchase=data['available_quantity'],
                 purchase_date=created_date  # Use the created_date here as well
             )
             db_session.add(purchase_history)
 
             stock_history = StockHistory(
                 product_id=product.id,
-                change_amount=data['quantity'],
+                change_amount=data['available_quantity'],
                 change_type='create',
                 timestamp=created_date  # Use the created_date here
             )
@@ -164,11 +165,11 @@ class ProductService:
         """Валідація вхідних даних для продукту"""
         errors = {}
         try:
-            quantity = float(data['quantity'])
+            quantity = float(data['available_quantity'])
             if quantity <= 0:
-                errors['quantity'] = "Quantity must be greater than 0."
+                errors['available_quantity'] = "Quantity must be greater than 0."
         except ValueError:
-            errors['quantity'] = "Quantity must be a valid number."
+            errors['available_quantity'] = "Quantity must be a valid number."
 
         try:
             purchase_price_per_item = float(data['purchase_price_per_item'])

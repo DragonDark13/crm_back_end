@@ -19,23 +19,39 @@ def get_all_categories():
     return jsonify(category_list), 200
 
 
-@category_bp.route('/api/categories', methods=['POST'])
+@category_bp.route('/api/add_new_category', methods=['POST'])
 def create_category():
     """Create a new category."""
     from postgreSQLConnect import db_session
+    from sqlalchemy.exc import IntegrityError
 
     data = request.get_json()
+
+    # **Перевірка вхідних даних**
+    if not data or 'name' not in data or not isinstance(data['name'], str) or not data['name'].strip():
+        return jsonify({'error': 'Invalid category name'}), 400
+
+    category_name = data['name'].strip()
+
     try:
         with db_session() as session:
-            category = Category(name=data['name'])
+            # **Перевірка, чи існує вже така категорія**
+            existing_category = session.query(Category).filter_by(name=category_name).first()
+            if existing_category:
+                return jsonify({'error': 'Category already exists',
+                                'category': {'id': existing_category.id, 'name': existing_category.name}}), 400
+
+            # **Створення нової категорії**
+            category = Category(name=category_name)
             session.add(category)
             session.commit()
-            return jsonify({'message': 'Category created successfully',
-                            'category': {'id': category.id, 'name': category.name}}), 201
-    except IntegrityError:
-        return jsonify({'message': 'Category already exists'}), 400
+
+            return jsonify({
+                'message': 'Category created successfully',
+                'category': {'id': category.id, 'name': category.name}
+            }), 201
     except Exception as e:
-        return jsonify({'error': str(e)}), 400
+        return jsonify({'error': str(e)}), 500  # **500 — внутрішня помилка сервера**
 
 
 @category_bp.route('/api/product/<int:product_id>/categories', methods=['POST'])
@@ -68,6 +84,8 @@ def assign_categories_to_product(product_id):
 @category_bp.route('/api/product/<int:product_id>/categories', methods=['GET'])
 def get_product_categories(product_id):
     """Retrieve categories of a product."""
+    from postgreSQLConnect import db_session
+
     try:
         with db_session() as session:
             product = session.query(Product).get(product_id)

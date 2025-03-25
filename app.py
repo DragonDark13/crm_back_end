@@ -81,7 +81,7 @@ def get_product(product_id):
     return jsonify(product_data), status_code
 
 
-@app.route('/api/product', methods=['POST'])
+@app.route('/api/add_new_product', methods=['POST'])
 def create_and_purchase_product():
     data = request.get_json()
     result, status_code = ProductService.create_product(data)
