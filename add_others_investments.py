@@ -42,18 +42,22 @@ def load_other_investments_from_csv(file_path, created_date):
                 print(f"Несподівана помилка: {e}")
 
 
-# Список з шляхами до CSV-файлів та відповідними датами
-investment_files_data = [
-    # ('csv_others_investments/15.02.2023.csv', "15.02.2023"),
-    # ('csv_others_investments/15.03.2023.csv', "15.03.2023"),
-    # ('csv_others_investments/15.05.2023.csv', "15.04.2023"),
-    # ('csv_others_investments/15.04.2023.csv', "15.04.2023"),
-    # ('csv_others_investments/15.06.2023.csv', "15.06.2023"),
-    # ('csv_others_investments/15.09.2024.csv', "15.09.2024"),
-    # ('csv_others_investments/15.01.2025.csv', "15.01.2025"),
-]
+def import_all_investment():
+    # Список з шляхами до CSV-файлів та відповідними датами
+    investment_files_data = [
+        ('csv_others_investments/15.02.2023.csv', "15.02.2023"),
+        ('csv_others_investments/15.03.2023.csv', "15.03.2023"),
+        ('csv_others_investments/15.05.2023.csv', "15.04.2023"),
+        ('csv_others_investments/15.04.2023.csv', "15.04.2023"),
+        ('csv_others_investments/15.06.2023.csv', "15.06.2023"),
+        ('csv_others_investments/15.09.2024.csv', "15.09.2024"),
+        ('csv_others_investments/15.01.2025.csv', "15.01.2025"),
+    ]
 
-# Цикл для виклику функції load_other_investments_from_csv для кожного файлу
-for file_path, date_str in investment_files_data:
-    created_date = datetime.strptime(date_str, "%d.%m.%Y").date()
-    load_other_investments_from_csv(file_path, created_date)
+    # Цикл для виклику функції load_other_investments_from_csv для кожного файлу
+    for file_path, date_str in investment_files_data:
+        created_date = datetime.strptime(date_str, "%d.%m.%Y").date()
+        load_other_investments_from_csv(file_path, created_date)
+
+
+import_all_investment()

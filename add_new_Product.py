@@ -135,21 +135,23 @@ def load_products_from_csv(file_path, created_date):
                 print(f"Несподівана помилка: {e}")
 
 
-# Список з шляхами до CSV-файлів та відповідними датами
-files_data = [
-    # ('csv/15.02.2023.csv', "15.02.2023"),
-    # ('csv/15.03.2023.csv', "15.03.2023"),
-    # ('csv/15.05.2023.csv', "15.05.2023"),
-    # ('csv/15.06.2023.csv', "15.06.2023"),
-    # ('csv/15.08.2023.csv', "15.08.2023"),
-    # ('csv/15.09.2024.csv', "15.09.2024"),
-    # ('csv/15.12.2024.csv', "15.12.2024"),
-    # ('csv/15.01.2025.csv', "15.01.2025")
-]
+def import_all_product():
+    # Список з шляхами до CSV-файлів та відповідними датами
+    files_data = [
+        ('csv/15.02.2023.csv', "15.02.2023"),
+        ('csv/15.03.2023.csv', "15.03.2023"),
+        ('csv/15.05.2023.csv', "15.05.2023"),
+        ('csv/15.06.2023.csv', "15.06.2023"),
+        ('csv/15.08.2023.csv', "15.08.2023"),
+        ('csv/15.09.2024.csv', "15.09.2024"),
+        ('csv/15.12.2024.csv', "15.12.2024"),
+        ('csv/15.01.2025.csv', "15.01.2025")
+    ]
 
-# Цикл для виклику функції load_products_from_csv для кожного файлу
-if __name__ == "__main__":
-    with app.app_context():
-        for file_path, date_str in files_data:
-            created_date = datetime.strptime(date_str, "%d.%m.%Y")
-            load_products_from_csv(file_path, created_date)
+    # Цикл для виклику функції load_products_from_csv для кожного файлу
+    for file_path, date_str in files_data:
+        created_date = datetime.strptime(date_str, "%d.%m.%Y")
+        load_products_from_csv(file_path, created_date)
+
+
+import_all_product()

@@ -1,0 +1,10 @@
+from add_new_Product import import_all_product
+from add_new_category import import_categories_from_csv
+from add_new_package import import_all_packages
+from add_others_investments import import_all_investment
+from postgreSQLConnect import db_session
+
+import_all_product()
+import_all_packages()
+import_all_investment()
+import_categories_from_csv('csv_categories/categories.csv', db_session)

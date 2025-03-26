@@ -100,18 +100,22 @@ def import_packaging_materials_from_csv(file_path, purchase_date, db_session):
         print(f"Error processing file {file_path}: {e}")
 
 
-# Список з шляхами до CSV-файлів та відповідними датами
-files_data = [
-    # ('csv_package/15.02.2023.csv', "15.02.2023"),
-    # ('csv_package/15.03.2023.csv', "15.03.2023"),
-    # ('csv_package/15.04.2023.csv', "15.04.2023"),
-    # ('csv_package/15.05.2023.csv', "15.05.2023"),
-    # ('csv_package/15.06.2023.csv', "15.06.2023"),
-    # ('csv_package/15.09.2024.csv', "15.09.2024"),
-    # ('csv_package/15.01.2025.csv', "15.01.2025"),
-]
+def import_all_packages():
+    # Список з шляхами до CSV-файлів та відповідними датами
+    files_data = [
+        ('csv_package/15.02.2023.csv', "15.02.2023"),
+        ('csv_package/15.03.2023.csv', "15.03.2023"),
+        ('csv_package/15.04.2023.csv', "15.04.2023"),
+        ('csv_package/15.05.2023.csv', "15.05.2023"),
+        ('csv_package/15.06.2023.csv', "15.06.2023"),
+        ('csv_package/15.09.2024.csv', "15.09.2024"),
+        ('csv_package/15.01.2025.csv', "15.01.2025"),
+    ]
 
-# Цикл для виклику функції import_packaging_materials_from_csv для кожного файлу
-for file_path_package, date_str in files_data:
-    purchase_date_package = datetime.strptime(date_str, "%d.%m.%Y").date()
-    import_packaging_materials_from_csv(file_path_package, purchase_date_package, db_session)
+    # Цикл для виклику функції import_packaging_materials_from_csv для кожного файлу
+    for file_path_package, date_str in files_data:
+        purchase_date_package = datetime.strptime(date_str, "%d.%m.%Y").date()
+        import_packaging_materials_from_csv(file_path_package, purchase_date_package, db_session)
+
+
+import_all_packages()
