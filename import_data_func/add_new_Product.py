@@ -1,3 +1,5 @@
+import os
+
 from sqlalchemy import inspect
 
 # Функція для завантаження продуктів у базу даних
@@ -136,22 +138,22 @@ def load_products_from_csv(file_path, created_date):
 
 
 def import_all_product():
-    # Список з шляхами до CSV-файлів та відповідними датами
+    # Базовий шлях до папки з продуктами
+    base_dir = 'import_data_csv/csv_product'
+
+    # Список назв файлів і дат
     files_data = [
-        ('csv/15.02.2023.csv', "15.02.2023"),
-        ('csv/15.03.2023.csv', "15.03.2023"),
-        ('csv/15.05.2023.csv', "15.05.2023"),
-        ('csv/15.06.2023.csv', "15.06.2023"),
-        ('csv/15.08.2023.csv', "15.08.2023"),
-        ('csv/15.09.2024.csv', "15.09.2024"),
-        ('csv/15.12.2024.csv', "15.12.2024"),
-        ('csv/15.01.2025.csv', "15.01.2025")
+        ('15.02.2023.csv', "15.02.2023"),
+        ('15.03.2023.csv', "15.03.2023"),
+        ('15.05.2023.csv', "15.05.2023"),
+        ('15.06.2023.csv', "15.06.2023"),
+        ('15.08.2023.csv', "15.08.2023"),
+        ('15.09.2024.csv', "15.09.2024"),
+        ('15.12.2024.csv', "15.12.2024"),
+        ('15.01.2025.csv', "15.01.2025")
     ]
 
-    # Цикл для виклику функції load_products_from_csv для кожного файлу
-    for file_path, date_str in files_data:
+    for filename, date_str in files_data:
+        file_path = os.path.join(base_dir, filename)
         created_date = datetime.strptime(date_str, "%d.%m.%Y")
         load_products_from_csv(file_path, created_date)
-
-
-import_all_product()

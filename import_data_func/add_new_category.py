@@ -1,7 +1,6 @@
 import csv
 
 from models import Category
-from postgreSQLConnect import db_session
 
 
 def import_categories_from_csv(csv_filename: str, db_session):
@@ -12,7 +11,3 @@ def import_categories_from_csv(csv_filename: str, db_session):
             category = Category(id=int(category_id), name=category_name)
             db_session.add(category)
         db_session.commit()
-
-
-# Виклик функції
-import_categories_from_csv('csv_categories/categories.csv', db_session)

@@ -1,3 +1,4 @@
+import os
 from datetime import datetime
 
 import csv
@@ -101,19 +102,23 @@ def import_packaging_materials_from_csv(file_path, purchase_date, db_session):
 
 
 def import_all_packages():
-    # Список з шляхами до CSV-файлів та відповідними датами
+    # Базова папка, яку можна змінити в одному місці
+    base_dir = 'import_data_csv/csv_package'
+
+    # Список тільки назв файлів і дат (без повного шляху)
     files_data = [
-        ('csv_package/15.02.2023.csv', "15.02.2023"),
-        ('csv_package/15.03.2023.csv', "15.03.2023"),
-        ('csv_package/15.04.2023.csv', "15.04.2023"),
-        ('csv_package/15.05.2023.csv', "15.05.2023"),
-        ('csv_package/15.06.2023.csv', "15.06.2023"),
-        ('csv_package/15.09.2024.csv', "15.09.2024"),
-        ('csv_package/15.01.2025.csv', "15.01.2025"),
+        ('15.02.2023.csv', "15.02.2023"),
+        ('15.03.2023.csv', "15.03.2023"),
+        ('15.04.2023.csv', "15.04.2023"),
+        ('15.05.2023.csv', "15.05.2023"),
+        ('15.06.2023.csv', "15.06.2023"),
+        ('15.09.2024.csv', "15.09.2024"),
+        ('15.01.2025.csv', "15.01.2025"),
     ]
 
     # Цикл для виклику функції import_packaging_materials_from_csv для кожного файлу
-    for file_path_package, date_str in files_data:
+    for filename, date_str in files_data:
+        file_path_package = os.path.join(base_dir, filename)
         purchase_date_package = datetime.strptime(date_str, "%d.%m.%Y").date()
         import_packaging_materials_from_csv(file_path_package, purchase_date_package, db_session)
 

@@ -1,3 +1,4 @@
+import os
 from datetime import datetime
 
 from sqlalchemy.exc import IntegrityError
@@ -43,21 +44,23 @@ def load_other_investments_from_csv(file_path, created_date):
 
 
 def import_all_investment():
-    # Список з шляхами до CSV-файлів та відповідними датами
+    # Базовий шлях до CSV-файлів інвестицій
+    base_dir = 'import_data_csv/csv_others_investments'
+
+    # Список файлів і відповідних дат
     investment_files_data = [
-        ('csv_others_investments/15.02.2023.csv', "15.02.2023"),
-        ('csv_others_investments/15.03.2023.csv', "15.03.2023"),
-        ('csv_others_investments/15.05.2023.csv', "15.04.2023"),
-        ('csv_others_investments/15.04.2023.csv', "15.04.2023"),
-        ('csv_others_investments/15.06.2023.csv', "15.06.2023"),
-        ('csv_others_investments/15.09.2024.csv', "15.09.2024"),
-        ('csv_others_investments/15.01.2025.csv', "15.01.2025"),
+        ('15.02.2023.csv', "15.02.2023"),
+        ('15.03.2023.csv', "15.03.2023"),
+        ('15.05.2023.csv', "15.04.2023"),  # Ймовірно тут помилка: файл 15.05, дата 15.04
+        ('15.04.2023.csv', "15.04.2023"),
+        ('15.06.2023.csv', "15.06.2023"),
+        ('15.09.2024.csv', "15.09.2024"),
+        ('15.01.2025.csv', "15.01.2025"),
     ]
 
-    # Цикл для виклику функції load_other_investments_from_csv для кожного файлу
-    for file_path, date_str in investment_files_data:
+    for filename, date_str in investment_files_data:
+        file_path = os.path.join(base_dir, filename)
         created_date = datetime.strptime(date_str, "%d.%m.%Y").date()
         load_other_investments_from_csv(file_path, created_date)
 
-
-import_all_investment()
+# import_all_investment()

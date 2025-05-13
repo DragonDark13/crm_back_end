@@ -76,7 +76,7 @@ def get_customer_details(customer_id):
         return jsonify({'error': f'Customer not found: {str(e)}'}), 404
 
 
-@customer_bp.route('/update_customers/<int:customer_id>', methods=['PUT'])
+@customer_bp.route('/api/update_customers/<int:customer_id>', methods=['PUT'])
 def edit_customer(customer_id: int):
     customer_data = request.get_json()
     from postgreSQLConnect import db_session

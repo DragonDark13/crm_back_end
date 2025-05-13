@@ -42,7 +42,8 @@ app = Flask(__name__)
 CORS(app)
 
 # Configure database (PostgreSQL)
-app.config['SQLALCHEMY_DATABASE_URI'] = os.getenv('DATABASE_URL','postgresql://postgres:admin@localhost:5432/shop_crm_post')
+app.config['SQLALCHEMY_DATABASE_URI'] = os.getenv('DATABASE_URL',
+                                                  'postgresql://postgres:admin@localhost:5432/shop_crm_post')
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
 # JWT Configuration
@@ -53,6 +54,26 @@ app.config['JWT_ACCESS_TOKEN_EXPIRES'] = timedelta(hours=1)
 # Initialize extensions
 db.init_app(app)
 jwt = JWTManager(app)
+
+
+@jwt.unauthorized_loader
+def custom_unauthorized_response(err):
+    print(f"Unauthorized: {err}")
+    return jsonify(msg="Missing or invalid token"), 401
+
+
+@jwt.invalid_token_loader
+def custom_invalid_token_response(err):
+    print(f"Invalid token: {err}")
+    return jsonify(msg="Invalid token"), 422
+
+
+@jwt.expired_token_loader
+def custom_expired_token_response(jwt_header, jwt_payload):
+    print("Token expired")
+    return jsonify(msg="Token has expired"), 401
+
+
 login_manager = LoginManager()
 login_manager.init_app(app)
 
@@ -155,7 +176,10 @@ def login():
     password = request.json.get('password')
     user = User.query.filter_by(username=username).first()
     if user and user.verify_password(password):
-        access_token = create_access_token(identity={'username': user.username, 'id': user.id})
+        access_token = create_access_token(
+            identity=str(user.id),
+            additional_claims={"username": user.username}
+        )
         return jsonify(message="Login successful", token=access_token), 200
     return jsonify(message="Invalid credentials"), 401
 
@@ -163,7 +187,8 @@ def login():
 @app.route('/api/logout', methods=['POST'])
 @jwt_required()
 def logout():
-    current_user = get_jwt_identity()  # Це повинно повернути правильний ідентифікатор користувача
+    current_user = get_jwt_identity()  # Extract the identity from the JWT token
+    print(f"Current user: {current_user}")  # Log the identity to verify it's being extracted
     if not isinstance(current_user, str):
         raise Exception("Subject must be a string")
     print(f"User {current_user} logged out")
