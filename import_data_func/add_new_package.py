@@ -123,4 +123,4 @@ def import_all_packages():
         import_packaging_materials_from_csv(file_path_package, purchase_date_package, db_session)
 
 
-import_all_packages()
+# import_all_packages()

@@ -11,3 +11,5 @@ def import_categories_from_csv(csv_filename: str, db_session):
             category = Category(id=int(category_id), name=category_name)
             db_session.add(category)
         db_session.commit()
+
+
