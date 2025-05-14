@@ -146,6 +146,6 @@ def get_purchase_history_data():
 
     # Приводимо дати до формату dd-mm-yyyy
     for item in combined_data_sorted:
-        item["date"] = item["date"].strftime("%d-%m-%Y")  # Формат dd-mm-yyyy
+        item["date"] = item["date"].strftime("%Y-%m-%d")  # Формат dd-mm-yyyy
 
     return combined_data_sorted

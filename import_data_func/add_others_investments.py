@@ -21,7 +21,9 @@ def load_other_investments_from_csv(file_path, created_date):
         for row in csv_reader:
             # Отримання даних з рядка CSV
             type_name = row['Наименование'].strip()
-            supplier = row['Поставщик'].strip()  # Текстове поле
+            raw_supplier = row.get('Поставщик')
+            supplier = raw_supplier.strip() if raw_supplier and raw_supplier.strip() else "N/A"
+
             cost = float(row['Стоимость'].replace(',', '.'))
 
             try:

@@ -8,6 +8,8 @@ from models import PackagingMaterial, PackagingMaterialSupplier, PackagingPurcha
 from postgreSQLConnect import db_session
 
 
+# TODO  Якщо немає постачальника то додай N/A
+
 def import_packaging_materials_from_csv(file_path, purchase_date, db_session):
     """
     Import packaging materials from a CSV file into the database.
@@ -22,12 +24,15 @@ def import_packaging_materials_from_csv(file_path, purchase_date, db_session):
 
             for row in reader:
                 name = row.get('Наименование')
-                supplier_name = row.get('Поставщик').strip()
+                raw_supplier_name = row.get('Поставщик')
+
                 quantity = int(row['Количество'].split()[0])
                 total_cost = float(row.get('Стоимость за количество', 0).replace(',', '.'))
                 cost_per_unit = float(row.get('Стоимость за 1 шт', 0).replace(',', '.'))
 
                 # Truncate supplier_name to 30 characters and store full name in contact_info
+                # Обробка імені постачальника
+                supplier_name = raw_supplier_name.strip() if raw_supplier_name and raw_supplier_name.strip() else "N/A"
                 truncated_supplier_name = supplier_name[:30]
                 contact_info = supplier_name
 
@@ -121,6 +126,5 @@ def import_all_packages():
         file_path_package = os.path.join(base_dir, filename)
         purchase_date_package = datetime.strptime(date_str, "%d.%m.%Y").date()
         import_packaging_materials_from_csv(file_path_package, purchase_date_package, db_session)
-
 
 # import_all_packages()

@@ -39,7 +39,8 @@ def load_products_from_csv(file_path, created_date):
         for row in csv_reader:
             # Отримання даних з рядка CSV
             name = row['Наименование'].strip()
-            supplier_name = row['Поставщик'].strip()
+            raw_supplier = row.get('Поставщик')
+            supplier_name = raw_supplier.strip() if raw_supplier and raw_supplier.strip() else "N/A"
             quantity = int(row['Количество'].split()[0])
             total_price = Decimal(row['Стоимость за количество'].replace(',', '.'))
             price_per_item = Decimal(row['Стоимость за 1 шт'].replace(',', '.'))
