@@ -1,7 +1,6 @@
 from flask import Blueprint, request, jsonify
 from sqlalchemy.exc import SQLAlchemyError
 
-from database import db_session
 from models import OtherInvestment
 from datetime import datetime
 
@@ -12,6 +11,7 @@ investments_bp = Blueprint('investments', __name__)
 @investments_bp.route('/api/create_new_investments', methods=['POST'])
 def add_investment():
     data = request.json
+    from postgreSQLConnect import db_session
 
     try:
         new_investment = OtherInvestment(
@@ -32,7 +32,7 @@ def add_investment():
 # Отримати всі вкладення
 @investments_bp.route('/api/gel_all_investments', methods=['GET'])
 def get_investments():
-    
+    from postgreSQLConnect import db_session
 
     investments = db_session.query(OtherInvestment).all()
     db_session.close()
@@ -48,7 +48,7 @@ def get_investments():
 # Видалити вкладення
 @investments_bp.route('/investments/<int:id>', methods=['DELETE'])
 def delete_investment(id):
-    
+    from postgreSQLConnect import db_session
 
     investment = db_session.query(OtherInvestment).get(id)
 
@@ -68,6 +68,8 @@ def delete_investment(id):
 
 @investments_bp.route('/api/delete_all_investments', methods=['DELETE'])
 def delete_all_investments():
+    from postgreSQLConnect import db_session
+
     """
     Видалення всіх записів з таблиці OtherInvestment.
     """

@@ -5,34 +5,34 @@ from models import StockHistory, SaleHistory, PurchaseHistory, product_categorie
 
 
 def calculate_total_sales():
-    from database import db_session  # Assuming `db_session` is the SQLAlchemy db_session
+    from postgreSQLConnect import db_session  # Assuming `db_session` is the SQLAlchemy db_session
 
     total_sales = db_session.query(func.sum(SaleHistory.selling_total_price)).scalar() or 0
     return total_sales
 
 
 def total_items_sold():
-    from database import db_session  # Assuming `db_session` is the SQLAlchemy db_session
+    from postgreSQLConnect import db_session  # Assuming `db_session` is the SQLAlchemy db_session
 
     return db_session.query(func.sum(SaleHistory.quantity_sold)).scalar() or 0
 
 
 def average_selling_price():
-    from database import db_session  # Assuming `db_session` is the SQLAlchemy db_session
+    from postgreSQLConnect import db_session  # Assuming `db_session` is the SQLAlchemy db_session
 
     avg_price = db_session.query(func.avg(SaleHistory.selling_price_per_item)).scalar() or 0
     return avg_price
 
 
 def average_purchase_price():
-    from database import db_session  # Assuming `db_session` is the SQLAlchemy db_session
+    from postgreSQLConnect import db_session  # Assuming `db_session` is the SQLAlchemy db_session
 
     avg_price = db_session.query(func.avg(PurchaseHistory.purchase_price_per_item)).scalar() or 0
     return avg_price
 
 
 def update_stock_after_sale(product_id, quantity_sold):
-    from database import db_session  # Assuming `db_session` is the SQLAlchemy db_session
+    from postgreSQLConnect import db_session  # Assuming `db_session` is the SQLAlchemy db_session
 
     product = db_session.query(Product).get(product_id)
     if product:
@@ -49,7 +49,7 @@ def update_stock_after_sale(product_id, quantity_sold):
 
 
 def update_stock_after_purchase(product_id, quantity_purchased):
-    from database import db_session  # Assuming `db_session` is the SQLAlchemy db_session
+    from postgreSQLConnect import db_session  # Assuming `db_session` is the SQLAlchemy db_session
 
     product = db_session.query(Product).get(product_id)
     if product:
@@ -66,7 +66,7 @@ def update_stock_after_purchase(product_id, quantity_purchased):
 
 
 def supplier_report():
-    from database import db_session  # Assuming `db_session` is the SQLAlchemy db_session
+    from postgreSQLConnect import db_session  # Assuming `db_session` is the SQLAlchemy db_session
 
     report = (
         db_session.query(PurchaseHistory.supplier, func.sum(PurchaseHistory.purchase_total_price).label('total_spent'))
@@ -77,7 +77,7 @@ def supplier_report():
 
 
 def category_sales_report():
-    from database import db_session  # Assuming `db_session` is the SQLAlchemy db_session
+    from postgreSQLConnect import db_session  # Assuming `db_session` is the SQLAlchemy db_session
 
     report = (
         db_session.query(product_categories_table.category,
@@ -90,7 +90,7 @@ def category_sales_report():
 
 
 def has_permission(user_id, action):
-    from database import db_session  # Assuming `db_session` is the SQLAlchemy db_session
+    from postgreSQLConnect import db_session  # Assuming `db_session` is the SQLAlchemy db_session
 
     user = db_session.query(User).get(user_id)
     if user and user.role.name == 'admin':
@@ -101,7 +101,7 @@ def has_permission(user_id, action):
 
 def verify_product_sale_history():
     try:
-        from database import db_session  # Assuming `db_session` is the SQLAlchemy db_session
+        from postgreSQLConnect import db_session  # Assuming `db_session` is the SQLAlchemy db_session
 
         # Отримуємо всі продукти
         products = db_session.query(Product).all()
