@@ -11,3 +11,11 @@ webhook.log
 
 # Ignore virtual environment directory
 venv/
+/instance/
+/migrations/
+/import_data_csv/
+/requirements_backup.txt
+/sdds.txt
+/app.log
+/.flaskenv
+/example_import_data_csv/
