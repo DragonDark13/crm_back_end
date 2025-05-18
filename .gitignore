@@ -19,3 +19,5 @@ venv/
 /app.log
 /.flaskenv
 /example_import_data_csv/
+/shop_crm_back.db
+/shop_crm_back_27_12.db
