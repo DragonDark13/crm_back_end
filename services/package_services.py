@@ -1,5 +1,6 @@
 from flask import Blueprint, jsonify, request
 from sqlalchemy.exc import SQLAlchemyError
+from flask import jsonify
 
 from models import PackagingMaterial, PackagingPurchaseHistory, PackagingMaterialSupplier, PackagingStockHistory, \
     PackagingSaleHistory
@@ -213,9 +214,6 @@ def get_packaging_material_history(packaging_material_id):
     }
 
     return result
-
-
-from flask import jsonify
 
 
 @package_bp.route('/api/delete_all_materials', methods=['DELETE'])

@@ -16,6 +16,7 @@ def add_investment():
     try:
         new_investment = OtherInvestment(
             type_name=data['type_name'],
+            supplier=data['supplier'],
             cost=data['cost'],
             date=datetime.strptime(data['date'], '%Y-%m-%d')
         )
