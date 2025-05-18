@@ -151,14 +151,16 @@ def create_roles_and_users():
             db.session.commit()
         if not User.query.filter_by(username='guest').first():
             guest_user = User(username='guest', email='guest@example.com')
-            guest_user.set_password('guestpassword')
+            guest_password = os.getenv('GUEST_PASSWORD', 'default_guest_password')
+            guest_user.set_password(guest_password)
             guest_user.fs_uniquifier = str(uuid.uuid4())
             db.session.add(guest_user)
             guest_user.roles.append(guest_role)
             db.session.commit()
         if not User.query.filter_by(username='manager').first():
             manager_user = User(username='manager', email='manager@example.com')
-            manager_user.set_password('managerpassword')
+            manager_password = os.getenv('MANAGER_PASSWORD', 'default_manager_password')
+            manager_user.set_password(manager_password)
             manager_user.fs_uniquifier = str(uuid.uuid4())
             db.session.add(manager_user)
             manager_user.roles.append(manager_role)

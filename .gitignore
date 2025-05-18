@@ -12,7 +12,7 @@ webhook.log
 # Ignore virtual environment directory
 venv/
 /migrations/
-/instance/
+instance/
 /**.db
 /import_data_csv/csv_product
 **.cvs
