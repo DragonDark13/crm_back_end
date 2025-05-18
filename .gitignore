@@ -22,7 +22,5 @@ venv/
 /import_data_csv/csv_others_investments/**.csv
 /.env
 /.flaskenv
-/instance/**.db
-
 /import_data_csv/
 /example_import_data_csv/
