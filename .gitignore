@@ -11,13 +11,22 @@ webhook.log
 
 # Ignore virtual environment directory
 venv/
-/instance/
 /migrations/
+instance/
+/**.db
+/import_data_csv/csv_product
+**.cvs
+/import_data_csv/csv_product/**.csv
+/import_data_csv/csv_product/
+/import_data_csv/csv_package/
+/import_data_csv/csv_others_investments/**.csv
+/.env
+/.flaskenv
 /import_data_csv/
+/example_import_data_csv/
 /requirements_backup.txt
+/instance/
 /sdds.txt
 /app.log
-/.flaskenv
-/example_import_data_csv/
 /shop_crm_back.db
 /shop_crm_back_27_12.db

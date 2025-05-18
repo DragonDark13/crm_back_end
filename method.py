@@ -1,103 +1,130 @@
-# агальний дохід від продажів: Додавання функції для підрахунку доходу.
-from peewee import fn, SQL
+from sqlalchemy import func
 
-from models import StockHistory, SaleHistory, PurchaseHistory, ProductCategory, User, Product
+from database import engine
+from models import StockHistory, SaleHistory, PurchaseHistory, product_categories_table, User, Product, Base
 
 
-def calculate_total_sales(self):
-    total_sales = SaleHistory.select(fn.SUM(SaleHistory.selling_total_price)).scalar() or 0
+def calculate_total_sales():
+    from postgreSQLConnect import db_session  # Assuming `db_session` is the SQLAlchemy db_session
+
+    total_sales = db_session.query(func.sum(SaleHistory.selling_total_price)).scalar() or 0
     return total_sales
 
 
-# Загальна кількість проданих одиниць:
-def total_items_sold(self):
-    return SaleHistory.select(fn.SUM(SaleHistory.quantity_sold)).scalar() or 0
+def total_items_sold():
+    from postgreSQLConnect import db_session  # Assuming `db_session` is the SQLAlchemy db_session
+
+    return db_session.query(func.sum(SaleHistory.quantity_sold)).scalar() or 0
 
 
-# Загальна вартість закупівель:
+def average_selling_price():
+    from postgreSQLConnect import db_session  # Assuming `db_session` is the SQLAlchemy db_session
 
-def average_selling_price(self):
-    avg_price = SaleHistory.select(fn.AVG(SaleHistory.selling_price_per_item)).scalar() or 0
+    avg_price = db_session.query(func.avg(SaleHistory.selling_price_per_item)).scalar() or 0
     return avg_price
 
 
-# Середня ціна за одиницю продажу/закупівлі:
+def average_purchase_price():
+    from postgreSQLConnect import db_session  # Assuming `db_session` is the SQLAlchemy db_session
 
-def average_purchase_price(self):
-    avg_price = PurchaseHistory.select(fn.AVG(PurchaseHistory.purchase_price_per_item)).scalar() or 0
+    avg_price = db_session.query(func.avg(PurchaseHistory.purchase_price_per_item)).scalar() or 0
     return avg_price
 
 
-# Метод для оновлення запасів після продажу:
 def update_stock_after_sale(product_id, quantity_sold):
-    product = Product.get_by_id(product_id)
-    product.quantity -= quantity_sold
-    product.save()
+    from postgreSQLConnect import db_session  # Assuming `db_session` is the SQLAlchemy db_session
 
-    StockHistory.create(
-        product=product,
-        change_amount=-quantity_sold,
-        change_type='subtract'
-    )
+    product = db_session.query(Product).get(product_id)
+    if product:
+        product.quantity -= quantity_sold
+        db_session.add(product)
+
+        stock_history = StockHistory(
+            product=product,
+            change_amount=-quantity_sold,
+            change_type='subtract'
+        )
+        db_session.add(stock_history)
+        db_session.commit()
 
 
-# Метод для оновлення запасів після закупівлі:
 def update_stock_after_purchase(product_id, quantity_purchased):
-    product = Product.get_by_id(product_id)
-    product.quantity += quantity_purchased
-    product.save()
+    from postgreSQLConnect import db_session  # Assuming `db_session` is the SQLAlchemy db_session
 
-    StockHistory.create(
-        product=product,
-        change_amount=quantity_purchased,
-        change_type='add'
-    )
+    product = db_session.query(Product).get(product_id)
+    if product:
+        product.quantity += quantity_purchased
+        db_session.add(product)
 
+        stock_history = StockHistory(
+            product=product,
+            change_amount=quantity_purchased,
+            change_type='add'
+        )
+        db_session.add(stock_history)
+        db_session.commit()
 
-# Звіти по постачальникам:
 
 def supplier_report():
-    report = (PurchaseHistory
-              .select(PurchaseHistory.supplier, fn.SUM(PurchaseHistory.purchase_total_price).alias('total_spent'))
-              .group_by(PurchaseHistory.supplier)
-              .order_by(SQL('total_spent').desc()))
+    from postgreSQLConnect import db_session  # Assuming `db_session` is the SQLAlchemy db_session
+
+    report = (
+        db_session.query(PurchaseHistory.supplier, func.sum(PurchaseHistory.purchase_total_price).label('total_spent'))
+            .group_by(PurchaseHistory.supplier)
+            .order_by(func.sum(PurchaseHistory.purchase_total_price).desc())
+            .all())
     return report
 
 
-# Аналіз продажів та закупівель за категоріями продуктів.
 def category_sales_report():
-    report = (SaleHistory
-              .select(ProductCategory.category, fn.SUM(SaleHistory.selling_total_price).alias('total_sales'))
-              .join(ProductCategory)
-              .group_by(ProductCategory.category)
-              .order_by(SQL('total_sales').desc()))
+    from postgreSQLConnect import db_session  # Assuming `db_session` is the SQLAlchemy db_session
+
+    report = (
+        db_session.query(product_categories_table.category,
+                         func.sum(SaleHistory.selling_total_price).label('total_sales'))
+            .join(product_categories_table)
+            .group_by(product_categories_table.category)
+            .order_by(func.sum(SaleHistory.selling_total_price).desc())
+            .all())
     return report
 
-
-# Метод для перевірки прав доступу:
 
 def has_permission(user_id, action):
-    user = User.get_by_id(user_id)
-    if user.role.name == 'admin':
+    from postgreSQLConnect import db_session  # Assuming `db_session` is the SQLAlchemy db_session
+
+    user = db_session.query(User).get(user_id)
+    if user and user.role.name == 'admin':
         return True
-    # Додати інші ролі та права доступу
+    # Add other roles and access permissions
     return False
 
 
 def verify_product_sale_history():
-    products = Product.select()  # Отримуємо всі продукти
+    try:
+        from postgreSQLConnect import db_session  # Assuming `db_session` is the SQLAlchemy db_session
 
-    for product in products:
-        # Підраховуємо загальну кількість проданих товарів і суму продажів для кожного продукту
-        sale_records = SaleHistory.select().where(SaleHistory.product == product)
+        # Отримуємо всі продукти
+        products = db_session.query(Product).all()
 
-        total_quantity_sold = sum(record.quantity_sold for record in sale_records)
-        total_selling_price = sum(record.selling_total_price for record in sale_records)
+        for product in products:
+            # Знаходимо всі записи продажів для кожного продукту
+            sale_records = db_session.query(SaleHistory).filter(SaleHistory.product_id == product.id).all()
 
-        # Порівнюємо з полями product.selling_quantity та product.selling_total_price
-        if total_quantity_sold == product.selling_quantity and total_selling_price == product.selling_total_price:
-            print(f"Product '{product.name}' verification successful!")
-        else:
-            print(f"Product '{product.name}' verification failed!")
-            print(f"Expected quantity sold: {product.selling_quantity}, calculated: {total_quantity_sold}")
-            print(f"Expected total selling price: {product.selling_total_price}, calculated: {total_selling_price}")
+            # Обчислюємо загальну кількість проданого та суму продажу
+            total_quantity_sold = sum(record.quantity_sold for record in sale_records)
+            total_selling_price = sum(record.selling_total_price for record in sale_records)
+
+            # Перевіряємо дані
+            if total_quantity_sold == product.sold_quantity and total_selling_price == float(
+                    product.selling_total_price):
+                print(f"Product '{product.name}' verification successful!")
+            else:
+                print(f"Product '{product.name}' verification failed!")
+                print(f"Expected quantity sold: {product.sold_quantity}, calculated: {total_quantity_sold}")
+                print(f"Expected total selling price: {product.selling_total_price}, calculated: {total_selling_price}")
+
+    except Exception as e:
+        print(f"An error occurred: {e}")
+
+
+
