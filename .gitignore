@@ -24,3 +24,4 @@ instance/
 /.flaskenv
 /import_data_csv/
 /example_import_data_csv/
+/requirements_backup.txt
