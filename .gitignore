@@ -14,6 +14,9 @@ venv/
 /migrations/
 instance/
 /**.db
+**.db
+shop_crm_back.db
+shop_crm_back_27_12.db
 /import_data_csv/csv_product
 **.cvs
 /import_data_csv/csv_product/**.csv
