@@ -37,6 +37,14 @@ class Supplier(Base):
     products = relationship("Product", back_populates="supplier", cascade="all, delete-orphan")
     purchase_history = relationship("PurchaseHistory", back_populates="supplier", cascade="all, delete-orphan")
 
+    # У моделі Supplier
+    def to_dict(self):
+        return {
+            'id': self.id,
+            'name': self.name,
+            'contact_info': self.contact_info
+        }
+
 
 class Product(Base):
     __tablename__ = 'products'
@@ -204,7 +212,7 @@ class SaleHistory(Base):
 class Category(Base):
     __tablename__ = 'categories'
 
-    id = Column(Integer, primary_key=True)
+    id = Column(Integer, primary_key=True, autoincrement=True)
     name = Column(String, unique=True, nullable=False)
     products = relationship("Product", secondary=product_categories_table, back_populates="categories")
 

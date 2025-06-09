@@ -10,7 +10,7 @@ import uuid
 import logging
 
 from flask_cors import CORS
-
+from werkzeug.security import generate_password_hash, check_password_hash
 from models import db, User, Role
 from services.category_routes import category_bp
 from services.customer_routes import customer_bp
@@ -149,8 +149,10 @@ def create_roles_and_users():
             manager_role = Role(name='manager', description='Full access')
             db.session.add(manager_role)
             db.session.commit()
-        if not User.query.filter_by(username='guest').first():
-            guest_user = User(username='guest', email='guest@example.com')
+        if not User.query.filter_by(username='guest_user').first():
+            guest_user = User()
+            guest_user.username = 'guest_user'
+            guest_user.email = 'guest@example.com'
             guest_password = os.getenv('GUEST_PASSWORD', 'default_guest_password')
             guest_user.set_password(guest_password)
             guest_user.fs_uniquifier = str(uuid.uuid4())
@@ -158,7 +160,9 @@ def create_roles_and_users():
             guest_user.roles.append(guest_role)
             db.session.commit()
         if not User.query.filter_by(username='manager').first():
-            manager_user = User(username='manager', email='manager@example.com')
+            manager_user = User()
+            manager_user.username = 'manager'
+            manager_user.email = 'manager@example.com'
             manager_password = os.getenv('MANAGER_PASSWORD', 'default_manager_password')
             manager_user.set_password(manager_password)
             manager_user.fs_uniquifier = str(uuid.uuid4())
@@ -176,6 +180,10 @@ with app.app_context():
 def login():
     username = request.json.get('username')
     password = request.json.get('password')
+    hash_password = generate_password_hash(password)
+
+    print("Hash:", hash_password)
+    print("Valid:", check_password_hash(hash_password, password))
     user = User.query.filter_by(username=username).first()
     if user and user.verify_password(password):
         access_token = create_access_token(
