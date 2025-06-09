@@ -1,7 +1,7 @@
 from flask import Blueprint, jsonify, request, abort
 from flask_sqlalchemy.session import Session
 
-from models import Customer, SaleHistory
+from models import Customer, SaleHistory, Supplier
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import joinedload
 
@@ -62,16 +62,39 @@ def get_all_customers():
 @customer_bp.route('/api/customers_details/<int:customer_id>', methods=['GET'])
 def get_customer_details(customer_id):
     from postgreSQLConnect import db_session
+    from models import Customer, SaleHistory, Product, PackagingMaterial  # Імпортуємо PackagingMaterial
 
     try:
         customer = db_session.query(Customer).filter_by(id=customer_id).one()
         customer_data = customer.to_dict()
 
-        # Get related sales for the customer
+        # Отримати всі продажі клієнта
         sales = db_session.query(SaleHistory).filter_by(customer_id=customer_id).all()
-        customer_data['sales'] = [sale.to_dict() for sale in sales]
+
+        sales_with_details = []
+        for sale in sales:
+            sale_dict = sale.to_dict()
+
+            # Додати товар
+            product = db_session.query(Product).filter_by(id=sale.product_id).first()
+            sale_dict['product'] = product.to_dict() if product else None
+
+            supplier = db_session.query(Supplier).filter(Supplier.id == sale.product.supplier_id).first()
+            sale_dict['product']['supplier'] = supplier.to_dict() if supplier else None
+
+            # Додати інформацію про пакування, якщо воно є
+            if sale.packaging_material_id:
+                packaging = db_session.query(PackagingMaterial).filter_by(id=sale.packaging_material_id).first()
+                sale_dict['packaging_material'] = packaging.to_dict() if packaging else None
+            else:
+                sale_dict['packaging_material'] = None
+
+            sales_with_details.append(sale_dict)
+
+        customer_data['sales'] = sales_with_details
 
         return jsonify(customer_data), 200
+
     except Exception as e:
         return jsonify({'error': f'Customer not found: {str(e)}'}), 404
 
