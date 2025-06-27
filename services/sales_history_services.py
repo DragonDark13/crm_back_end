@@ -1,8 +1,7 @@
 from uuid import uuid4
 
 from flask import Flask, jsonify, request, Blueprint
-from sqlalchemy.orm import joinedload
-from datetime import datetime
+
 from decimal import Decimal
 
 from models import db, SaleHistory, Product, Customer, PackagingSaleHistory, GiftSetSalesHistory

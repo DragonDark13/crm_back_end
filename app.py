@@ -184,6 +184,8 @@ def login():
 
     print("Hash:", hash_password)
     print("Valid:", check_password_hash(hash_password, password))
+    print("password from request:", repr(password))
+    print("Equal to 'managerpassword':", password == 'managerpassword')
     user = User.query.filter_by(username=username).first()
     if user and user.verify_password(password):
         access_token = create_access_token(

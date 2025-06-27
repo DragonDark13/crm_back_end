@@ -296,7 +296,7 @@ def sell_gift_set(gift_set_id):
         # Перевірка чи об'єкт прив'язаний до іншої сесії
         product.reserved_quantity -= gift_set_product.quantity  # Зменшуємо кількість зарезервовану
         product.sold_quantity += gift_set_product.quantity  # Збільшуємо кількість продану
-        product.available_quantity += gift_set_product.quantity  # Зменшуємо кількість в наявності
+        # product.available_quantity -= gift_set_product.quantity  # Зменшуємо кількість в наявності
 
         # Додаємо запис про цей товар у історію продажів через зворотний зв'язок
         sales_product = GiftSetSalesHistoryProduct(

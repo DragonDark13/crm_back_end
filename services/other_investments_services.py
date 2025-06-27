@@ -47,11 +47,11 @@ def get_investments():
 
 
 # Видалити вкладення
-@investments_bp.route('/investments/<int:id>', methods=['DELETE'])
-def delete_investment(id):
+@investments_bp.route('/api/delete_investments/<int:investment_id>', methods=['DELETE', 'OPTIONS'])
+def delete_investment(investment_id: int):
     from postgreSQLConnect import db_session
 
-    investment = db_session.query(OtherInvestment).get(id)
+    investment = db_session.query(OtherInvestment).filter_by(id=investment_id).first()
 
     if not investment:
         return jsonify({"error": "Investment not found"}), 404
