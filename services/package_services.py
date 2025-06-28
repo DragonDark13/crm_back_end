@@ -8,7 +8,7 @@ from models import PackagingMaterial, PackagingPurchaseHistory, PackagingMateria
 package_bp = Blueprint('packages', __name__)
 
 
-@package_bp.route('/api/get_all_packaging_materials', methods=['GET'])
+@package_bp.route('/get_all_packaging_materials', methods=['GET'])
 def get_packaging_materials():
     from postgreSQLConnect import db_session
 
@@ -23,7 +23,7 @@ def get_packaging_materials():
     return jsonify({'materials': materials_data})
 
 
-@package_bp.route('/api/packaging_materials/purchase', methods=['POST'])
+@package_bp.route('/packaging_materials/purchase', methods=['POST'])
 def purchase_packaging_material():
     from postgreSQLConnect import db_session
 
@@ -78,7 +78,7 @@ def purchase_packaging_material():
     return jsonify(material.to_dict()), 201
 
 
-@package_bp.route('/api/get_all_packaging_suppliers', methods=['GET'])
+@package_bp.route('/get_all_packaging_suppliers', methods=['GET'])
 def get_all_suppliers():
     from postgreSQLConnect import db_session
 
@@ -88,7 +88,7 @@ def get_all_suppliers():
     return jsonify(suppliers_data), 200
 
 
-@package_bp.route('/api/add_new_packaging_suppliers', methods=['POST'])
+@package_bp.route('/add_new_packaging_suppliers', methods=['POST'])
 def add_supplier():
     data = request.json
     name = data.get('name')
@@ -104,7 +104,7 @@ def add_supplier():
     return jsonify(new_supplier.to_dict()), 201
 
 
-@package_bp.route('/api/purchase_current_packaging', methods=['POST'])
+@package_bp.route('/purchase_current_packaging', methods=['POST'])
 def purchase_current_packaging_material():
     data = request.json
     material_id = data.get('material_id')
@@ -150,7 +150,7 @@ def purchase_current_packaging_material():
         return jsonify({'error': 'Database error', 'details': str(e)}), 500
 
 
-@package_bp.route('/api/update_packaging_status', methods=['OPTIONS', 'POST'])
+@package_bp.route('/update_packaging_status', methods=['OPTIONS', 'POST'])
 def update_packaging_status():
     if request.method == 'OPTIONS':
         return '', 200  # Повертає статус 200 для запиту OPTIONS
@@ -189,7 +189,7 @@ def update_packaging_status():
         return jsonify({'error': 'Database error', 'details': str(e)}), 500
 
 
-@package_bp.route('/api/materials/<int:packaging_material_id>/history', methods=['GET'])
+@package_bp.route('/materials/<int:packaging_material_id>/history', methods=['GET'])
 def get_packaging_material_history(packaging_material_id):
     from postgreSQLConnect import db_session
 
@@ -216,7 +216,7 @@ def get_packaging_material_history(packaging_material_id):
     return result
 
 
-@package_bp.route('/api/delete_all_materials', methods=['DELETE'])
+@package_bp.route('/delete_all_materials', methods=['DELETE'])
 def delete_all_packaging_materials():
     from postgreSQLConnect import db_session
     try:

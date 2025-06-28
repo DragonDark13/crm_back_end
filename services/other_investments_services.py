@@ -8,7 +8,7 @@ investments_bp = Blueprint('investments', __name__)
 
 
 # Додати нове вкладення
-@investments_bp.route('/api/create_new_investments', methods=['POST'])
+@investments_bp.route('/create_new_investments', methods=['POST'])
 def add_investment():
     data = request.json
     from postgreSQLConnect import db_session
@@ -31,7 +31,7 @@ def add_investment():
 
 
 # Отримати всі вкладення
-@investments_bp.route('/api/gel_all_investments', methods=['GET'])
+@investments_bp.route('/gel_all_investments', methods=['GET'])
 def get_investments():
     from postgreSQLConnect import db_session
 
@@ -47,7 +47,7 @@ def get_investments():
 
 
 # Видалити вкладення
-@investments_bp.route('/api/delete_investments/<int:investments_id>', methods=['DELETE'])
+@investments_bp.route('/delete_investments/<int:investments_id>', methods=['DELETE'])
 def delete_investment(investments_id: int):
     from postgreSQLConnect import db_session
     try:
@@ -71,7 +71,7 @@ def delete_investment(investments_id: int):
 
 
 
-@investments_bp.route('/api/delete_all_investments', methods=['DELETE'])
+@investments_bp.route('/delete_all_investments', methods=['DELETE'])
 def delete_all_investments():
     from postgreSQLConnect import db_session
 

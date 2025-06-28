@@ -191,7 +191,7 @@ class ProductService:
             db_session.add(product_category)
 
 
-@product_bp.route('/api/product/<int:product_id>', methods=['PUT'])
+@product_bp.route('/product/<int:product_id>', methods=['PUT'])
 def update_product(product_id):
     from postgreSQLConnect import db_session
 
@@ -298,7 +298,7 @@ def update_product(product_id):
         return jsonify({'error': 'Product not found'}),
 
 
-@product_bp.route('/api/delete_all_products', methods=['DELETE'])
+@product_bp.route('/delete_all_products', methods=['DELETE'])
 def delete_all_products():
     """
 
@@ -331,7 +331,7 @@ def delete_all_products():
 product_history_bp = Blueprint('product_history', __name__)
 
 
-@product_history_bp.route('/api/product/<int:product_id>', methods=['DELETE'])
+@product_history_bp.route('/product/<int:product_id>', methods=['DELETE'])
 def delete_product(product_id):
     """Delete product and all related records."""
     try:
@@ -356,7 +356,7 @@ def delete_product(product_id):
         return jsonify({'error': 'Product not found'}), 404
 
 
-@product_history_bp.route('/api/product/<int:product_id>/history', methods=['GET'])
+@product_history_bp.route('/product/<int:product_id>/history', methods=['GET'])
 def get_product_history(product_id):
     """Get history of stock, purchase, and sales changes for a product."""
     try:
@@ -402,7 +402,7 @@ def get_product_history(product_id):
         return jsonify({'error': 'Product not found'}), 404
 
 
-@product_history_bp.route('/api/product/<int:product_id>/purchase', methods=['POST'])
+@product_history_bp.route('/product/<int:product_id>/purchase', methods=['POST'])
 def purchase_product(product_id):
     """Handle product purchase and record in history."""
     data = request.get_json()
@@ -458,7 +458,7 @@ def purchase_product(product_id):
         return jsonify({'error': f'Missing field: {str(e)}'}), 400
 
 
-@product_history_bp.route('/api/product/<int:product_id>/sale', methods=['POST'])
+@product_history_bp.route('/product/<int:product_id>/sale', methods=['POST'])
 def record_sale(product_id):
     """Record a sale for a product and update sale history."""
     data = request.get_json()
@@ -572,7 +572,7 @@ def record_sale(product_id):
         return jsonify({'error': f'Missing field: {str(e)}'}), 400
 
 
-@product_history_bp.route('/api/delete-history/<int:product_id>/<string:history_type>/<int:history_id>',
+@product_history_bp.route('/delete-history/<int:product_id>/<string:history_type>/<int:history_id>',
                           methods=['DELETE'])
 def delete_product_history(product_id, history_type, history_id):
     from postgreSQLConnect import db_session

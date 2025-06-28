@@ -17,7 +17,7 @@ def add_sale_history_id(sales_data):
     return sales_data
 
 
-@sales_history_services_bp.route('/api/get_all_sales_history', methods=['GET'])
+@sales_history_services_bp.route('/get_all_sales_history', methods=['GET'])
 def get_sales_history():
     from postgreSQLConnect import db_session
 

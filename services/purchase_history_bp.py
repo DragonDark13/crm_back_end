@@ -10,7 +10,7 @@ from models import PurchaseHistory, Supplier, Product, Category, product_categor
 purchase_history_bp = Blueprint('purchase_history', __name__)
 
 
-@purchase_history_bp.route('/api/get_all_purchase_history', methods=['GET'])
+@purchase_history_bp.route('/get_all_purchase_history', methods=['GET'])
 def get_purchase_history_data():
     """
     Отримує дані про історію закупівель для сторінки.

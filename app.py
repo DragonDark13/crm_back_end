@@ -110,17 +110,17 @@ def create_and_purchase_product():
 
 
 # Register Blueprints
-app.register_blueprint(product_bp)
-app.register_blueprint(product_history_bp)
-app.register_blueprint(category_bp)
-app.register_blueprint(supplier_bp)
-app.register_blueprint(customer_bp)
-app.register_blueprint(package_bp)
-app.register_blueprint(investments_bp)
-app.register_blueprint(purchase_history_bp)
-app.register_blueprint(export_to_excel_bp)
-app.register_blueprint(sales_history_services_bp)
-app.register_blueprint(gift_box_services_bp)
+app.register_blueprint(product_bp, url_prefix='/api')
+app.register_blueprint(product_history_bp, url_prefix='/api')
+app.register_blueprint(category_bp, url_prefix='/api')
+app.register_blueprint(supplier_bp, url_prefix='/api')
+app.register_blueprint(customer_bp, url_prefix='/api')
+app.register_blueprint(package_bp, url_prefix='/api')
+app.register_blueprint(investments_bp, url_prefix='/api')
+app.register_blueprint(purchase_history_bp, url_prefix='/api')
+app.register_blueprint(export_to_excel_bp, url_prefix='/api')
+app.register_blueprint(sales_history_services_bp, url_prefix='/api')
+app.register_blueprint(gift_box_services_bp, url_prefix='/api')
 
 
 @app.route('/update_server', methods=['POST'])

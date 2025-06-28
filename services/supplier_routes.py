@@ -8,7 +8,7 @@ supplier_bp = Blueprint('supplier', __name__)
 
 
 # Create a new supplier
-@supplier_bp.route('/api/create_supplier', methods=['POST'])
+@supplier_bp.route('/create_supplier', methods=['POST'])
 def create_supplier():
     """Add a new supplier"""
     from postgreSQLConnect import db_session
@@ -46,7 +46,7 @@ def create_supplier():
 
 
 # Get all suppliers
-@supplier_bp.route('/api/suppliers/list', methods=['GET'])
+@supplier_bp.route('/suppliers/list', methods=['GET'])
 def get_suppliers():
     from postgreSQLConnect import db_session
 
@@ -88,7 +88,7 @@ def get_supplier_purchase_history(supplier_id):
 
 
 # Get supplier purchase history through API endpoint
-@supplier_bp.route('/api/supplier/<int:supplier_id>/purchase-history', methods=['GET'])
+@supplier_bp.route('/supplier/<int:supplier_id>/purchase-history', methods=['GET'])
 def get_supplier_purchase_history_api(supplier_id):
     supplier_data = get_supplier_purchase_history(supplier_id)
 
@@ -126,7 +126,7 @@ def get_supplier_products(supplier_id):
 
 
 # Get supplier products through API endpoint
-@supplier_bp.route('/api/supplier/<int:supplier_id>/products', methods=['GET'])
+@supplier_bp.route('/supplier/<int:supplier_id>/products', methods=['GET'])
 def get_supplier_products_api(supplier_id):
     supplier_data = get_supplier_products(supplier_id)
 
@@ -140,7 +140,7 @@ def get_supplier_products_api(supplier_id):
 
 
 # Delete a supplier
-@supplier_bp.route('/api/delete_supplier/<int:supplier_id>', methods=['DELETE'])
+@supplier_bp.route('/delete_supplier/<int:supplier_id>', methods=['DELETE'])
 def delete_supplier(supplier_id):
     from postgreSQLConnect import db_session
 
@@ -160,7 +160,7 @@ def delete_supplier(supplier_id):
 
 
 # Update supplier data
-@supplier_bp.route('/api/supplier_edit/<int:supplier_id>', methods=['PUT'])
+@supplier_bp.route('/supplier_edit/<int:supplier_id>', methods=['PUT'])
 def update_supplier(supplier_id):
     """Update supplier information"""
     data = request.get_json()
