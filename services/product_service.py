@@ -25,11 +25,7 @@ class ProductService:
             product = db_session.query(Product).filter(Product.id == product_id).one()
             product_dict = product.to_dict()  # Assuming you have a method for dict conversion
             product_dict['category_ids'] = [category.id for category in product.categories]
-            product_dict['supplier'] = {
-                'id': product.supplier.id,
-                'name': product.supplier.name,
-                'contact_info': product.supplier.contact_info
-            } if product.supplier else None
+            product_dict['supplier'] = product.supplier.to_dict() if product.supplier else None
             return product_dict, 200
         except NoResultFound:
             return {'error': 'Product not found'}, 404
@@ -53,11 +49,8 @@ class ProductService:
 
             # Додаємо постачальника продукту
             if product.supplier:
-                product_dict['supplier'] = {
-                    'id': product.supplier.id,
-                    'name': product.supplier.name,
-                    'contact_info': product.supplier.contact_info
-                }
+                product_dict['supplier'] = product.supplier.to_dict()
+
             else:
                 product_dict['supplier'] = None
 

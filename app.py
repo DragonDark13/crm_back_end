@@ -90,7 +90,7 @@ def protected():
     return jsonify(logged_in_as=current_user), 200
 
 
-@app.route('/api/products', methods=['GET'])
+@app.route('/api/get_all_products', methods=['GET'])
 def get_products():
     product_list, status_code = ProductService.get_all_products()
     return jsonify(product_list), status_code

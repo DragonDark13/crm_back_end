@@ -51,16 +51,8 @@ def get_suppliers():
     from postgreSQLConnect import db_session
 
     """Get a list of all suppliers"""
-    suppliers = db_session.query(Supplier).all()
-
-    suppliers_list = [{
-        'id': supplier.id,
-        'name': supplier.name,
-        'contact_info': supplier.contact_info,
-        'email': supplier.email,
-        'phone_number': supplier.phone_number,
-        'address': supplier.address
-    } for supplier in suppliers]
+    suppliers = db_session.query(Supplier).order_by(Supplier.name).all()
+    suppliers_list = [supplier.to_dict() for supplier in suppliers]
 
     return jsonify(suppliers_list), 200
 
@@ -164,7 +156,7 @@ def delete_supplier(supplier_id):
 def update_supplier(supplier_id):
     """Update supplier information"""
     data = request.get_json()
-    
+    from postgreSQLConnect import db_session
 
     supplier = db_session.query(Supplier).filter_by(id=supplier_id).one_or_none()
 
@@ -177,6 +169,10 @@ def update_supplier(supplier_id):
     supplier.email = data.get('email', supplier.email)
     supplier.phone_number = data.get('phone_number', supplier.phone_number)
     supplier.address = data.get('address', supplier.address)
+
+    # Додано: оновлення is_active, якщо воно передано
+    if 'is_active' in data:
+        supplier.is_active = bool(data['is_active'])
 
     try:
         db_session.commit()

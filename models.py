@@ -1,6 +1,6 @@
 from flask_sqlalchemy import SQLAlchemy
 from flask_login import UserMixin
-from sqlalchemy import Column, Integer, String, DateTime, ForeignKey, Float, Date, DECIMAL, Table
+from sqlalchemy import Column, Integer, String, DateTime, ForeignKey, Float, Date, DECIMAL, Table, Boolean
 from sqlalchemy.orm import relationship
 from datetime import datetime
 from werkzeug.security import generate_password_hash, check_password_hash
@@ -34,15 +34,20 @@ class Supplier(Base):
     email = Column(String, nullable=True)
     phone_number = Column(String, nullable=True)
     address = Column(String, nullable=True)
+    is_active = Column(Boolean, nullable=False, default=True)
+
     products = relationship("Product", back_populates="supplier", cascade="all, delete-orphan")
     purchase_history = relationship("PurchaseHistory", back_populates="supplier", cascade="all, delete-orphan")
 
-    # У моделі Supplier
     def to_dict(self):
         return {
             'id': self.id,
             'name': self.name,
-            'contact_info': self.contact_info
+            'contact_info': self.contact_info,
+            'email': self.email,
+            'phone_number': self.phone_number,
+            'address': self.address,
+            'is_active': self.is_active  # ← ДОДАНО
         }
 
 
@@ -129,11 +134,8 @@ class PurchaseHistory(Base):
             'purchase_total_price': float(self.purchase_total_price),
             'purchase_date': self.purchase_date.strftime('%Y-%m-%d'),
             'quantity_purchase': self.quantity_purchase,
-            'supplier': {
-                'id': self.supplier.id,
-                'name': self.supplier.name,
-                'contact_info': self.supplier.contact_info
-            } if self.supplier else None
+            'supplier': self.supplier.to_dict() if self.supplier else None
+
         }
 
 
