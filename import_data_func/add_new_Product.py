@@ -10,7 +10,6 @@ import csv
 from sqlalchemy.exc import IntegrityError
 from models import Product, Supplier, PurchaseHistory, StockHistory, Base
 from postgreSQLConnect import engine, db_session
-from app import app  # Імпортуємо Flask застосунок
 
 
 def ensure_table_exists(table_name):

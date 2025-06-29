@@ -1,10 +1,10 @@
 from uuid import uuid4
 
-from flask import Flask, jsonify, request, Blueprint
+from flask import jsonify, Blueprint
 
 from decimal import Decimal
 
-from models import db, SaleHistory, Product, Customer, PackagingSaleHistory, GiftSetSalesHistory
+from models import SaleHistory, Product, Customer, PackagingSaleHistory, GiftSetSalesHistory
 
 sales_history_services_bp = Blueprint('sales_history', __name__)
 

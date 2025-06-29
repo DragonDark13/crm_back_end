@@ -1,9 +1,8 @@
 from flask import Blueprint, jsonify, request, abort
 from flask_sqlalchemy.session import Session
 
-from models import Customer, SaleHistory, Supplier
+from models import Customer, Supplier
 from sqlalchemy.exc import IntegrityError
-from sqlalchemy.orm import joinedload
 
 # Create Blueprint for customers
 

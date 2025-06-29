@@ -1,9 +1,7 @@
 from flask import Blueprint, jsonify, request
-from sqlalchemy.exc import IntegrityError
-from sqlalchemy.orm import Session
-from models import Category, Product, product_categories_table
 
 # Create a Blueprint for categories
+from models import Category, Product
 
 category_bp = Blueprint('categories', __name__)
 
@@ -23,7 +21,6 @@ def get_all_categories():
 def create_category():
     """Create a new category."""
     from postgreSQLConnect import db_session
-    from sqlalchemy.exc import IntegrityError
 
     data = request.get_json()
 
