@@ -1,5 +1,5 @@
 from flask import Blueprint, jsonify, request
-from models import Supplier, PurchaseHistory, Product
+from models import Supplier, PurchaseHistory, Product, PackagingMaterialSupplier
 from sqlalchemy.exc import IntegrityError
 
 # Create Blueprint for suppliers
@@ -50,11 +50,21 @@ def create_supplier():
 def get_suppliers():
     from postgreSQLConnect import db_session
 
-    """Get a list of all suppliers"""
-    suppliers = db_session.query(Supplier).order_by(Supplier.name).all()
-    suppliers_list = [supplier.to_dict() for supplier in suppliers]
+    """Отримати список всіх постачальників (товарів і пакування)"""
+    product_suppliers = db_session.query(Supplier).order_by(Supplier.name).all()
+    packaging_suppliers = db_session.query(PackagingMaterialSupplier).order_by(PackagingMaterialSupplier.name).all()
 
-    return jsonify(suppliers_list), 200
+    product_suppliers_list = [
+        {**supplier.to_dict(), "type": "product"} for supplier in product_suppliers
+    ]
+
+    packaging_suppliers_list = [
+        {**supplier.to_dict(), "type": "packaging"} for supplier in packaging_suppliers
+    ]
+
+    combined_suppliers = product_suppliers_list + packaging_suppliers_list
+
+    return jsonify(combined_suppliers), 200
 
 
 # Get supplier purchase history

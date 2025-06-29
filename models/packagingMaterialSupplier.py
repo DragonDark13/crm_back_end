@@ -17,6 +17,7 @@ class PackagingMaterialSupplier(Base):
                                        cascade="all, delete-orphan")
     purchase_history = relationship("PackagingPurchaseHistory",
                                     back_populates="packaging_material_supplier")  # New relationship added
+    is_active = Column(Boolean, nullable=False, default=True)
 
     def to_dict(self):
         return {
@@ -26,4 +27,7 @@ class PackagingMaterialSupplier(Base):
             'email': self.email,
             'phone_number': self.phone_number,
             'address': self.address,
+            'is_active': self.is_active  # ← ДОДАНО
         }
+
+
