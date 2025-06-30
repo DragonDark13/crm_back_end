@@ -28,6 +28,7 @@ def get_purchase_history_data():
             # Використовуємо string_agg для PostgreSQL
             Supplier.id.label('supplier_id'),
             Supplier.name.label('supplier_name'),
+            Supplier.is_active.label('supplier_is_active'),
             PurchaseHistory.quantity_purchase.label('quantity'),
             PurchaseHistory.purchase_price_per_item.label('price_per_item'),
             PurchaseHistory.purchase_total_price.label('total_price'),
@@ -50,6 +51,7 @@ def get_purchase_history_data():
             PackagingMaterial.id.label('packaging_material_id'),
             PackagingMaterial.name.label('packaging_material_name'),
             PackagingMaterialSupplier.name.label('supplier_name'),  # Ім'я постачальника
+            PackagingMaterialSupplier.is_active.label('supplier_is_active'),
             # З'єднання імен постачальників у рядок
             PackagingPurchaseHistory.quantity_purchased.label('quantity'),
             PackagingPurchaseHistory.purchase_price_per_unit.label('price_per_unit'),
@@ -101,6 +103,7 @@ def get_purchase_history_data():
                 "product_categories"] else [],
             "supplier_id": item["supplier_id"],
             "supplier_name": item["supplier_name"],
+            "supplier_is_active": item["supplier_is_active"],
             "quantity": item["quantity"],
             "price_per_item": item["price_per_item"],
             "total_price": item["total_price"],
@@ -115,6 +118,7 @@ def get_purchase_history_data():
             "name": item['packaging_material_name'],
             "categories": [],
             "supplier_name": item["supplier_name"],
+            "supplier_is_active": item["supplier_is_active"],
             "quantity": item["quantity"],
             "price_per_item": item["price_per_unit"],
             "total_price": item["total_price"],
@@ -130,6 +134,7 @@ def get_purchase_history_data():
             "categories": [],
             "supplier_id": None,
             "supplier_name": item["supplier"],
+            "supplier_is_active": True,
             "quantity": None,
             "price_per_item": None,
             "total_price": item["expense_amount"],

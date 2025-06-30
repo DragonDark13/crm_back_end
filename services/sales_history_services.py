@@ -110,10 +110,7 @@ def get_sales_history():
                 'id': category.id,
                 'name': category.name
             } for category in sale.product.categories],  # Повертати категорії як об'єкти
-            'supplier': {
-                'id': sale.product.supplier.id if sale.product.supplier else None,
-                'name': sale.product.supplier.name if sale.product.supplier else ''
-            },  # Повертати постачальника як об'єкт
+            "supplier": sale.product.supplier.to_dict() if sale.product.supplier else None,  # Повертати постачальника як об'єкт
             'customer': {
                 'id': sale.customer.id,
                 'name': sale.customer.name

@@ -1,3 +1,5 @@
+from decimal import Decimal
+
 from flask import Blueprint, request
 from sqlalchemy.exc import SQLAlchemyError, IntegrityError
 from flask import jsonify
@@ -174,7 +176,8 @@ def update_packaging_status():
 
         # Віднімаємо використану кількість
         material.available_quantity -= quantity_used
-        material.available_stock_cost -= quantity_used * float(material.purchase_price_per_unit or 0)
+        material.available_stock_cost -= Decimal(str(quantity_used)) * (
+                    material.purchase_price_per_unit or Decimal("0"))
 
         # Встановлюємо статус "used"
         if material.available_quantity == quantity_used:
