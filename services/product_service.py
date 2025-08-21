@@ -14,6 +14,18 @@ from datetime import datetime
 product_bp = Blueprint('products', __name__)
 
 
+def generate_article_for_new_prod():
+    from postgreSQLConnect import db_session
+
+    last_product = db_session.query(Product).order_by(Product.id.desc()).first()
+    if last_product and last_product.article.startswith("PRD-"):
+        last_number = int(last_product.article.split("-")[1])
+        new_number = last_number + 1
+    else:
+        new_number = 1
+    return f"PRD-{new_number:04d}"
+
+
 class ProductService:
 
     @staticmethod
@@ -93,7 +105,9 @@ class ProductService:
                 name=data['name'],
                 total_quantity=0,
                 available_quantity=0,
-                created_date=created_date  # Pass the datetime object
+                created_date=created_date,  # Pass the datetime object
+                article=generate_article_for_new_prod()  # Додаємо артикул тут
+
             )
 
             # Add product to session before associating categories

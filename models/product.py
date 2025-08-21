@@ -29,6 +29,7 @@ class Product(Base):
     categories = relationship("Category", secondary=product_categories_table, back_populates="products")
     reorder_level = Column(Integer, default=0)
     reserved_quantity = Column(Integer, nullable=False, default=0)  # Додайте default=0
+    article = Column(String(20), unique=True, nullable=False)
 
     def to_dict(self):
         """Convert product instance to dictionary."""
@@ -43,5 +44,7 @@ class Product(Base):
             'purchase_price_per_item': float(self.purchase_price_per_item or 0),
             'selling_total_price': float(self.selling_total_price or 0),
             'selling_price_per_item': float(self.selling_price_per_item or 0),
-            'created_date': self.created_date.isoformat() if self.created_date else None
+            'created_date': self.created_date.isoformat() if self.created_date else None,
+            'article': self.article
+
         }

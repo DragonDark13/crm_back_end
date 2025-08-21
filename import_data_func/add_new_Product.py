@@ -24,6 +24,9 @@ def ensure_table_exists(table_name):
         print(f"Таблиця '{table_name}' успішно створена.")
 
 
+
+
+
 def load_products_from_csv(file_path, created_date):
     """
     Завантажує продукти з CSV-файлу до бази даних.
@@ -32,7 +35,18 @@ def load_products_from_csv(file_path, created_date):
 
     :param file_path: Шлях до CSV-файлу.
     :param created_date: Дата створення або надходження продуктів (тип datetime).
+
     """
+
+    def generate_article():
+        last_product = Product.query.order_by(Product.id.desc()).first()
+        if last_product and last_product.article.startswith("PRD-"):
+            last_number = int(last_product.article.split("-")[1])
+            new_number = last_number + 1
+        else:
+            new_number = 1
+        return f"PRD-{new_number:04d}"
+
     with open(file_path, mode='r', encoding='utf-8') as file:
         csv_reader = csv.DictReader(file)
         for row in csv_reader:
@@ -101,7 +115,9 @@ def load_products_from_csv(file_path, created_date):
                     available_quantity=quantity,
                     purchase_total_price=total_price,
                     purchase_price_per_item=price_per_item,
-                    created_date=created_date
+                    created_date=created_date,
+                    article=generate_article(),
+
                 )
                 db_session.add(product)
                 db_session.commit()
