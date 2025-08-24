@@ -28,3 +28,5 @@ class PurchaseHistory(Base):
             'supplier': self.supplier.to_dict() if self.supplier else None
 
         }
+
+

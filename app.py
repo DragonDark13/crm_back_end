@@ -21,6 +21,7 @@ from services.package_services import package_bp
 from services.product_service import ProductService, product_bp, product_history_bp
 from services.purchase_history_bp import purchase_history_bp
 from services.sales_history_services import sales_history_services_bp
+from services.statistics_services import statistics_services_bp
 from services.supplier_routes import supplier_bp
 
 # Load environment variables
@@ -121,7 +122,7 @@ app.register_blueprint(purchase_history_bp, url_prefix='/api')
 app.register_blueprint(export_to_excel_bp, url_prefix='/api')
 app.register_blueprint(sales_history_services_bp, url_prefix='/api')
 app.register_blueprint(gift_box_services_bp, url_prefix='/api')
-
+app.register_blueprint(statistics_services_bp,url_prefix='/api/statistics')
 
 @app.route('/update_server', methods=['POST'])
 def webhook():
