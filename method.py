@@ -1,6 +1,4 @@
 from sqlalchemy import func
-
-from database import engine
 from models import StockHistory, SaleHistory, PurchaseHistory, product_categories_table, User, Product, Base
 
 
