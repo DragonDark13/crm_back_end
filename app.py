@@ -175,7 +175,7 @@ def create_roles_and_users():
                 username="manager",
                 email="manager@example.com",
                 fs_uniquifier=str(uuid.uuid4()),
-                active=True,
+                active=1,
             )
             manager_user.set_password(
                 os.getenv("MANAGER_PASSWORD", "default_manager_password")
