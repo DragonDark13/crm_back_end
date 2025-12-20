@@ -13,6 +13,8 @@ DB_PASSWORD = os.getenv("DB_PASSWORD")
 
 
 def create_database():
+    print("DB_USER:", os.getenv("DB_USER"))
+    print("DB_PASSWORD:", os.getenv("DB_PASSWORD"))
     conn = psycopg2.connect(
         dbname="postgres",  # підключаємось до системної БД
         user=DB_USER,
