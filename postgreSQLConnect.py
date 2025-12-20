@@ -20,10 +20,10 @@ engine = create_engine(
 def test_connection():
     try:
         with engine.connect() as connection:
-            print("✅ Підключення до бази даних успішне!")
+            print("[OK] Зʼєднання з базою даних успішне!")
             return True
     except Exception as e:
-        print(f"❌ Помилка підключення до бази даних: {e}")
+        print(f"[ERROR] Помилка підключення до бази: {e}")
         return False
 
 
