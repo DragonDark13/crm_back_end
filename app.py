@@ -139,37 +139,52 @@ def webhook():
 # Function to create standard roles and users
 def create_roles_and_users():
     with app.app_context():
-        db.create_all()
-        guest_role = Role.query.filter_by(name='guest').first()
+
+        # --- ROLES ---
+        guest_role = Role.query.filter_by(name="guest").first()
         if not guest_role:
-            guest_role = Role(name='guest', description='Read-only access')
+            guest_role = Role(name="guest", description="Read-only access")
             db.session.add(guest_role)
-            db.session.commit()
-        manager_role = Role.query.filter_by(name='manager').first()
+
+        manager_role = Role.query.filter_by(name="manager").first()
         if not manager_role:
-            manager_role = Role(name='manager', description='Full access')
+            manager_role = Role(name="manager", description="Full access")
             db.session.add(manager_role)
-            db.session.commit()
-        if not User.query.filter_by(username='guest_user').first():
+
+        db.session.flush()  # ролі вже в сесії, але без commit
+
+        # --- USERS ---
+        if not User.query.filter_by(email="guest@example.com").first():
             guest_user = User()
-            guest_user.username = 'guest_user'
-            guest_user.email = 'guest@example.com'
-            guest_password = os.getenv('GUEST_PASSWORD', 'default_guest_password')
-            guest_user.set_password(guest_password)
+            guest_user.username = "guest_user"
+            guest_user.email = "guest@example.com"
+            guest_user.active = 1
             guest_user.fs_uniquifier = str(uuid.uuid4())
-            db.session.add(guest_user)
+            guest_user.set_password(
+                os.getenv("GUEST_PASSWORD", "default_guest_password")
+            )
+
+            guest_user.set_password(
+                os.getenv("GUEST_PASSWORD", "default_guest_password")
+            )
             guest_user.roles.append(guest_role)
-            db.session.commit()
-        if not User.query.filter_by(username='manager').first():
-            manager_user = User()
-            manager_user.username = 'manager'
-            manager_user.email = 'manager@example.com'
-            manager_password = os.getenv('MANAGER_PASSWORD', 'default_manager_password')
-            manager_user.set_password(manager_password)
-            manager_user.fs_uniquifier = str(uuid.uuid4())
-            db.session.add(manager_user)
+            db.session.add(guest_user)
+
+        if not User.query.filter_by(email="manager@example.com").first():
+            manager_user = User(
+                username="manager",
+                email="manager@example.com",
+                fs_uniquifier=str(uuid.uuid4()),
+                active=True,
+            )
+            manager_user.set_password(
+                os.getenv("MANAGER_PASSWORD", "default_manager_password")
+            )
             manager_user.roles.append(manager_role)
-            db.session.commit()
+            db.session.add(manager_user)
+
+        # --- ONE COMMIT ---
+        db.session.commit()
 
 
 # Initialize database with roles and users
