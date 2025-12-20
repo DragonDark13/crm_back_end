@@ -2,7 +2,7 @@ from sqlalchemy import insert, delete
 
 from models import Product, product_categories_table, Supplier, PurchaseHistory, StockHistory, Category, SaleHistory, \
     Customer, ReturnHistory, PackagingMaterial, PackagingSaleHistory
-from flask import jsonify, Blueprint, request
+from flask import Blueprint, request
 from sqlalchemy.orm import joinedload
 from sqlalchemy.exc import NoResultFound, SQLAlchemyError
 from flask import jsonify
@@ -12,6 +12,18 @@ from datetime import datetime
 # Створюємо Blueprint для продуктів
 
 product_bp = Blueprint('products', __name__)
+
+
+def generate_article_for_new_prod():
+    from postgreSQLConnect import db_session
+
+    last_product = db_session.query(Product).order_by(Product.id.desc()).first()
+    if last_product and last_product.article.startswith("PRD-"):
+        last_number = int(last_product.article.split("-")[1])
+        new_number = last_number + 1
+    else:
+        new_number = 1
+    return f"PRD-{new_number:04d}"
 
 
 class ProductService:
@@ -25,11 +37,7 @@ class ProductService:
             product = db_session.query(Product).filter(Product.id == product_id).one()
             product_dict = product.to_dict()  # Assuming you have a method for dict conversion
             product_dict['category_ids'] = [category.id for category in product.categories]
-            product_dict['supplier'] = {
-                'id': product.supplier.id,
-                'name': product.supplier.name,
-                'contact_info': product.supplier.contact_info
-            } if product.supplier else None
+            product_dict['supplier'] = product.supplier.to_dict() if product.supplier else None
             return product_dict, 200
         except NoResultFound:
             return {'error': 'Product not found'}, 404
@@ -53,11 +61,8 @@ class ProductService:
 
             # Додаємо постачальника продукту
             if product.supplier:
-                product_dict['supplier'] = {
-                    'id': product.supplier.id,
-                    'name': product.supplier.name,
-                    'contact_info': product.supplier.contact_info
-                }
+                product_dict['supplier'] = product.supplier.to_dict()
+
             else:
                 product_dict['supplier'] = None
 
@@ -100,7 +105,9 @@ class ProductService:
                 name=data['name'],
                 total_quantity=0,
                 available_quantity=0,
-                created_date=created_date  # Pass the datetime object
+                created_date=created_date,  # Pass the datetime object
+                article=generate_article_for_new_prod()  # Додаємо артикул тут
+
             )
 
             # Add product to session before associating categories
@@ -191,7 +198,7 @@ class ProductService:
             db_session.add(product_category)
 
 
-@product_bp.route('/api/product/<int:product_id>', methods=['PUT'])
+@product_bp.route('/product/<int:product_id>', methods=['PUT'])
 def update_product(product_id):
     from postgreSQLConnect import db_session
 
@@ -298,7 +305,7 @@ def update_product(product_id):
         return jsonify({'error': 'Product not found'}),
 
 
-@product_bp.route('/api/delete_all_products', methods=['DELETE'])
+@product_bp.route('/delete_all_products', methods=['DELETE'])
 def delete_all_products():
     """
 
@@ -331,7 +338,7 @@ def delete_all_products():
 product_history_bp = Blueprint('product_history', __name__)
 
 
-@product_history_bp.route('/api/product/<int:product_id>', methods=['DELETE'])
+@product_history_bp.route('/product/<int:product_id>', methods=['DELETE'])
 def delete_product(product_id):
     """Delete product and all related records."""
     try:
@@ -356,7 +363,7 @@ def delete_product(product_id):
         return jsonify({'error': 'Product not found'}), 404
 
 
-@product_history_bp.route('/api/product/<int:product_id>/history', methods=['GET'])
+@product_history_bp.route('/product/<int:product_id>/history', methods=['GET'])
 def get_product_history(product_id):
     """Get history of stock, purchase, and sales changes for a product."""
     try:
@@ -402,7 +409,7 @@ def get_product_history(product_id):
         return jsonify({'error': 'Product not found'}), 404
 
 
-@product_history_bp.route('/api/product/<int:product_id>/purchase', methods=['POST'])
+@product_history_bp.route('/product/<int:product_id>/purchase', methods=['POST'])
 def purchase_product(product_id):
     """Handle product purchase and record in history."""
     data = request.get_json()
@@ -458,7 +465,7 @@ def purchase_product(product_id):
         return jsonify({'error': f'Missing field: {str(e)}'}), 400
 
 
-@product_history_bp.route('/api/product/<int:product_id>/sale', methods=['POST'])
+@product_history_bp.route('/product/<int:product_id>/sale', methods=['POST'])
 def record_sale(product_id):
     """Record a sale for a product and update sale history."""
     data = request.get_json()
@@ -572,7 +579,7 @@ def record_sale(product_id):
         return jsonify({'error': f'Missing field: {str(e)}'}), 400
 
 
-@product_history_bp.route('/api/delete-history/<int:product_id>/<string:history_type>/<int:history_id>',
+@product_history_bp.route('/delete-history/<int:product_id>/<string:history_type>/<int:history_id>',
                           methods=['DELETE'])
 def delete_product_history(product_id, history_type, history_id):
     from postgreSQLConnect import db_session

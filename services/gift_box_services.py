@@ -5,7 +5,7 @@ from models import GiftSet, GiftSetProduct, GiftSetPackaging, Product, Packaging
 gift_box_services_bp = Blueprint('gift_box_services', __name__)
 
 
-@gift_box_services_bp.route('/api/create_gift_set', methods=['POST'])
+@gift_box_services_bp.route('/create_gift_set', methods=['POST'])
 def create_gift_set():
     data = request.json
     from postgreSQLConnect import db_session
@@ -81,7 +81,7 @@ def create_gift_set():
     return jsonify({"message": "Gift set created successfully", "id": gift_set.id}), 201
 
 
-@gift_box_services_bp.route('/api/gift_set_show_details/<int:gift_set_id>', methods=['GET'])
+@gift_box_services_bp.route('/gift_set_show_details/<int:gift_set_id>', methods=['GET'])
 def get_gift_set(gift_set_id):
     gift_set = GiftSet.query.get(gift_set_id)
     if not gift_set:
@@ -116,7 +116,7 @@ def get_gift_set(gift_set_id):
     })
 
 
-@gift_box_services_bp.route('/api/update_gift_set/<int:gift_set_id>', methods=['PUT'])
+@gift_box_services_bp.route('/update_gift_set/<int:gift_set_id>', methods=['PUT'])
 def update_gift_set(gift_set_id):
     try:
         data = request.json
@@ -222,7 +222,7 @@ def update_gift_set(gift_set_id):
         return jsonify({"error": str(e)}), 500
 
 
-@gift_box_services_bp.route('/api/remove_gift_set/<int:gift_set_id>', methods=['DELETE'])
+@gift_box_services_bp.route('/remove_gift_set/<int:gift_set_id>', methods=['DELETE'])
 def dismantle_gift_set(gift_set_id):
     # Знаходимо подарунковий набір
     from postgreSQLConnect import db_session
@@ -264,7 +264,7 @@ def dismantle_gift_set(gift_set_id):
     return jsonify({"message": "Gift set and all related data dismantled successfully"}), 200
 
 
-@gift_box_services_bp.route('/api/sell_gift_set/<int:gift_set_id>', methods=['POST'])
+@gift_box_services_bp.route('/sell_gift_set/<int:gift_set_id>', methods=['POST'])
 def sell_gift_set(gift_set_id):
     from postgreSQLConnect import db_session
 
@@ -296,7 +296,7 @@ def sell_gift_set(gift_set_id):
         # Перевірка чи об'єкт прив'язаний до іншої сесії
         product.reserved_quantity -= gift_set_product.quantity  # Зменшуємо кількість зарезервовану
         product.sold_quantity += gift_set_product.quantity  # Збільшуємо кількість продану
-        product.available_quantity += gift_set_product.quantity  # Зменшуємо кількість в наявності
+        # product.available_quantity -= gift_set_product.quantity  # Зменшуємо кількість в наявності
 
         # Додаємо запис про цей товар у історію продажів через зворотний зв'язок
         sales_product = GiftSetSalesHistoryProduct(
@@ -336,7 +336,7 @@ def sell_gift_set(gift_set_id):
     }), 200
 
 
-@gift_box_services_bp.route('/api/get_all_gift_sets', methods=['GET'])
+@gift_box_services_bp.route('/get_all_gift_sets', methods=['GET'])
 def get_gift_sets():
     # Отримуємо параметри для фільтрації (за потреби)
     name_filter = request.args.get('name', '').lower()
@@ -363,7 +363,7 @@ def get_gift_sets():
     return jsonify(gift_sets_data), 200
 
 
-@gift_box_services_bp.route('/api/get_all_gift_set_sales_history', methods=['GET'])
+@gift_box_services_bp.route('/get_all_gift_set_sales_history', methods=['GET'])
 def get_gift_set_sales_history():
     from postgreSQLConnect import db_session
 

@@ -1,4 +1,4 @@
-from flask import Flask, request, jsonify, send_file, Blueprint
+from flask import request, jsonify, send_file, Blueprint
 from sqlalchemy.orm import joinedload
 from io import BytesIO
 import pandas as pd
@@ -8,7 +8,7 @@ from models import Product
 export_to_excel_bp = Blueprint('export_to_excel', __name__)
 
 
-@export_to_excel_bp.route('/api/export-products-excel', methods=['POST'])
+@export_to_excel_bp.route('/export-products-excel', methods=['POST'])
 def export_products():
     from postgreSQLConnect import db_session
 

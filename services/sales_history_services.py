@@ -1,11 +1,10 @@
 from uuid import uuid4
 
-from flask import Flask, jsonify, request, Blueprint
-from sqlalchemy.orm import joinedload
-from datetime import datetime
+from flask import jsonify, Blueprint
+
 from decimal import Decimal
 
-from models import db, SaleHistory, Product, Customer, PackagingSaleHistory, GiftSetSalesHistory
+from models import SaleHistory, Product, Customer, PackagingSaleHistory, GiftSetSalesHistory
 
 sales_history_services_bp = Blueprint('sales_history', __name__)
 
@@ -18,7 +17,7 @@ def add_sale_history_id(sales_data):
     return sales_data
 
 
-@sales_history_services_bp.route('/api/get_all_sales_history', methods=['GET'])
+@sales_history_services_bp.route('/get_all_sales_history', methods=['GET'])
 def get_sales_history():
     from postgreSQLConnect import db_session
 
@@ -111,10 +110,7 @@ def get_sales_history():
                 'id': category.id,
                 'name': category.name
             } for category in sale.product.categories],  # Повертати категорії як об'єкти
-            'supplier': {
-                'id': sale.product.supplier.id if sale.product.supplier else None,
-                'name': sale.product.supplier.name if sale.product.supplier else ''
-            },  # Повертати постачальника як об'єкт
+            "supplier": sale.product.supplier.to_dict() if sale.product.supplier else None,  # Повертати постачальника як об'єкт
             'customer': {
                 'id': sale.customer.id,
                 'name': sale.customer.name

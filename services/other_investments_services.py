@@ -8,7 +8,7 @@ investments_bp = Blueprint('investments', __name__)
 
 
 # Додати нове вкладення
-@investments_bp.route('/api/create_new_investments', methods=['POST'])
+@investments_bp.route('/create_new_investments', methods=['POST'])
 def add_investment():
     data = request.json
     from postgreSQLConnect import db_session
@@ -31,7 +31,7 @@ def add_investment():
 
 
 # Отримати всі вкладення
-@investments_bp.route('/api/gel_all_investments', methods=['GET'])
+@investments_bp.route('/gel_all_investments', methods=['GET'])
 def get_investments():
     from postgreSQLConnect import db_session
 
@@ -47,27 +47,31 @@ def get_investments():
 
 
 # Видалити вкладення
-@investments_bp.route('/investments/<int:id>', methods=['DELETE'])
-def delete_investment(id):
+@investments_bp.route('/delete_investments/<int:investments_id>', methods=['DELETE'])
+def delete_investment(investments_id: int):
     from postgreSQLConnect import db_session
-
-    investment = db_session.query(OtherInvestment).get(id)
-
-    if not investment:
-        return jsonify({"error": "Investment not found"}), 404
-
     try:
+        investment = db_session.query(OtherInvestment).get(investments_id)
+
+        if not investment:
+            print(f"Не знайдено інвестицію з ID {investments_id}")
+            return jsonify({"error": "Investment not found"}), 404
+
         db_session.delete(investment)
         db_session.commit()
-        return jsonify({"message": "Investment deleted successfully"})
+        print(f"Інвестиція з ID {investments_id} успішно видалена")
+        return jsonify({"message": "Investment deleted successfully"}), 200
+
     except Exception as e:
         db_session.rollback()
         return jsonify({"error": str(e)}), 400
+
     finally:
         db_session.close()
 
 
-@investments_bp.route('/api/delete_all_investments', methods=['DELETE'])
+
+@investments_bp.route('/delete_all_investments', methods=['DELETE'])
 def delete_all_investments():
     from postgreSQLConnect import db_session
 

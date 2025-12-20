@@ -10,7 +10,7 @@ import uuid
 import logging
 
 from flask_cors import CORS
-
+from werkzeug.security import generate_password_hash, check_password_hash
 from models import db, User, Role
 from services.category_routes import category_bp
 from services.customer_routes import customer_bp
@@ -21,6 +21,7 @@ from services.package_services import package_bp
 from services.product_service import ProductService, product_bp, product_history_bp
 from services.purchase_history_bp import purchase_history_bp
 from services.sales_history_services import sales_history_services_bp
+from services.statistics_services import statistics_services_bp
 from services.supplier_routes import supplier_bp
 
 # Load environment variables
@@ -90,7 +91,7 @@ def protected():
     return jsonify(logged_in_as=current_user), 200
 
 
-@app.route('/api/products', methods=['GET'])
+@app.route('/api/get_all_products', methods=['GET'])
 def get_products():
     product_list, status_code = ProductService.get_all_products()
     return jsonify(product_list), status_code
@@ -110,18 +111,18 @@ def create_and_purchase_product():
 
 
 # Register Blueprints
-app.register_blueprint(product_bp)
-app.register_blueprint(product_history_bp)
-app.register_blueprint(category_bp)
-app.register_blueprint(supplier_bp)
-app.register_blueprint(customer_bp)
-app.register_blueprint(package_bp)
-app.register_blueprint(investments_bp)
-app.register_blueprint(purchase_history_bp)
-app.register_blueprint(export_to_excel_bp)
-app.register_blueprint(sales_history_services_bp)
-app.register_blueprint(gift_box_services_bp)
-
+app.register_blueprint(product_bp, url_prefix='/api')
+app.register_blueprint(product_history_bp, url_prefix='/api')
+app.register_blueprint(category_bp, url_prefix='/api')
+app.register_blueprint(supplier_bp, url_prefix='/api')
+app.register_blueprint(customer_bp, url_prefix='/api')
+app.register_blueprint(package_bp, url_prefix='/api')
+app.register_blueprint(investments_bp, url_prefix='/api')
+app.register_blueprint(purchase_history_bp, url_prefix='/api')
+app.register_blueprint(export_to_excel_bp, url_prefix='/api')
+app.register_blueprint(sales_history_services_bp, url_prefix='/api')
+app.register_blueprint(gift_box_services_bp, url_prefix='/api')
+app.register_blueprint(statistics_services_bp,url_prefix='/api/statistics')
 
 @app.route('/update_server', methods=['POST'])
 def webhook():
@@ -138,33 +139,52 @@ def webhook():
 # Function to create standard roles and users
 def create_roles_and_users():
     with app.app_context():
-        db.create_all()
-        guest_role = Role.query.filter_by(name='guest').first()
+
+        # --- ROLES ---
+        guest_role = Role.query.filter_by(name="guest").first()
         if not guest_role:
-            guest_role = Role(name='guest', description='Read-only access')
+            guest_role = Role(name="guest", description="Read-only access")
             db.session.add(guest_role)
-            db.session.commit()
-        manager_role = Role.query.filter_by(name='manager').first()
+
+        manager_role = Role.query.filter_by(name="manager").first()
         if not manager_role:
-            manager_role = Role(name='manager', description='Full access')
+            manager_role = Role(name="manager", description="Full access")
             db.session.add(manager_role)
-            db.session.commit()
-        if not User.query.filter_by(username='guest').first():
-            guest_user = User(username='guest', email='guest@example.com')
-            guest_password = os.getenv('GUEST_PASSWORD', 'default_guest_password')
-            guest_user.set_password(guest_password)
+
+        db.session.flush()  # ролі вже в сесії, але без commit
+
+        # --- USERS ---
+        if not User.query.filter_by(email="guest@example.com").first():
+            guest_user = User()
+            guest_user.username = "guest_user"
+            guest_user.email = "guest@example.com"
+            guest_user.active = 1
             guest_user.fs_uniquifier = str(uuid.uuid4())
-            db.session.add(guest_user)
+            guest_user.set_password(
+                os.getenv("GUEST_PASSWORD", "default_guest_password")
+            )
+
+            guest_user.set_password(
+                os.getenv("GUEST_PASSWORD", "default_guest_password")
+            )
             guest_user.roles.append(guest_role)
-            db.session.commit()
-        if not User.query.filter_by(username='manager').first():
-            manager_user = User(username='manager', email='manager@example.com')
-            manager_password = os.getenv('MANAGER_PASSWORD', 'default_manager_password')
-            manager_user.set_password(manager_password)
-            manager_user.fs_uniquifier = str(uuid.uuid4())
-            db.session.add(manager_user)
+            db.session.add(guest_user)
+
+        if not User.query.filter_by(email="manager@example.com").first():
+            manager_user = User(
+                username="manager",
+                email="manager@example.com",
+                fs_uniquifier=str(uuid.uuid4()),
+                active=True,
+            )
+            manager_user.set_password(
+                os.getenv("MANAGER_PASSWORD", "default_manager_password")
+            )
             manager_user.roles.append(manager_role)
-            db.session.commit()
+            db.session.add(manager_user)
+
+        # --- ONE COMMIT ---
+        db.session.commit()
 
 
 # Initialize database with roles and users
@@ -176,6 +196,12 @@ with app.app_context():
 def login():
     username = request.json.get('username')
     password = request.json.get('password')
+    hash_password = generate_password_hash(password)
+
+    print("Hash:", hash_password)
+    print("Valid:", check_password_hash(hash_password, password))
+    print("password from request:", repr(password))
+    print("Equal to 'managerpassword':", password == 'managerpassword')
     user = User.query.filter_by(username=username).first()
     if user and user.verify_password(password):
         access_token = create_access_token(

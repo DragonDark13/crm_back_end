@@ -1,5 +1,5 @@
 from flask import Blueprint, jsonify, request
-from models import Supplier, PurchaseHistory, Product
+from models import Supplier, PurchaseHistory, Product, PackagingMaterialSupplier
 from sqlalchemy.exc import IntegrityError
 
 # Create Blueprint for suppliers
@@ -8,7 +8,7 @@ supplier_bp = Blueprint('supplier', __name__)
 
 
 # Create a new supplier
-@supplier_bp.route('/api/create_supplier', methods=['POST'])
+@supplier_bp.route('/create_supplier', methods=['POST'])
 def create_supplier():
     """Add a new supplier"""
     from postgreSQLConnect import db_session
@@ -46,23 +46,25 @@ def create_supplier():
 
 
 # Get all suppliers
-@supplier_bp.route('/api/suppliers/list', methods=['GET'])
+@supplier_bp.route('/suppliers/list', methods=['GET'])
 def get_suppliers():
     from postgreSQLConnect import db_session
 
-    """Get a list of all suppliers"""
-    suppliers = db_session.query(Supplier).all()
+    """Отримати список всіх постачальників (товарів і пакування)"""
+    product_suppliers = db_session.query(Supplier).order_by(Supplier.name).all()
+    packaging_suppliers = db_session.query(PackagingMaterialSupplier).order_by(PackagingMaterialSupplier.name).all()
 
-    suppliers_list = [{
-        'id': supplier.id,
-        'name': supplier.name,
-        'contact_info': supplier.contact_info,
-        'email': supplier.email,
-        'phone_number': supplier.phone_number,
-        'address': supplier.address
-    } for supplier in suppliers]
+    product_suppliers_list = [
+        {**supplier.to_dict(), "type": "product"} for supplier in product_suppliers
+    ]
 
-    return jsonify(suppliers_list), 200
+    packaging_suppliers_list = [
+        {**supplier.to_dict(), "type": "packaging"} for supplier in packaging_suppliers
+    ]
+
+    combined_suppliers = product_suppliers_list + packaging_suppliers_list
+
+    return jsonify(combined_suppliers), 200
 
 
 # Get supplier purchase history
@@ -88,7 +90,7 @@ def get_supplier_purchase_history(supplier_id):
 
 
 # Get supplier purchase history through API endpoint
-@supplier_bp.route('/api/supplier/<int:supplier_id>/purchase-history', methods=['GET'])
+@supplier_bp.route('/supplier/<int:supplier_id>/purchase-history', methods=['GET'])
 def get_supplier_purchase_history_api(supplier_id):
     supplier_data = get_supplier_purchase_history(supplier_id)
 
@@ -126,7 +128,7 @@ def get_supplier_products(supplier_id):
 
 
 # Get supplier products through API endpoint
-@supplier_bp.route('/api/supplier/<int:supplier_id>/products', methods=['GET'])
+@supplier_bp.route('/supplier/<int:supplier_id>/products', methods=['GET'])
 def get_supplier_products_api(supplier_id):
     supplier_data = get_supplier_products(supplier_id)
 
@@ -140,7 +142,7 @@ def get_supplier_products_api(supplier_id):
 
 
 # Delete a supplier
-@supplier_bp.route('/api/delete_supplier/<int:supplier_id>', methods=['DELETE'])
+@supplier_bp.route('/delete_supplier/<int:supplier_id>', methods=['DELETE'])
 def delete_supplier(supplier_id):
     from postgreSQLConnect import db_session
 
@@ -160,11 +162,11 @@ def delete_supplier(supplier_id):
 
 
 # Update supplier data
-@supplier_bp.route('/api/supplier_edit/<int:supplier_id>', methods=['PUT'])
+@supplier_bp.route('/supplier_edit/<int:supplier_id>', methods=['PUT'])
 def update_supplier(supplier_id):
     """Update supplier information"""
     data = request.get_json()
-    
+    from postgreSQLConnect import db_session
 
     supplier = db_session.query(Supplier).filter_by(id=supplier_id).one_or_none()
 
@@ -177,6 +179,10 @@ def update_supplier(supplier_id):
     supplier.email = data.get('email', supplier.email)
     supplier.phone_number = data.get('phone_number', supplier.phone_number)
     supplier.address = data.get('address', supplier.address)
+
+    # Додано: оновлення is_active, якщо воно передано
+    if 'is_active' in data:
+        supplier.is_active = bool(data['is_active'])
 
     try:
         db_session.commit()

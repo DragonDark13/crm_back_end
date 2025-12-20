@@ -1,14 +1,12 @@
 from flask import Blueprint, jsonify, request
-from sqlalchemy.exc import IntegrityError
-from sqlalchemy.orm import Session
-from models import Category, Product, product_categories_table
 
 # Create a Blueprint for categories
+from models import Category, Product
 
 category_bp = Blueprint('categories', __name__)
 
 
-@category_bp.route('/api/categories', methods=['GET'])
+@category_bp.route('/categories', methods=['GET'])
 def get_all_categories():
     """Retrieve all categories."""
     from postgreSQLConnect import db_session
@@ -19,11 +17,10 @@ def get_all_categories():
     return jsonify(category_list), 200
 
 
-@category_bp.route('/api/add_new_category', methods=['POST'])
+@category_bp.route('/add_new_category', methods=['POST'])
 def create_category():
     """Create a new category."""
     from postgreSQLConnect import db_session
-    from sqlalchemy.exc import IntegrityError
 
     data = request.get_json()
 
@@ -54,7 +51,7 @@ def create_category():
         return jsonify({'error': str(e)}), 500  # **500 — внутрішня помилка сервера**
 
 
-@category_bp.route('/api/product/<int:product_id>/categories', methods=['POST'])
+@category_bp.route('/product/<int:product_id>/categories', methods=['POST'])
 def assign_categories_to_product(product_id):
     """Assign categories to a product."""
     from postgreSQLConnect import db_session
@@ -81,7 +78,7 @@ def assign_categories_to_product(product_id):
         return jsonify({'error': str(e)}), 400
 
 
-@category_bp.route('/api/product/<int:product_id>/categories', methods=['GET'])
+@category_bp.route('/product/<int:product_id>/categories', methods=['GET'])
 def get_product_categories(product_id):
     """Retrieve categories of a product."""
     from postgreSQLConnect import db_session

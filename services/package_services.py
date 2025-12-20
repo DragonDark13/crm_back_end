@@ -1,5 +1,7 @@
-from flask import Blueprint, jsonify, request
-from sqlalchemy.exc import SQLAlchemyError
+from decimal import Decimal
+
+from flask import Blueprint, request
+from sqlalchemy.exc import SQLAlchemyError, IntegrityError
 from flask import jsonify
 
 from models import PackagingMaterial, PackagingPurchaseHistory, PackagingMaterialSupplier, PackagingStockHistory, \
@@ -8,7 +10,7 @@ from models import PackagingMaterial, PackagingPurchaseHistory, PackagingMateria
 package_bp = Blueprint('packages', __name__)
 
 
-@package_bp.route('/api/get_all_packaging_materials', methods=['GET'])
+@package_bp.route('/get_all_packaging_materials', methods=['GET'])
 def get_packaging_materials():
     from postgreSQLConnect import db_session
 
@@ -23,62 +25,62 @@ def get_packaging_materials():
     return jsonify({'materials': materials_data})
 
 
-@package_bp.route('/api/packaging_materials/purchase', methods=['POST'])
-def purchase_packaging_material():
-    from postgreSQLConnect import db_session
+# @package_bp.route('/packaging_materials/purchase', methods=['POST'])
+# def purchase_packaging_material():
+#     from postgreSQLConnect import db_session
+#
+#     data = request.json
+#     name = data.get('name')
+#     supplier_id = data.get('supplier_id')
+#     quantity_purchased = data.get('quantity_purchased')
+#     purchase_price_per_unit = data.get('purchase_price_per_unit')
+#     total_purchase_cost = data.get('total_purchase_cost')
+#
+#     if not all([name, supplier_id, quantity_purchased, purchase_price_per_unit]):
+#         return jsonify({'error': 'Missing required fields'}), 400
+#
+#     # Check if the material already exists
+#     material = db_session.query(PackagingMaterial).filter_by(name=name).first()
+#     if not material:
+#         # Create a new material
+#         material = PackagingMaterial(
+#             name=name,
+#             packaging_material_supplier_id=supplier_id,
+#             total_quantity=quantity_purchased,
+#             available_quantity=quantity_purchased,
+#             purchase_price_per_unit=purchase_price_per_unit,
+#             total_purchase_cost=total_purchase_cost,  # Set total purchase cost
+#             available_stock_cost=total_purchase_cost  # Set available stock cost
+#         )
+#         db_session.add(material)
+#     else:
+#         # Update existing material
+#         material.total_quantity += quantity_purchased
+#         material.available_quantity += quantity_purchased
+#         material.purchase_price_per_unit = purchase_price_per_unit
+#
+#         # Update total purchase cost
+#         material.total_purchase_cost += total_purchase_cost
+#
+#         # Update available stock cost
+#         material.available_stock_cost += total_purchase_cost
+#
+#     # Log purchase history
+#     purchase_history = PackagingPurchaseHistory(
+#         material_id=material.id,
+#         supplier_id=supplier_id,
+#         quantity_purchased=quantity_purchased,
+#         purchase_price_per_unit=purchase_price_per_unit,
+#         purchase_total_price=total_purchase_cost
+#     )
+#     db_session.add(purchase_history)
+#
+#     db_session.commit()
+#
+#     return jsonify(material.to_dict()), 201
 
-    data = request.json
-    name = data.get('name')
-    supplier_id = data.get('supplier_id')
-    quantity_purchased = data.get('quantity_purchased')
-    purchase_price_per_unit = data.get('purchase_price_per_unit')
-    total_purchase_cost = data.get('total_purchase_cost')
 
-    if not all([name, supplier_id, quantity_purchased, purchase_price_per_unit]):
-        return jsonify({'error': 'Missing required fields'}), 400
-
-    # Check if the material already exists
-    material = db_session.query(PackagingMaterial).filter_by(name=name).first()
-    if not material:
-        # Create a new material
-        material = PackagingMaterial(
-            name=name,
-            packaging_material_supplier_id=supplier_id,
-            total_quantity=quantity_purchased,
-            available_quantity=quantity_purchased,
-            purchase_price_per_unit=purchase_price_per_unit,
-            total_purchase_cost=total_purchase_cost,  # Set total purchase cost
-            available_stock_cost=total_purchase_cost  # Set available stock cost
-        )
-        db_session.add(material)
-    else:
-        # Update existing material
-        material.total_quantity += quantity_purchased
-        material.available_quantity += quantity_purchased
-        material.purchase_price_per_unit = purchase_price_per_unit
-
-        # Update total purchase cost
-        material.total_purchase_cost += total_purchase_cost
-
-        # Update available stock cost
-        material.available_stock_cost += total_purchase_cost
-
-    # Log purchase history
-    purchase_history = PackagingPurchaseHistory(
-        material_id=material.id,
-        supplier_id=supplier_id,
-        quantity_purchased=quantity_purchased,
-        purchase_price_per_unit=purchase_price_per_unit,
-        purchase_total_price=total_purchase_cost
-    )
-    db_session.add(purchase_history)
-
-    db_session.commit()
-
-    return jsonify(material.to_dict()), 201
-
-
-@package_bp.route('/api/get_all_packaging_suppliers', methods=['GET'])
+@package_bp.route('/get_all_packaging_suppliers', methods=['GET'])
 def get_all_suppliers():
     from postgreSQLConnect import db_session
 
@@ -88,7 +90,7 @@ def get_all_suppliers():
     return jsonify(suppliers_data), 200
 
 
-@package_bp.route('/api/add_new_packaging_suppliers', methods=['POST'])
+@package_bp.route('/add_new_packaging_suppliers', methods=['POST'])
 def add_supplier():
     data = request.json
     name = data.get('name')
@@ -104,7 +106,7 @@ def add_supplier():
     return jsonify(new_supplier.to_dict()), 201
 
 
-@package_bp.route('/api/purchase_current_packaging', methods=['POST'])
+@package_bp.route('/purchase_current_packaging', methods=['POST'])
 def purchase_current_packaging_material():
     data = request.json
     material_id = data.get('material_id')
@@ -150,7 +152,7 @@ def purchase_current_packaging_material():
         return jsonify({'error': 'Database error', 'details': str(e)}), 500
 
 
-@package_bp.route('/api/update_packaging_status', methods=['OPTIONS', 'POST'])
+@package_bp.route('/update_packaging_status', methods=['OPTIONS', 'POST'])
 def update_packaging_status():
     if request.method == 'OPTIONS':
         return '', 200  # Повертає статус 200 для запиту OPTIONS
@@ -174,7 +176,8 @@ def update_packaging_status():
 
         # Віднімаємо використану кількість
         material.available_quantity -= quantity_used
-        material.available_stock_cost -= quantity_used * float(material.purchase_price_per_unit or 0)
+        material.available_stock_cost -= Decimal(str(quantity_used)) * (
+                    material.purchase_price_per_unit or Decimal("0"))
 
         # Встановлюємо статус "used"
         if material.available_quantity == quantity_used:
@@ -189,7 +192,7 @@ def update_packaging_status():
         return jsonify({'error': 'Database error', 'details': str(e)}), 500
 
 
-@package_bp.route('/api/materials/<int:packaging_material_id>/history', methods=['GET'])
+@package_bp.route('/materials/<int:packaging_material_id>/history', methods=['GET'])
 def get_packaging_material_history(packaging_material_id):
     from postgreSQLConnect import db_session
 
@@ -216,7 +219,7 @@ def get_packaging_material_history(packaging_material_id):
     return result
 
 
-@package_bp.route('/api/delete_all_materials', methods=['DELETE'])
+@package_bp.route('/delete_all_materials', methods=['DELETE'])
 def delete_all_packaging_materials():
     from postgreSQLConnect import db_session
     try:
@@ -241,3 +244,86 @@ def delete_all_packaging_materials():
     finally:
         # Закрити сесію
         db_session.close()
+
+
+# get all history current suppl
+@package_bp.route('/packaging-supplier/<int:supplier_id>/purchase-history', methods=['GET'])
+def get_packaging_supplier_purchase_history_api(supplier_id):
+    from postgreSQLConnect import db_session
+
+    supplier = db_session.query(PackagingMaterialSupplier).get(supplier_id)
+
+    if not supplier:
+        return jsonify({'error': 'Packaging supplier not found'}), 4041
+
+    purchase_history = db_session.query(PackagingPurchaseHistory).filter_by(supplier_id=supplier_id).all()
+
+    return jsonify({
+        "supplier": supplier.to_dict(),
+        "purchase_history": [{
+            "material": purchase.material.name if purchase.material else None,
+            "quantity_purchased": purchase.quantity_purchased,
+            "purchase_date": purchase.purchase_date.strftime('%Y-%m-%d'),
+            "purchase_price_per_unit": float(purchase.purchase_price_per_unit),
+            "purchase_total_price": float(purchase.purchase_total_price)
+        } for purchase in purchase_history],
+        "materials": [
+            {"id": material.id, "name": material.name}
+            for material in supplier.packaging_materials
+        ]
+    }), 200
+
+
+# Update packaging supplier data
+@package_bp.route('/packaging_supplier_edit/<int:supplier_id>', methods=['PUT'])
+def update_packaging_supplier(supplier_id):
+    """Update packaging material supplier information"""
+    data = request.get_json()
+    from postgreSQLConnect import db_session
+    from models import PackagingMaterialSupplier  # переконайся, що модель імпортована
+
+    supplier = db_session.query(PackagingMaterialSupplier).filter_by(id=supplier_id).one_or_none()
+
+    if not supplier:
+        return jsonify({'error': 'Packaging supplier not found'}), 404
+
+    # Оновлення полів
+    supplier.name = data.get('name', supplier.name)
+    supplier.contact_info = data.get('contact_info', supplier.contact_info)
+    supplier.email = data.get('email', supplier.email)
+    supplier.phone_number = data.get('phone_number', supplier.phone_number)
+    supplier.address = data.get('address', supplier.address)
+
+    # Оновлення статусу активності, якщо передано
+    if 'is_active' in data:
+        supplier.is_active = bool(data['is_active'])
+
+    try:
+        db_session.commit()
+        return jsonify({'message': 'Packaging supplier updated successfully'}), 200
+    except IntegrityError as e:
+        db_session.rollback()
+        return jsonify({'error': f'Failed to update packaging supplier: {str(e)}'}), 500
+    except Exception as e:
+        db_session.rollback()
+        return jsonify({'error': f'Unexpected error: {str(e)}'}), 500
+
+
+# Delete a packaging material supplier
+@package_bp.route('/delete_packaging_supplier/<int:supplier_id>', methods=['DELETE'])
+def delete_packaging_supplier(supplier_id):
+    from postgreSQLConnect import db_session
+
+    """Delete a packaging material supplier by ID"""
+    supplier = db_session.query(PackagingMaterialSupplier).filter_by(id=supplier_id).one_or_none()
+
+    if not supplier:
+        return jsonify({'error': 'Packaging supplier not found'}), 404
+
+    try:
+        db_session.delete(supplier)
+        db_session.commit()
+        return jsonify({'message': 'Packaging supplier deleted successfully'}), 200
+    except Exception as e:
+        db_session.rollback()
+        return jsonify({'error': f'Failed to delete packaging supplier: {str(e)}'}), 500
