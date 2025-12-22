@@ -16,8 +16,8 @@ if not exist example_import_data_csv (
     robocopy ..\example_import_data_csv example_import_data_csv /E /NFL /NDL
 )
 
-if not exist import_exampla_data_func (
-    robocopy ..\import_exampla_data_func import_exampla_data_func /E /NFL /NDL
+if not exist import_data_csv (
+    robocopy ..\import_data_csv import_data_csv /E /NFL /NDL
 )
 
 echo === CREATE VENV ===
