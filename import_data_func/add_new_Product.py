@@ -39,7 +39,7 @@ def load_products_from_csv(file_path, created_date):
     """
 
     def generate_article():
-        last_product = Product.query.order_by(Product.id.desc()).first()
+        last_product = db_session.query(Product).order_by(Product.id.desc()).first()
         if last_product and last_product.article.startswith("PRD-"):
             last_number = int(last_product.article.split("-")[1])
             new_number = last_number + 1
