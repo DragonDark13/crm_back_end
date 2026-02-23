@@ -11,6 +11,12 @@ import logging
 
 from flask_cors import CORS
 from werkzeug.security import generate_password_hash, check_password_hash
+
+from api.categories_api import categories_ns
+from api.customer_api import customers_ns
+from api.investment_api import investments_ns
+from api.packaging_routes import packaging_ns
+from api.supplier_routes import supplier_ns
 from models import db, User, Role
 from services.category_routes import category_bp
 from services.customer_routes import customer_bp
@@ -23,6 +29,9 @@ from services.purchase_history_bp import purchase_history_bp
 from services.sales_history_services import sales_history_services_bp
 from services.statistics_services import statistics_services_bp
 from services.supplier_routes import supplier_bp
+
+from flask_restx import Api, Resource
+from api.products_api import products_ns
 
 # Load environment variables
 load_dotenv()
@@ -41,6 +50,13 @@ logger.addHandler(console_handler)
 # Flask app initialization
 app = Flask(__name__)
 CORS(app)
+api = Api(
+    app,
+    title="CRM API",
+    version="1.0",
+    description="Документація CRM API"
+)
+
 
 # Configure database (PostgreSQL)
 app.config['SQLALCHEMY_DATABASE_URI'] = os.getenv('DATABASE_URL',
@@ -91,10 +107,7 @@ def protected():
     return jsonify(logged_in_as=current_user), 200
 
 
-@app.route('/api/get_all_products', methods=['GET'])
-def get_products():
-    product_list, status_code = ProductService.get_all_products()
-    return jsonify(product_list), status_code
+
 
 
 @app.route('/api/product/<int:product_id>', methods=['GET'])
@@ -228,6 +241,15 @@ def log_request_info():
     logger.info(f"Request method: {request.method}, URL: {request.url}")
     if request.method in ["POST", "PUT", "PATCH"]:
         logger.info(f"Body: {request.get_data(as_text=True)}")
+
+
+
+api.add_namespace(products_ns, path="/api/get_all_products")
+api.add_namespace(supplier_ns, path="/api/suppliers")
+api.add_namespace(categories_ns, path="/api/categories")
+api.add_namespace(investments_ns, path="/api/investments")
+api.add_namespace(customers_ns, path="/api/customers")
+api.add_namespace(packaging_ns, path="/api/packaging")
 
 
 if __name__ == '__main__':

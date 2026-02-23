@@ -1,8 +1,11 @@
 from flask import Blueprint, request, jsonify
+from flask_restx import Resource
 from sqlalchemy.exc import SQLAlchemyError
 
+from api.investment_api import investments_ns, investment_model
 from models import OtherInvestment
 from datetime import datetime
+
 
 investments_bp = Blueprint('investments', __name__)
 
@@ -30,21 +33,26 @@ def add_investment():
         db_session.close()
 
 
-# Отримати всі вкладення
-@investments_bp.route('/gel_all_investments', methods=['GET'])
-def get_investments():
-    from postgreSQLConnect import db_session
+@investments_ns.route("/get_all_investments")
+class InvestmentList(Resource):
 
-    investments = db_session.query(OtherInvestment).all()
-    db_session.close()
-    return jsonify([{
-        "id": inv.id,
-        "type_name": inv.type_name,
-        "cost": inv.cost,
-        "supplier": inv.supplier,
-        "date": inv.date.strftime('%Y-%m-%d')
-    } for inv in investments])
+    @investments_ns.doc(
+        summary="Отримати всі вкладення",
+        description="Повертає список усіх інших вкладень"
+    )
+    @investments_ns.marshal_list_with(investment_model)
+    def get(self):
+        from postgreSQLConnect import db_session
 
+        investments = db_session.query(OtherInvestment).all()
+
+        return [{
+            "id": inv.id,
+            "type_name": inv.type_name,
+            "cost": float(inv.cost),
+            "supplier": inv.supplier,
+            "date": inv.date.strftime('%Y-%m-%d')
+        } for inv in investments], 200
 
 # Видалити вкладення
 @investments_bp.route('/delete_investments/<int:investments_id>', methods=['DELETE'])

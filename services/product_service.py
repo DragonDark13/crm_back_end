@@ -106,8 +106,8 @@ class ProductService:
                 total_quantity=0,
                 available_quantity=0,
                 created_date=created_date,  # Pass the datetime object
-                article=generate_article_for_new_prod()  # Додаємо артикул тут
-
+                article=generate_article_for_new_prod() , # Додаємо артикул тут
+                product_description = data['product_description']
             )
 
             # Add product to session before associating categories
@@ -146,7 +146,7 @@ class ProductService:
                 purchase_total_price=Decimal(data['purchase_total_price']),
                 supplier_id=supplier.id,
                 quantity_purchase=data['available_quantity'],
-                purchase_date=created_date  # Use the created_date here as well
+                purchase_date=created_date,  # Use the created_date here as well
             )
             db_session.add(purchase_history)
 

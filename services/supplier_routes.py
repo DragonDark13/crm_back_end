@@ -1,4 +1,7 @@
 from flask import Blueprint, jsonify, request
+from flask_restx import Resource
+
+from api.supplier_routes import supplier_ns
 from models import Supplier, PurchaseHistory, Product, PackagingMaterialSupplier
 from sqlalchemy.exc import IntegrityError
 
@@ -45,26 +48,34 @@ def create_supplier():
         return jsonify({'error': f'Unexpected error: {str(e)}'}), 500
 
 
-# Get all suppliers
-@supplier_bp.route('/suppliers/list', methods=['GET'])
-def get_suppliers():
-    from postgreSQLConnect import db_session
+@supplier_ns.route("/get_suppliers_list")
+class SupplierList(Resource):
+    @supplier_ns.doc(
+        summary="Отримати всіх постачальників",
+        description="""
+        Повертає обʼєднаний список:
+        - постачальників товарів
+        - постачальників пакування
+        """
+    )
 
-    """Отримати список всіх постачальників (товарів і пакування)"""
-    product_suppliers = db_session.query(Supplier).order_by(Supplier.name).all()
-    packaging_suppliers = db_session.query(PackagingMaterialSupplier).order_by(PackagingMaterialSupplier.name).all()
 
-    product_suppliers_list = [
-        {**supplier.to_dict(), "type": "product"} for supplier in product_suppliers
-    ]
+    def get(self):
+        from postgreSQLConnect import db_session
 
-    packaging_suppliers_list = [
-        {**supplier.to_dict(), "type": "packaging"} for supplier in packaging_suppliers
-    ]
+        product_suppliers = db_session.query(Supplier).order_by(Supplier.name).all()
+        packaging_suppliers = db_session.query(PackagingMaterialSupplier).order_by(
+            PackagingMaterialSupplier.name
+        ).all()
 
-    combined_suppliers = product_suppliers_list + packaging_suppliers_list
+        result = [
+            {**s.to_dict(), "type": "product"} for s in product_suppliers
+        ] + [
+            {**s.to_dict(), "type": "packaging"} for s in packaging_suppliers
+        ]
 
-    return jsonify(combined_suppliers), 200
+        return result, 200
+
 
 
 # Get supplier purchase history

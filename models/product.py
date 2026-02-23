@@ -30,6 +30,11 @@ class Product(Base):
     reorder_level = Column(Integer, default=0)
     reserved_quantity = Column(Integer, nullable=False, default=0)  # Додайте default=0
     article = Column(String(20), unique=True, nullable=False)
+    product_description = Column(
+        String(500),
+        nullable=False,
+        default=""
+    )
 
     def to_dict(self):
         """Convert product instance to dictionary."""
@@ -45,6 +50,6 @@ class Product(Base):
             'selling_total_price': float(self.selling_total_price or 0),
             'selling_price_per_item': float(self.selling_price_per_item or 0),
             'created_date': self.created_date.isoformat() if self.created_date else None,
-            'article': self.article
-
+            'article': self.article,
+            'product_description': self.product_description
         }

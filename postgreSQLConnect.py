@@ -1,7 +1,6 @@
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker, scoped_session
 
-from app import app
 from models import db
 
 # Налаштування підключення до PostgreSQL
@@ -32,17 +31,5 @@ Session = sessionmaker(bind=engine)
 db_session = scoped_session(Session)
 
 
-# Функція ініціалізації бази (створює таблиці, якщо вони не існують)
-def init_db():
-    """Функція ініціалізації бази даних"""
-    with app.app_context():  # Додаємо контекст застосунку
-        db.create_all()
 
 
-# Виконати перевірку
-if test_connection():
-    init_db()
-
-# Викликаємо ініціалізацію БД тільки якщо цей файл виконується напряму
-if __name__ == "__main__":
-    init_db()

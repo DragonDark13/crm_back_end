@@ -1,29 +1,29 @@
 from decimal import Decimal
 
 from flask import Blueprint, request
+from flask_restx import Resource
 from sqlalchemy.exc import SQLAlchemyError, IntegrityError
 from flask import jsonify
 
+from api.packaging_routes import packaging_ns
 from models import PackagingMaterial, PackagingPurchaseHistory, PackagingMaterialSupplier, PackagingStockHistory, \
     PackagingSaleHistory
 
 package_bp = Blueprint('packages', __name__)
 
 
-@package_bp.route('/get_all_packaging_materials', methods=['GET'])
-def get_packaging_materials():
-    from postgreSQLConnect import db_session
+@packaging_ns.route("/get_all_packaging_materials")
+class PackagingMaterialList(Resource):
 
-    # Отримуємо всі матеріали з бази даних
-    materials = db_session.query(PackagingMaterial).all()  # Corrected query
+    @packaging_ns.doc(
+        summary="Отримати всі матеріали пакування",
+        description="Повертає список усіх матеріалів пакування"
+    )
+    def get(self):
+        from postgreSQLConnect import db_session
 
-    # Підготовка результату для відповіді
-    materials_data = []
-    for material in materials:
-        materials_data.append(material.to_dict())  # Use the to_dict() method here
-
-    return jsonify({'materials': materials_data})
-
+        materials = db_session.query(PackagingMaterial).all()
+        return [material.to_dict() for material in materials], 200
 
 # @package_bp.route('/packaging_materials/purchase', methods=['POST'])
 # def purchase_packaging_material():

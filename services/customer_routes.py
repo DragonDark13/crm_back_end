@@ -1,6 +1,8 @@
 from flask import Blueprint, jsonify, request, abort
+from flask_restx import Resource
 from flask_sqlalchemy.session import Session
 
+from api.customer_api import customers_ns
 from models import Customer, Supplier
 from sqlalchemy.exc import IntegrityError
 
@@ -48,14 +50,26 @@ def create_customer():
 
 
 # Get all customers
-@customer_bp.route('/get_all_customers', methods=['GET'])
-def get_all_customers():
-    from postgreSQLConnect import db_session
+# @customer_bp.route('/get_all_customers', methods=['GET'])
+# def get_all_customers():
+#     from postgreSQLConnect import db_session
+#
+#     customers = db_session.query(Customer).all()
+#     customer_list = [customer.to_dict() for customer in customers]
+#     return jsonify(customer_list), 200
 
-    customers = db_session.query(Customer).all()
-    customer_list = [customer.to_dict() for customer in customers]
-    return jsonify(customer_list), 200
+@customers_ns.route("/get_all_customers")
+class CustomerList(Resource):
 
+    @customers_ns.doc(
+        summary="Отримати всіх клієнтів",
+        description="Повертає список усіх клієнтів"
+    )
+    def get(self):
+        from postgreSQLConnect import db_session
+
+        customers = db_session.query(Customer).all()
+        return [customer.to_dict() for customer in customers], 200
 
 # Get customer details by ID
 @customer_bp.route('/customers_details/<int:customer_id>', methods=['GET'])

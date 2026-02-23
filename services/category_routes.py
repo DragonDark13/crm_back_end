@@ -1,4 +1,7 @@
 from flask import Blueprint, jsonify, request
+from flask_restx import Resource
+
+from api.categories_api import categories_ns, category_model
 
 # Create a Blueprint for categories
 from models import Category, Product
@@ -6,15 +9,23 @@ from models import Category, Product
 category_bp = Blueprint('categories', __name__)
 
 
-@category_bp.route('/categories', methods=['GET'])
-def get_all_categories():
-    """Retrieve all categories."""
-    from postgreSQLConnect import db_session
+@categories_ns.route("/get_all_categories")
+class CategoryList(Resource):
 
-    with db_session() as session:
-        categories = session.query(Category).all()
-        category_list = [{'id': cat.id, 'name': cat.name} for cat in categories]
-    return jsonify(category_list), 200
+    @categories_ns.doc(
+        summary="Отримати всі категорії",
+        description="Повертає список всіх категорій товарів"
+    )
+    @categories_ns.marshal_list_with(category_model)
+    def get(self):
+        from postgreSQLConnect import db_session
+
+        categories = db_session.query(Category).all()
+        return [
+            {"id": cat.id, "name": cat.name}
+            for cat in categories
+        ], 200
+
 
 
 @category_bp.route('/add_new_category', methods=['POST'])
