@@ -7,4 +7,4 @@ from postgreSQLConnect import db_session
 import_all_product()
 import_all_packages()
 import_all_investment()
-import_categories_from_csv('./import_data_csv/csv_categories/categories.csv', db_session)
+import_categories_from_csv('../import_data_csv/csv_categories/categories.csv', db_session)

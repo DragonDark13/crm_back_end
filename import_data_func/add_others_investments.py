@@ -47,7 +47,7 @@ def load_other_investments_from_csv(file_path, created_date):
 
 def import_all_investment():
     # Базовий шлях до CSV-файлів інвестицій
-    base_dir = 'import_data_csv/csv_others_investments'
+    base_dir = '../import_data_csv/csv_others_investments'
 
     # Список файлів і відповідних дат
     investment_files_data = [

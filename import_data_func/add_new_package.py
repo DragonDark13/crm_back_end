@@ -108,7 +108,7 @@ def import_packaging_materials_from_csv(file_path, purchase_date, db_session):
 
 def import_all_packages():
     # Базова папка, яку можна змінити в одному місці
-    base_dir = 'import_data_csv/csv_package'
+    base_dir = '../import_data_csv/csv_package'
 
     # Список тільки назв файлів і дат (без повного шляху)
     files_data = [

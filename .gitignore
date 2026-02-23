@@ -34,3 +34,5 @@ shop_crm_back_27_12.db
 /app.log
 /shop_crm_back.db
 /shop_crm_back_27_12.db
+/models/
+/alembic/

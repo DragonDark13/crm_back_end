@@ -155,7 +155,7 @@ def load_products_from_csv(file_path, created_date):
 
 def import_all_product():
     # Базовий шлях до папки з продуктами
-    base_dir = 'import_data_csv/csv_product'
+    base_dir = '../import_data_csv/csv_product'
 
     # Список назв файлів і дат
     files_data = [
