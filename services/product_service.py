@@ -35,7 +35,9 @@ class ProductService:
 
         """Отримати продукт за ID"""
         try:
-            product = db_session.query(Product).filter(Product.id == product_id).one()
+            product = db_session.query(Product).filter(
+            Product.id == product_id
+        ).with_for_update().populate_existing().one()
             product_dict = product.to_dict()  # Assuming you have a method for dict conversion
             product_dict['category_ids'] = [category.id for category in product.categories]
             product_dict['supplier'] = product.supplier.to_dict() if product.supplier else None
@@ -236,7 +238,9 @@ def update_product(product_id):
         return jsonify({'errors': errors}), 400
 
     try:
-        product = db_session.query(Product).filter(Product.id == product_id).one()
+        product = db_session.query(Product).filter(
+            Product.id == product_id
+        ).with_for_update().populate_existing().one()
 
         supplier_id = data.get('supplier_id')
         if supplier_id:
@@ -346,7 +350,9 @@ def delete_product(product_id):
         from postgreSQLConnect import db_session
 
         # Fetch the product
-        product = db_session.query(Product).filter(Product.id == product_id).one()
+        product = db_session.query(Product).filter(
+            Product.id == product_id
+        ).with_for_update().populate_existing().one()
 
         # Delete related records
         # Ensure the column name in the filter is correct (e.g., product_id or product_fk)
@@ -395,8 +401,13 @@ def inventory_product(product_id):
     reason = reason.strip() or None if reason is not None else None
 
     try:
-        product_exists = db_session.query(Product.id).filter(Product.id == product_id).first()
-        if not product_exists:
+        # Блокуємо інвентаризований товар до читання наборів, щоб нове резервування
+        # не могло пройти паралельно з інвентаризацією.
+        product = db_session.query(Product).filter(
+            Product.id == product_id
+        ).with_for_update().populate_existing().one_or_none()
+        if not product:
+            db_session.rollback()
             return jsonify({'error': 'Product not found'}), 404
 
         # Беремо лише непродані набори, у складі яких є інвентаризований товар.
@@ -430,11 +441,15 @@ def inventory_product(product_id):
             gift_set_packagings = []
 
         # Блокуємо всі товари та пакування, резерви яких будемо повертати.
-        product_ids = sorted({product_id, *(item.product_id for item in gift_set_products)})
-        locked_products = db_session.query(Product).filter(
-            Product.id.in_(product_ids)
-        ).order_by(Product.id).with_for_update().all()
-        products_by_id = {product.id: product for product in locked_products}
+        product_ids = sorted({item.product_id for item in gift_set_products if item.product_id != product_id})
+        if product_ids:
+            other_products = db_session.query(Product).filter(
+                Product.id.in_(product_ids)
+            ).order_by(Product.id).with_for_update().populate_existing().all()
+        else:
+            other_products = []
+        products_by_id = {item.id: item for item in other_products}
+        products_by_id[product_id] = product
 
         packaging_ids = sorted({item.packaging_id for item in gift_set_packagings})
         if packaging_ids:
@@ -485,8 +500,15 @@ def inventory_product(product_id):
             db_session.delete(item)
         for item in gift_set_packagings:
             db_session.delete(item)
-        for gift_set in gift_sets:
-            db_session.delete(gift_set)
+
+        # Спочатку фізично видаляємо дочірні рядки, потім набори bulk-delete,
+        # щоб ORM не намагався обнулити NOT NULL gift_set_id у зв'язках.
+        db_session.flush()
+        if gift_set_ids:
+            db_session.query(GiftSet).filter(
+                GiftSet.id.in_(gift_set_ids),
+                GiftSet.is_sold.is_(False)
+            ).delete(synchronize_session=False)
 
         # Усі резерви інвентаризованого товару скасовані разом із його непроданими наборами.
         product.reserved_quantity = 0
