@@ -1,0 +1,3 @@
+from services.supplier_routes import delete_all_packaging_suppliers
+
+delete_all_packaging_suppliers()

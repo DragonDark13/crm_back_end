@@ -58,8 +58,6 @@ class SupplierList(Resource):
         - постачальників пакування
         """
     )
-
-
     def get(self):
         from postgreSQLConnect import db_session
 
@@ -69,13 +67,12 @@ class SupplierList(Resource):
         ).all()
 
         result = [
-            {**s.to_dict(), "type": "product"} for s in product_suppliers
-        ] + [
-            {**s.to_dict(), "type": "packaging"} for s in packaging_suppliers
-        ]
+                     {**s.to_dict(), "type": "product"} for s in product_suppliers
+                 ] + [
+                     {**s.to_dict(), "type": "packaging"} for s in packaging_suppliers
+                 ]
 
         return result, 200
-
 
 
 # Get supplier purchase history
@@ -204,3 +201,51 @@ def update_supplier(supplier_id):
     except Exception as e:
         db_session.rollback()
         return jsonify({'error': f'Unexpected error: {str(e)}'}), 500
+
+
+# Delete all packaging suppliers
+def delete_all_packaging_suppliers():
+    from postgreSQLConnect import db_session
+
+    try:
+        deleted_count = db_session.query(PackagingMaterialSupplier).delete(
+            synchronize_session=False
+        )
+        db_session.commit()
+
+        return {
+            "success": True,
+            "message": f"Видалено постачальників пакування: {deleted_count}",
+            "deleted_count": deleted_count
+        }
+
+    except Exception as e:
+        db_session.rollback()
+        return {
+            "success": False,
+            "message": str(e)
+        }
+
+
+# Delete all product suppliers
+def delete_all_product_suppliers():
+    from postgreSQLConnect import db_session
+
+    try:
+        deleted_count = db_session.query(Supplier).delete(
+            synchronize_session=False
+        )
+        db_session.commit()
+
+        return {
+            "success": True,
+            "message": f"Видалено постачальників товарів: {deleted_count}",
+            "deleted_count": deleted_count
+        }
+
+    except Exception as e:
+        db_session.rollback()
+        return {
+            "success": False,
+            "message": str(e)
+        }
