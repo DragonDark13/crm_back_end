@@ -1,4 +1,4 @@
-from sqlalchemy import insert, delete
+from sqlalchemy import insert, delete, or_
 
 from models import Product, product_categories_table, Supplier, PurchaseHistory, StockHistory, Category, SaleHistory, \
     Customer, ReturnHistory, PackagingMaterial, PackagingSaleHistory, GiftSet, GiftSetProduct, GiftSetPackaging, \
@@ -415,7 +415,7 @@ def inventory_product(product_id):
             GiftSetProduct, GiftSetProduct.gift_set_id == GiftSet.id
         ).filter(
             GiftSetProduct.product_id == product_id,
-            GiftSet.is_sold.is_(False)
+            or_(GiftSet.is_sold.is_(False), GiftSet.is_sold.is_(None))
         ).with_for_update().all()
 
         gift_set_ids = [gift_set.id for gift_set in gift_sets]
@@ -507,7 +507,7 @@ def inventory_product(product_id):
         if gift_set_ids:
             db_session.query(GiftSet).filter(
                 GiftSet.id.in_(gift_set_ids),
-                GiftSet.is_sold.is_(False)
+                or_(GiftSet.is_sold.is_(False), GiftSet.is_sold.is_(None))
             ).delete(synchronize_session=False)
 
         # Усі резерви інвентаризованого товару скасовані разом із його непроданими наборами.
