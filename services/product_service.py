@@ -1,7 +1,8 @@
 from sqlalchemy import insert, delete
 
 from models import Product, product_categories_table, Supplier, PurchaseHistory, StockHistory, Category, SaleHistory, \
-    Customer, ReturnHistory, PackagingMaterial, PackagingSaleHistory
+    Customer, ReturnHistory, PackagingMaterial, PackagingSaleHistory, GiftSet, GiftSetProduct, GiftSetPackaging, \
+    GiftSetSalesHistory
 from flask import Blueprint, request
 from sqlalchemy.orm import joinedload
 from sqlalchemy.exc import NoResultFound, SQLAlchemyError
@@ -363,6 +364,172 @@ def delete_product(product_id):
         return jsonify({'error': 'Product not found'}), 404
 
 
+class InventoryConflict(Exception):
+    pass
+
+
+@product_history_bp.route('/product/<int:product_id>/inventory', methods=['POST'])
+def inventory_product(product_id):
+    from postgreSQLConnect import db_session
+
+    data = request.get_json(silent=True) or {}
+    raw_actual_quantity = data.get('actual_quantity')
+
+    if isinstance(raw_actual_quantity, bool):
+        return jsonify({'error': 'actual_quantity must be a non-negative integer'}), 400
+
+    try:
+        actual_quantity = int(raw_actual_quantity)
+    except (TypeError, ValueError):
+        return jsonify({'error': 'actual_quantity must be a non-negative integer'}), 400
+
+    if isinstance(raw_actual_quantity, float) and not raw_actual_quantity.is_integer():
+        return jsonify({'error': 'actual_quantity must be a non-negative integer'}), 400
+
+    if actual_quantity < 0:
+        return jsonify({'error': 'actual_quantity must be a non-negative integer'}), 400
+
+    reason = data.get('reason')
+    if reason is not None and not isinstance(reason, str):
+        return jsonify({'error': 'reason must be a string'}), 400
+    reason = reason.strip() or None if reason is not None else None
+
+    try:
+        product_exists = db_session.query(Product.id).filter(Product.id == product_id).first()
+        if not product_exists:
+            return jsonify({'error': 'Product not found'}), 404
+
+        # Беремо лише непродані набори, у складі яких є інвентаризований товар.
+        gift_sets = db_session.query(GiftSet).join(
+            GiftSetProduct, GiftSetProduct.gift_set_id == GiftSet.id
+        ).filter(
+            GiftSetProduct.product_id == product_id,
+            GiftSet.is_sold.is_(False)
+        ).with_for_update().all()
+
+        gift_set_ids = [gift_set.id for gift_set in gift_sets]
+
+        if gift_set_ids:
+            # Не дозволяємо видалити набір, якщо для нього вже існує історія продажу.
+            has_sales_history = db_session.query(GiftSetSalesHistory.id).filter(
+                GiftSetSalesHistory.gift_set_id.in_(gift_set_ids)
+            ).first()
+            if has_sales_history:
+                raise InventoryConflict(
+                    'An unsold gift set has sales history and cannot be safely removed'
+                )
+
+            gift_set_products = db_session.query(GiftSetProduct).filter(
+                GiftSetProduct.gift_set_id.in_(gift_set_ids)
+            ).all()
+            gift_set_packagings = db_session.query(GiftSetPackaging).filter(
+                GiftSetPackaging.gift_set_id.in_(gift_set_ids)
+            ).all()
+        else:
+            gift_set_products = []
+            gift_set_packagings = []
+
+        # Блокуємо всі товари та пакування, резерви яких будемо повертати.
+        product_ids = sorted({product_id, *(item.product_id for item in gift_set_products)})
+        locked_products = db_session.query(Product).filter(
+            Product.id.in_(product_ids)
+        ).order_by(Product.id).with_for_update().all()
+        products_by_id = {product.id: product for product in locked_products}
+
+        packaging_ids = sorted({item.packaging_id for item in gift_set_packagings})
+        if packaging_ids:
+            locked_packagings = db_session.query(PackagingMaterial).filter(
+                PackagingMaterial.id.in_(packaging_ids)
+            ).order_by(PackagingMaterial.id).with_for_update().all()
+        else:
+            locked_packagings = []
+        packagings_by_id = {packaging.id: packaging for packaging in locked_packagings}
+
+        product = products_by_id.get(product_id)
+        if not product:
+            return jsonify({'error': 'Product not found'}), 404
+
+        quantity_before = (product.available_quantity or 0) + (product.reserved_quantity or 0)
+
+        # Повертаємо на склад усі складові кожного видаленого набору.
+        for item in gift_set_products:
+            related_product = products_by_id.get(item.product_id)
+            if not related_product or not item.quantity or item.quantity < 0:
+                raise InventoryConflict('Gift set contains an invalid product item')
+
+            reserved_quantity = related_product.reserved_quantity or 0
+            if reserved_quantity < item.quantity:
+                raise InventoryConflict(
+                    f'Reserved quantity is inconsistent for product {related_product.id}'
+                )
+
+            related_product.available_quantity = (related_product.available_quantity or 0) + item.quantity
+            related_product.reserved_quantity = reserved_quantity - item.quantity
+
+        for item in gift_set_packagings:
+            packaging = packagings_by_id.get(item.packaging_id)
+            if not packaging or not item.quantity or item.quantity < 0:
+                raise InventoryConflict('Gift set contains an invalid packaging item')
+
+            reserved_quantity = packaging.reserved_quantity or 0
+            if reserved_quantity < item.quantity:
+                raise InventoryConflict(
+                    f'Reserved quantity is inconsistent for packaging {packaging.id}'
+                )
+
+            packaging.available_quantity = (packaging.available_quantity or 0) + item.quantity
+            packaging.reserved_quantity = reserved_quantity - item.quantity
+
+        # Видаляємо склад наборів та самі непродані набори.
+        for item in gift_set_products:
+            db_session.delete(item)
+        for item in gift_set_packagings:
+            db_session.delete(item)
+        for gift_set in gift_sets:
+            db_session.delete(gift_set)
+
+        # Усі резерви інвентаризованого товару скасовані разом із його непроданими наборами.
+        product.reserved_quantity = 0
+        product.available_quantity = actual_quantity
+
+        change_amount = actual_quantity - quantity_before
+        stock_history = StockHistory(
+            product_id=product.id,
+            change_amount=change_amount,
+            change_type='inventory',
+            timestamp=datetime.now(),
+            quantity_before=quantity_before,
+            quantity_after=actual_quantity,
+            reason=reason
+        )
+        db_session.add(stock_history)
+
+        # Усі зміни фіксуються одним commit.
+        db_session.commit()
+
+        return jsonify({
+            'message': 'Inventory completed successfully',
+            'product_id': product.id,
+            'quantity_before': quantity_before,
+            'quantity_after': actual_quantity,
+            'change_amount': change_amount,
+            'deleted_gift_sets': gift_set_ids,
+            'available_quantity': product.available_quantity,
+            'reserved_quantity': product.reserved_quantity,
+            'stock_history': stock_history.to_dict()
+        }), 200
+
+    except InventoryConflict as e:
+        db_session.rollback()
+        return jsonify({'error': str(e)}), 409
+    except SQLAlchemyError:
+        db_session.rollback()
+        return jsonify({'error': 'Database error during inventory'}), 500
+    except Exception:
+        db_session.rollback()
+        return jsonify({'error': 'Unexpected error during inventory'}), 500
+
+
 @product_history_bp.route('/product/<int:product_id>/history', methods=['GET'])
 def get_product_history(product_id):
     """Get history of stock, purchase, and sales changes for a product."""
@@ -613,6 +780,9 @@ def delete_stock_history(product_id, history_id):
     history = db_session.query(StockHistory).filter_by(id=history_id, product_id=product_id).first()
     if not history:
         return {'error': 'Stock history record not found or does not belong to this product'}
+    if history.change_type == 'inventory':
+        return {'error': 'Inventory records cannot be deleted; perform a new inventory instead'}
+
     product = history.product
     if history.change_type == 'add':
         product.available_quantity -= history.change_amount
