@@ -558,7 +558,9 @@ def get_product_history(product_id):
     try:
         from postgreSQLConnect import db_session
 
-        product = db_session.query(Product).filter(Product.id == product_id).one()
+        product = db_session.query(Product).filter(
+            Product.id == product_id
+        ).with_for_update().populate_existing().one()
 
         # Stock History
         stock_history = db_session.query(StockHistory).filter(StockHistory.product_id == product.id).all()
@@ -610,7 +612,9 @@ def purchase_product(product_id):
         return jsonify({'errors': errors}), 400
 
     try:
-        product = db_session.query(Product).filter(Product.id == product_id).one()
+        product = db_session.query(Product).filter(
+            Product.id == product_id
+        ).with_for_update().populate_existing().one()
 
         quantity = data['quantity']
         purchase_price_per_item = Decimal(data['purchase_price_per_item'])
@@ -666,7 +670,9 @@ def record_sale(product_id):
         return jsonify({'errors': errors}), 400
 
     try:
-        product = db_session.query(Product).filter(Product.id == product_id).one()
+        product = db_session.query(Product).filter(
+            Product.id == product_id
+        ).with_for_update().populate_existing().one()
 
         quantity_sold = data['quantity']
         selling_price_per_item = Decimal(data['selling_price_per_item'])
