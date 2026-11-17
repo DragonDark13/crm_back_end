@@ -274,7 +274,9 @@ def dismantle_gift_set(gift_set_id):
 def sell_gift_set(gift_set_id):
     from postgreSQLConnect import db_session
 
-    gift_set = db_session.query(GiftSet).get(gift_set_id)
+    gift_set = db_session.query(GiftSet).filter(
+        GiftSet.id == gift_set_id
+    ).with_for_update().populate_existing().one_or_none()
 
     if not gift_set:
         return jsonify({"error": "Gift set not found"}), 404
