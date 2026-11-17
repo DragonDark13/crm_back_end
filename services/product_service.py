@@ -7,6 +7,7 @@ from flask import Blueprint, request
 from sqlalchemy.orm import joinedload
 from sqlalchemy.exc import NoResultFound, SQLAlchemyError
 from flask import jsonify
+from flask_jwt_extended import jwt_required
 from decimal import Decimal
 from datetime import datetime
 
@@ -375,6 +376,7 @@ class InventoryConflict(Exception):
 
 
 @product_history_bp.route('/product/<int:product_id>/inventory', methods=['POST'])
+@jwt_required()
 def inventory_product(product_id):
     from postgreSQLConnect import db_session
 
