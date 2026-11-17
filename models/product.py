@@ -44,6 +44,7 @@ class Product(Base):
             'supplier_id': self.supplier_id,
             'total_quantity': self.total_quantity,
             'available_quantity': self.available_quantity,
+            'reserved_quantity': self.reserved_quantity,
             'sold_quantity': self.sold_quantity,
             'purchase_total_price': float(self.purchase_total_price or 0),
             'purchase_price_per_item': float(self.purchase_price_per_item or 0),

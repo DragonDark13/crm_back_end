@@ -44,7 +44,9 @@ def create_gift_set():
         quantity = item.get('quantity', 1)
 
         if item_type == "product":
-            product = db_session.query(Product).filter(Product.id == item_id).one_or_none()
+            product = db_session.query(Product).filter(
+                Product.id == item_id
+            ).with_for_update().populate_existing().one_or_none()
             if not product:
                 return jsonify({"error": f"Product {item_id} not found"}), 400
             if product.available_quantity < quantity:
@@ -123,7 +125,9 @@ def update_gift_set(gift_set_id):
         from postgreSQLConnect import db_session
 
         # Отримуємо набір з бази даних
-        gift_set = db_session.query(GiftSet).filter(GiftSet.id == gift_set_id).one_or_none()
+        gift_set = db_session.query(GiftSet).filter(
+            GiftSet.id == gift_set_id
+        ).with_for_update().populate_existing().one_or_none()
         if not gift_set:
             return jsonify({"error": "Gift set not found"}), 404
 
@@ -227,7 +231,9 @@ def dismantle_gift_set(gift_set_id):
     # Знаходимо подарунковий набір
     from postgreSQLConnect import db_session
 
-    gift_set = db_session.query(GiftSet).get(gift_set_id)
+    gift_set = db_session.query(GiftSet).filter(
+        GiftSet.id == gift_set_id
+    ).with_for_update().populate_existing().one_or_none()
     if not gift_set:
         return jsonify({"error": "Gift set not found"}), 404
 
@@ -268,7 +274,9 @@ def dismantle_gift_set(gift_set_id):
 def sell_gift_set(gift_set_id):
     from postgreSQLConnect import db_session
 
-    gift_set = db_session.query(GiftSet).get(gift_set_id)
+    gift_set = db_session.query(GiftSet).filter(
+        GiftSet.id == gift_set_id
+    ).with_for_update().populate_existing().one_or_none()
 
     if not gift_set:
         return jsonify({"error": "Gift set not found"}), 404
