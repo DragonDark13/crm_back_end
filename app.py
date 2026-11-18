@@ -246,6 +246,52 @@ def logout():
     return jsonify(message="Logout successful"), 200
 
 
+# Centralized API authentication and role-based access control.
+# The decorated helper applies Flask-JWT-Extended validation to every protected API request.
+@jwt_required()
+def _require_api_jwt():
+    return None
+
+
+@app.before_request
+def enforce_api_authorization():
+    if not request.path.startswith('/api/'):
+        return None
+
+    # Login is the only public API endpoint.
+    if request.path == '/api/login':
+        return None
+
+    jwt_response = _require_api_jwt()
+    if jwt_response is not None:
+        return jwt_response
+
+    identity = get_jwt_identity()
+    try:
+        user = User.query.get(int(identity))
+    except (TypeError, ValueError):
+        user = None
+
+    if not user or not user.active:
+        return jsonify(message="User is inactive or no longer exists"), 401
+
+    role_names = {role.name for role in user.roles}
+
+    if 'manager' in role_names:
+        # Destructive bulk operations and history deletion are not available
+        # until a dedicated administrator role is introduced.
+        if request.path.startswith('/api/delete_all_') or request.path.startswith('/api/delete-history/'):
+            return jsonify(message="Administrator role required"), 403
+        return None
+
+    if 'guest' in role_names:
+        if request.method in ('GET', 'HEAD', 'OPTIONS'):
+            return None
+        return jsonify(message="Manager role required"), 403
+
+    return jsonify(message="User has no permitted role"), 403
+
+
 @app.before_request
 def log_request_info():
     logger.info("Request method: %s, path: %s", request.method, request.path)
