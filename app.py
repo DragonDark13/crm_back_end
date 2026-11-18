@@ -11,13 +11,15 @@ import logging
 import hmac
 
 from flask_cors import CORS
+from sqlalchemy import case
+from sqlalchemy.dialects.postgresql import insert as postgresql_insert
 
 from api.categories_api import categories_ns
 from api.customer_api import customers_ns
 from api.investment_api import investments_ns
 from api.packaging_routes import packaging_ns
 from api.supplier_routes import supplier_ns
-from models import db, User, Role, TokenBlocklist, LoginAttempt
+from models import db, User, Role, TokenBlocklist, LoginAttempt, LoginIPAttempt
 from services.category_routes import category_bp
 from services.customer_routes import customer_bp
 from services.export_to_excel_services import export_to_excel_bp
@@ -258,6 +260,54 @@ with app.app_context():
     create_roles_and_users()
 
 
+LOGIN_WINDOW = timedelta(minutes=15)
+LOGIN_LOCKOUT = timedelta(minutes=15)
+LOGIN_USERNAME_MAX_ATTEMPTS = int(os.getenv("LOGIN_USERNAME_MAX_ATTEMPTS", "5"))
+LOGIN_IP_MAX_ATTEMPTS = int(os.getenv("LOGIN_IP_MAX_ATTEMPTS", "30"))
+
+
+def _is_login_locked(attempt, now):
+    return bool(attempt and attempt.locked_until and attempt.locked_until > now)
+
+
+def _increment_login_counter(model, key_values, now, max_attempts):
+    table = model.__table__
+    window_expired = table.c.window_started_at <= now - LOGIN_WINDOW
+    next_attempts = case(
+        (window_expired, 1),
+        else_=table.c.attempts + 1
+    )
+
+    statement = postgresql_insert(model).values(
+        **key_values,
+        attempts=1,
+        window_started_at=now,
+        locked_until=None
+    )
+
+    if model is LoginAttempt:
+        conflict_columns = [table.c.username, table.c.ip_address]
+    else:
+        conflict_columns = [table.c.ip_address]
+
+    statement = statement.on_conflict_do_update(
+        index_elements=conflict_columns,
+        set_={
+            "attempts": next_attempts,
+            "window_started_at": case(
+                (window_expired, now),
+                else_=table.c.window_started_at
+            ),
+            "locked_until": case(
+                (window_expired, None),
+                (next_attempts >= max_attempts, now + LOGIN_LOCKOUT),
+                else_=table.c.locked_until
+            )
+        }
+    )
+    db.session.execute(statement)
+
+
 @app.route('/api/login', methods=['POST'])
 def login():
     credentials = request.get_json(silent=True) or {}
@@ -269,24 +319,21 @@ def login():
 
     normalized_username = username.strip()
     client_ip = request.remote_addr or "unknown"
-    attempt = LoginAttempt.query.filter_by(
+    now = datetime.now(timezone.utc)
+
+    username_attempt = LoginAttempt.query.filter_by(
         username=normalized_username,
         ip_address=client_ip
     ).first()
-    now = datetime.now(timezone.utc)
+    ip_attempt = LoginIPAttempt.query.filter_by(ip_address=client_ip).first()
 
-    if attempt and attempt.locked_until and attempt.locked_until > now:
+    if _is_login_locked(username_attempt, now) or _is_login_locked(ip_attempt, now):
         return jsonify(message="Too many failed login attempts. Try again later."), 429
-
-    if attempt and attempt.window_started_at and now - attempt.window_started_at > timedelta(minutes=15):
-        attempt.attempts = 0
-        attempt.window_started_at = now
-        attempt.locked_until = None
 
     user = User.query.filter_by(username=normalized_username).first()
     if user and user.active and user.verify_password(password):
-        if attempt:
-            db.session.delete(attempt)
+        if username_attempt:
+            db.session.delete(username_attempt)
         db.session.commit()
         role_names = [role.name for role in user.roles]
         access_token = create_access_token(
@@ -295,18 +342,18 @@ def login():
         )
         return jsonify(message="Login successful", token=access_token), 200
 
-    if not attempt:
-        attempt = LoginAttempt(
-            username=normalized_username,
-            ip_address=client_ip,
-            attempts=0,
-            window_started_at=now
-        )
-        db.session.add(attempt)
-
-    attempt.attempts += 1
-    if attempt.attempts >= 5:
-        attempt.locked_until = now + timedelta(minutes=15)
+    _increment_login_counter(
+        LoginAttempt,
+        {"username": normalized_username, "ip_address": client_ip},
+        now,
+        LOGIN_USERNAME_MAX_ATTEMPTS
+    )
+    _increment_login_counter(
+        LoginIPAttempt,
+        {"ip_address": client_ip},
+        now,
+        LOGIN_IP_MAX_ATTEMPTS
+    )
     db.session.commit()
     return jsonify(message="Invalid credentials"), 401
 
