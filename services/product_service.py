@@ -8,7 +8,7 @@ from sqlalchemy.orm import joinedload
 from sqlalchemy.exc import NoResultFound, SQLAlchemyError
 from flask import jsonify
 from flask_jwt_extended import jwt_required
-from decimal import Decimal
+from decimal import Decimal, InvalidOperation
 from datetime import datetime
 
 # Створюємо Blueprint для продуктів
@@ -893,10 +893,18 @@ def validate_sale_data(data):
     for field in required_fields:
         if field not in data:
             errors[field] = f'Missing field: {field}'
-    if data['quantity'] <= 0:
+
+    if 'quantity' in data and data['quantity'] <= 0:
         errors['quantity'] = 'Quantity must be greater than 0.'
-    if data['selling_price_per_item'] <= 0 or data['selling_total_price'] <= 0:
-        errors['selling_price'] = 'Selling price and total price must be greater than 0.'
+
+    try:
+        selling_price_per_item = Decimal(str(data.get('selling_price_per_item', 0)))
+        selling_total_price = Decimal(str(data.get('selling_total_price', 0)))
+        if selling_price_per_item <= 0 or selling_total_price <= 0:
+            errors['selling_price'] = 'Selling price and total price must be greater than 0.'
+    except (InvalidOperation, TypeError, ValueError):
+        errors['selling_price'] = 'Selling price and total price must be valid numbers.'
+
     return errors
 
 
