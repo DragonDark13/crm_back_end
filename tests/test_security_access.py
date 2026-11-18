@@ -6,6 +6,7 @@ The test suite never falls back to the application's normal DATABASE_URL.
 """
 import os
 import unittest
+import uuid
 from concurrent.futures import ThreadPoolExecutor
 from datetime import datetime, timedelta, timezone
 
@@ -15,8 +16,8 @@ if TEST_DATABASE_URL:
     os.environ["DATABASE_URL"] = TEST_DATABASE_URL
     os.environ.setdefault("SECRET_KEY", "test-only-secret-key")
     os.environ.setdefault("JWT_SECRET_KEY", "test-only-jwt-secret")
-    from app import app, _increment_login_counter
-    from models import db, User, Role, LoginAttempt, LoginIPAttempt
+    from app import app, _increment_login_counter, cleanup_expired_tokens
+    from models import db, User, Role, LoginAttempt, LoginIPAttempt, TokenBlocklist
 
 
 @unittest.skipUnless(TEST_DATABASE_URL, "Set TEST_DATABASE_URL to a dedicated test database")
@@ -237,6 +238,30 @@ class SecurityAccessTests(unittest.TestCase):
             environ_overrides={"REMOTE_ADDR": "198.51.100.11"},
         )
         self.assertEqual(response.status_code, 401)
+
+    def test_cleanup_removes_expired_tokens_and_keeps_valid_tokens(self):
+        now = datetime.now(timezone.utc)
+        expired_jti = str(uuid.uuid4())
+        valid_jti = str(uuid.uuid4())
+
+        with app.app_context():
+            db.session.add_all([
+                TokenBlocklist(
+                    jti=expired_jti,
+                    expires_at=now - timedelta(minutes=1),
+                ),
+                TokenBlocklist(
+                    jti=valid_jti,
+                    expires_at=now + timedelta(hours=1),
+                ),
+            ])
+            db.session.commit()
+
+            deleted_count = cleanup_expired_tokens()
+
+            self.assertEqual(deleted_count, 1)
+            self.assertIsNone(TokenBlocklist.query.filter_by(jti=expired_jti).first())
+            self.assertIsNotNone(TokenBlocklist.query.filter_by(jti=valid_jti).first())
 
     def test_login_counter_updates_are_atomic_under_concurrency(self):
         ip_address = "203.0.113.25"
