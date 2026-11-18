@@ -27,3 +27,13 @@ class LoginAttempt(Base):
         UniqueConstraint("username", "ip_address", name="uq_login_attempt_username_ip"),
         Index("ix_login_attempt_locked_until", "locked_until"),
     )
+
+
+class LoginIPAttempt(Base):
+    __tablename__ = "login_ip_attempts"
+
+    id = Column(Integer, primary_key=True)
+    ip_address = Column(String(64), nullable=False, unique=True, index=True)
+    attempts = Column(Integer, nullable=False, default=0)
+    window_started_at = Column(DateTime(timezone=True), nullable=False, default=datetime.utcnow)
+    locked_until = Column(DateTime(timezone=True), nullable=True)
