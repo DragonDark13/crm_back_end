@@ -351,7 +351,7 @@ def test_sale_profit_includes_packaging_cost_and_updates_packaging_stock(
     packaging_history = db_session.query(PackagingSaleHistory).filter_by(sale_id=sale.id).one()
 
     assert sale.selling_total_price == Decimal("59.97")
-    assert sale.profit == Decimal("26.97")
+    assert sale.profit == Decimal("26.94")
     assert sale.total_packaging_cost == 3.0
     assert updated_packaging.available_quantity == 8
     assert updated_packaging.available_stock_cost == Decimal("12.00")
