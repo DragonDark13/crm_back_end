@@ -258,6 +258,10 @@ def enforce_api_authorization():
     if not request.path.startswith('/api/'):
         return None
 
+    # Allow CORS preflight requests without authentication.
+    if request.method == 'OPTIONS':
+        return None
+
     # Login is the only public API endpoint.
     if request.path == '/api/login':
         return None
