@@ -49,7 +49,17 @@ logger.addHandler(console_handler)
 
 # Flask app initialization
 app = Flask(__name__)
-CORS(app)
+# Allow only the configured frontend origins. Set CORS_ALLOWED_ORIGINS as a comma-separated
+# list in production; local development remains available by default.
+allowed_origins = [
+    origin.strip()
+    for origin in os.getenv(
+        "CORS_ALLOWED_ORIGINS",
+        "http://localhost:5173,http://127.0.0.1:5173,https://aleksandrforupwork.pythonanywhere.com"
+    ).split(",")
+    if origin.strip()
+]
+CORS(app, resources={r"/api/*": {"origins": allowed_origins}})
 api = Api(
     app,
     title="CRM API",
@@ -91,20 +101,17 @@ jwt = JWTManager(app)
 
 
 @jwt.unauthorized_loader
-def custom_unauthorized_response(err):
-    print(f"Unauthorized: {err}")
-    return jsonify(msg="Missing or invalid token"), 401
+def custom_unauthorized_response(_err):
+    return jsonify(msg="Authentication required"), 401
 
 
 @jwt.invalid_token_loader
-def custom_invalid_token_response(err):
-    print(f"Invalid token: {err}")
-    return jsonify(msg="Invalid token"), 422
+def custom_invalid_token_response(_err):
+    return jsonify(msg="Invalid token"), 401
 
 
 @jwt.expired_token_loader
-def custom_expired_token_response(jwt_header, jwt_payload):
-    print("Token expired")
+def custom_expired_token_response(_jwt_header, _jwt_payload):
     return jsonify(msg="Token has expired"), 401
 
 
@@ -225,10 +232,15 @@ with app.app_context():
 
 @app.route('/api/login', methods=['POST'])
 def login():
-    username = request.json.get('username')
-    password = request.json.get('password')
-    user = User.query.filter_by(username=username).first()
-    if user and user.verify_password(password):
+    credentials = request.get_json(silent=True) or {}
+    username = credentials.get('username')
+    password = credentials.get('password')
+
+    if not isinstance(username, str) or not username.strip() or not isinstance(password, str) or not password:
+        return jsonify(message="Invalid credentials"), 401
+
+    user = User.query.filter_by(username=username.strip()).first()
+    if user and user.active and user.verify_password(password):
         access_token = create_access_token(
             identity=str(user.id),
             additional_claims={"username": user.username}
@@ -289,11 +301,26 @@ def enforce_api_authorization():
         return None
 
     if 'guest' in role_names:
-        # Guest має read-only доступ до API: лише безпечні HTTP-методи.
-        # Усі API GET-маршрути залишаються захищеними JWT та перевіркою активного користувача.
-        if request.method in ('GET', 'HEAD'):
+        # Guest can read only public catalogue/stock data. Customer, sales,
+        # purchase, investment, packaging history and financial endpoints stay private.
+        guest_read_paths = {
+            '/api/get_all_products/',
+            '/api/categories/get_all_categories',
+            '/api/suppliers/get_suppliers_list',
+            '/api/statistics/stock',
+        }
+        is_single_product_read = (
+            request.method in ('GET', 'HEAD')
+            and request.path.startswith('/api/product/')
+            and request.path.removeprefix('/api/product/').isdigit()
+        )
+
+        if request.method in ('GET', 'HEAD') and (
+            request.path in guest_read_paths or is_single_product_read
+        ):
             return None
-        return jsonify(message="Read-only access; manager role required for this operation"), 403
+
+        return jsonify(message="This resource requires manager access"), 403
 
     return jsonify(message="User has no permitted role"), 403
 
