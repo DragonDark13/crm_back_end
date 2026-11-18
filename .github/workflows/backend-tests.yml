@@ -12,7 +12,7 @@ permissions:
 
 jobs:
   authorization-tests:
-    name: Authorization integration tests
+    name: Authorization and financial integration tests
     runs-on: ubuntu-latest
 
     steps:
@@ -30,6 +30,6 @@ jobs:
           python -m pip install --upgrade pip
           python -m pip install -r requirements.txt
 
-      - name: Run authorization and product creation tests
+      - name: Run backend integration tests
         run: |
-          python -m pytest -v tests/test_authorization.py tests/test_product_creation.py tests/test_financial_statistics.py
+          python -m pytest -v tests/test_authorization.py tests/test_product_creation.py tests/test_financial_statistics.py tests/test_financial_operations.py
