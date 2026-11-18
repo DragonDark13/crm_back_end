@@ -264,6 +264,8 @@ LOGIN_WINDOW = timedelta(minutes=15)
 LOGIN_LOCKOUT = timedelta(minutes=15)
 LOGIN_USERNAME_MAX_ATTEMPTS = int(os.getenv("LOGIN_USERNAME_MAX_ATTEMPTS", "5"))
 LOGIN_IP_MAX_ATTEMPTS = int(os.getenv("LOGIN_IP_MAX_ATTEMPTS", "30"))
+LOGIN_ACCOUNT_MAX_ATTEMPTS = int(os.getenv("LOGIN_ACCOUNT_MAX_ATTEMPTS", "20"))
+LOGIN_ACCOUNT_IP_KEY = "__all_ips__"
 
 
 def _is_login_locked(attempt, now):
@@ -326,14 +328,24 @@ def login():
         ip_address=client_ip
     ).first()
     ip_attempt = LoginIPAttempt.query.filter_by(ip_address=client_ip).first()
+    account_attempt = LoginAttempt.query.filter_by(
+        username=normalized_username,
+        ip_address=LOGIN_ACCOUNT_IP_KEY
+    ).first()
 
-    if _is_login_locked(username_attempt, now) or _is_login_locked(ip_attempt, now):
+    if (
+        _is_login_locked(username_attempt, now)
+        or _is_login_locked(ip_attempt, now)
+        or _is_login_locked(account_attempt, now)
+    ):
         return jsonify(message="Too many failed login attempts. Try again later."), 429
 
     user = User.query.filter_by(username=normalized_username).first()
     if user and user.active and user.verify_password(password):
         if username_attempt:
             db.session.delete(username_attempt)
+        if account_attempt:
+            db.session.delete(account_attempt)
         db.session.commit()
         role_names = [role.name for role in user.roles]
         access_token = create_access_token(
@@ -353,6 +365,12 @@ def login():
         {"ip_address": client_ip},
         now,
         LOGIN_IP_MAX_ATTEMPTS
+    )
+    _increment_login_counter(
+        LoginAttempt,
+        {"username": normalized_username, "ip_address": LOGIN_ACCOUNT_IP_KEY},
+        now,
+        LOGIN_ACCOUNT_MAX_ATTEMPTS
     )
     db.session.commit()
     return jsonify(message="Invalid credentials"), 401

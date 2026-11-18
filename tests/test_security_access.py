@@ -155,5 +155,24 @@ class SecurityAccessTests(unittest.TestCase):
         self.assertEqual(response.status_code, 429)
 
 
+    def test_login_throttles_account_across_multiple_ip_addresses(self):
+        username = "security-distributed-lockout"
+
+        for attempt_number in range(20):
+            response = self.client.post(
+                "/api/login",
+                json={"username": username, "password": "incorrect"},
+                environ_overrides={"REMOTE_ADDR": f"192.0.2.{attempt_number + 1}"},
+            )
+            self.assertEqual(response.status_code, 401)
+
+        response = self.client.post(
+            "/api/login",
+            json={"username": username, "password": "incorrect"},
+            environ_overrides={"REMOTE_ADDR": "198.51.100.1"},
+        )
+        self.assertEqual(response.status_code, 429)
+
+
 if __name__ == "__main__":
     unittest.main()
