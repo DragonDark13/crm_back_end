@@ -1,6 +1,7 @@
 """Integration tests for atomic product creation and purchase history."""
 
 import importlib
+from datetime import date
 
 import pytest
 
