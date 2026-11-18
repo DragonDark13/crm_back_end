@@ -102,6 +102,14 @@ app.config['JWT_BLOCKLIST_TOKEN_CHECKS'] = ['access']
 
 # Initialize extensions
 db.init_app(app)
+from postgreSQLConnect import remove_session
+
+
+@app.teardown_appcontext
+def shutdown_db_session(_exception=None):
+    remove_session()
+
+
 jwt = JWTManager(app)
 
 
