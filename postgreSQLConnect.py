@@ -41,3 +41,7 @@ def test_connection():
 
 Session = sessionmaker(bind=engine)
 db_session = scoped_session(Session)
+
+def remove_session():
+    """Release the current request-scoped SQLAlchemy session."""
+    db_session.remove()
