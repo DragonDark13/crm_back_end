@@ -85,8 +85,8 @@ def test_purchase_updates_stock_cost_and_purchase_history(
     client, auth_tokens, financial_dependencies
 ):
     product, supplier, _customer = financial_dependencies
-    product_id = product_id
-    supplier_id = supplier_id
+    product_id = product.id
+    supplier_id = supplier.id
 
     response = client.post(
         f"/api/product/{product_id}/purchase",
@@ -121,8 +121,8 @@ def test_sale_updates_stock_revenue_and_profit(
     client, auth_tokens, financial_dependencies
 ):
     product, _supplier, customer = financial_dependencies
-    product_id = product_id
-    customer_id = customer_id
+    product_id = product.id
+    customer_id = customer.id
 
     response = client.post(
         f"/api/product/{product_id}/sale",
@@ -156,8 +156,8 @@ def test_sale_calculates_profit_to_cent_precision(
     client, auth_tokens, financial_dependencies
 ):
     product, _supplier, customer = financial_dependencies
-    product_id = product_id
-    customer_id = customer_id
+    product_id = product.id
+    customer_id = customer.id
     product.purchase_price_per_item = Decimal("10.01")
     db_session.commit()
 
@@ -186,8 +186,8 @@ def test_sale_rejects_quantity_above_available_stock_without_changing_stock(
     client, auth_tokens, financial_dependencies
 ):
     product, _supplier, customer = financial_dependencies
-    product_id = product_id
-    customer_id = customer_id
+    product_id = product.id
+    customer_id = customer.id
 
     response = client.post(
         f"/api/product/{product_id}/sale",
@@ -217,8 +217,8 @@ def test_repeated_purchases_accumulate_purchase_cost_without_increasing_sales_re
     client, auth_tokens, financial_dependencies
 ):
     product, supplier, _customer = financial_dependencies
-    product_id = product_id
-    supplier_id = supplier_id
+    product_id = product.id
+    supplier_id = supplier.id
 
     purchases = [
         {
@@ -270,6 +270,9 @@ def test_sequential_purchases_and_sale_keep_stock_and_financial_totals_consisten
     client, auth_tokens, financial_dependencies
 ):
     product, supplier, customer = financial_dependencies
+    product_id = product.id
+    supplier_id = supplier.id
+    customer_id = customer.id
 
     first_purchase = client.post(
         f"/api/product/{product_id}/purchase",
@@ -278,7 +281,7 @@ def test_sequential_purchases_and_sale_keep_stock_and_financial_totals_consisten
             "quantity": 2,
             "purchase_price_per_item": "12.50",
             "purchase_total_price": "25.00",
-            "supplier_id": supplier.id,
+            "supplier_id": supplier_id,
             "purchase_date": "2026-11-18",
         },
     )
@@ -289,7 +292,7 @@ def test_sequential_purchases_and_sale_keep_stock_and_financial_totals_consisten
             "quantity": 3,
             "purchase_price_per_item": "13.00",
             "purchase_total_price": "39.00",
-            "supplier_id": supplier.id,
+            "supplier_id": supplier_id,
             "purchase_date": "2026-11-19",
         },
     )
@@ -326,8 +329,8 @@ def test_sale_profit_includes_packaging_cost_and_updates_packaging_stock(
     client, auth_tokens, financial_dependencies
 ):
     product, _supplier, customer = financial_dependencies
-    product_id = product_id
-    customer_id = customer_id
+    product_id = product.id
+    customer_id = customer.id
     product.purchase_price_per_item = Decimal("10.01")
     packaging = PackagingMaterial(
         name="Financial test packaging",
