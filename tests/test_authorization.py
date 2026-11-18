@@ -9,6 +9,7 @@ validation, user lookup, and RBAC middleware remain active.
 import importlib
 import os
 import tempfile
+import uuid
 from pathlib import Path
 
 import pytest
@@ -222,3 +223,61 @@ def test_login_is_public_and_options_preflight_does_not_require_jwt(client, monk
 
     options_response = client.options("/api/integration/read")
     assert options_response.status_code != 401
+
+
+def _create_user_token(role_name=None, active=1):
+    with app.app_context():
+        role = None
+        if role_name:
+            role = Role.query.filter_by(name=role_name).first()
+            if role is None:
+                role = Role(name=role_name, description="Integration test role")
+                db.session.add(role)
+                db.session.flush()
+
+        unique_id = uuid.uuid4().hex
+        user = User(
+            username=f"negative-test-{unique_id}",
+            email=f"negative-test-{unique_id}@example.test",
+            fs_uniquifier=str(uuid.uuid4()),
+            active=active,
+        )
+        user.set_password("integration-test-password")
+        if role is not None:
+            user.roles.append(role)
+
+        db.session.add(user)
+        db.session.commit()
+        token = app_module.create_access_token(identity=str(user.id))
+        return token, user.id
+
+
+def test_invalid_jwt_is_rejected(client):
+    response = client.get(
+        "/api/integration/read",
+        headers={"Authorization": "Bearer not-a-valid-jwt"},
+    )
+
+    assert response.status_code == 401
+
+
+def test_inactive_user_is_rejected(client):
+    token, _user_id = _create_user_token(role_name="guest", active=0)
+
+    response = client.get(
+        "/api/integration/read",
+        headers=_auth_headers(token),
+    )
+
+    assert response.status_code == 401
+
+
+def test_user_without_role_is_rejected(client):
+    token, _user_id = _create_user_token()
+
+    response = client.get(
+        "/api/integration/read",
+        headers=_auth_headers(token),
+    )
+
+    assert response.status_code == 403
