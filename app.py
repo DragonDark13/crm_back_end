@@ -476,23 +476,7 @@ def enforce_api_authorization():
         return None
 
     if 'guest' in role_names:
-        # Guest can read only public catalogue/stock data. Customer, sales,
-        # purchase, investment, packaging history and financial endpoints stay private.
-        guest_read_paths = {
-            '/api/get_all_products/',
-            '/api/categories/get_all_categories',
-            '/api/suppliers/get_suppliers_list',
-            '/api/statistics/stock',
-        }
-        is_single_product_read = (
-            request.method in ('GET', 'HEAD')
-            and request.path.startswith('/api/product/')
-            and request.path.removeprefix('/api/product/').isdigit()
-        )
-
-        if request.method in ('GET', 'HEAD') and (
-            request.path in guest_read_paths or is_single_product_read
-        ):
+        if request.method in ('GET', 'HEAD'):
             return None
 
         return jsonify(message="This resource requires manager access"), 403
