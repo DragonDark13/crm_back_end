@@ -15618,3 +15618,42 @@ Accept-Language: en-GB,en;q=0.9,uk-UA;q=0.8,uk;q=0.7,en-US;q=0.6,ru;q=0.5
 2026-11-17 20:30:00,565 - INFO - Request method: OPTIONS, URL: http://127.0.0.1:5000/api/export-products-excel
 2026-11-17 20:30:00,573 - INFO - Request method: POST, URL: http://127.0.0.1:5000/api/export-products-excel
 2026-11-17 20:30:00,573 - INFO - Body: {"product_ids":[106,101,20,82,25,26,27,93,11,39,17,66,89,33,109,57,31,34,12,10,18,98,64,104,102,71,2,72,47,46,83,15,77,73,56,40,13,91,21,5,112,96,107,108,19,65,52,37,85,32,78,100,113,24,55,68,38,8,80,110,99,48,28,94,30,95,62,97,114,67,50,51,76,69,81,79,42,90,59,84,74,6,29,41,16,54,103,115,36,4,53,92,23,44,58,1,111,86,49,22,70,45,60,105,75,43,3,61,87,14,35,63,9,88,7]}
+2026-11-17 21:58:15,777 - INFO - Request method: GET, URL: http://127.0.0.1:5000/api/suppliers/get_suppliers_list
+2026-11-17 21:58:15,795 - INFO - Request method: GET, URL: http://127.0.0.1:5000/api/categories/get_all_categories
+2026-11-17 21:58:15,803 - INFO - Request method: GET, URL: http://127.0.0.1:5000/api/investments/get_all_investments
+2026-11-17 21:58:15,809 - INFO - Request method: GET, URL: http://127.0.0.1:5000/api/packaging/get_all_packaging_materials
+2026-11-17 21:58:15,815 - INFO - Request method: GET, URL: http://127.0.0.1:5000/api/customers/get_all_customers
+2026-11-17 21:58:16,092 - INFO - Request method: GET, URL: http://127.0.0.1:5000/api/categories/get_all_categories
+2026-11-17 21:58:16,121 - INFO - Request method: GET, URL: http://127.0.0.1:5000/api/suppliers/get_suppliers_list
+2026-11-17 21:58:16,369 - INFO - Request method: GET, URL: http://127.0.0.1:5000/api/get_all_products/
+2026-11-17 21:58:16,616 - INFO - Request method: GET, URL: http://127.0.0.1:5000/api/get_all_products/
+2026-11-17 21:58:37,897 - INFO - Request method: GET, URL: http://127.0.0.1:5000/api/suppliers/get_suppliers_list
+2026-11-17 21:58:37,914 - INFO - Request method: GET, URL: http://127.0.0.1:5000/api/categories/get_all_categories
+2026-11-17 21:58:37,917 - INFO - Request method: GET, URL: http://127.0.0.1:5000/api/get_all_products
+2026-11-17 21:58:37,928 - INFO - Request method: GET, URL: http://127.0.0.1:5000/api/investments/get_all_investments
+2026-11-17 21:58:37,952 - INFO - Request method: GET, URL: http://127.0.0.1:5000/api/packaging/get_all_packaging_materials
+2026-11-17 21:58:37,959 - INFO - Request method: GET, URL: http://127.0.0.1:5000/api/customers/get_all_customers
+2026-11-17 21:58:37,962 - INFO - Request method: GET, URL: http://127.0.0.1:5000/api/categories/get_all_categories
+2026-11-17 21:58:37,975 - INFO - Request method: GET, URL: http://127.0.0.1:5000/api/suppliers/get_suppliers_list
+2026-11-17 21:58:38,494 - INFO - Request method: GET, URL: http://127.0.0.1:5000/api/get_all_products/
+2026-11-17 21:58:38,749 - INFO - Request method: GET, URL: http://127.0.0.1:5000/api/get_all_products/
+2026-11-17 22:06:29,486 - INFO - Request method: OPTIONS, URL: http://127.0.0.1:5000/api/login
+2026-11-17 22:06:29,502 - INFO - Request method: POST, URL: http://127.0.0.1:5000/api/login
+2026-11-17 22:06:29,502 - INFO - Body: {"username":"manager","password":"managerpassword"}
+2026-11-17 22:06:30,082 - INFO - Request method: GET, URL: http://127.0.0.1:5000/api/suppliers/get_suppliers_list
+2026-11-17 22:06:30,085 - INFO - Request method: GET, URL: http://127.0.0.1:5000/api/categories/get_all_categories
+2026-11-17 22:06:30,266 - INFO - Request method: GET, URL: http://127.0.0.1:5000/api/get_all_products/
+2026-11-17 22:09:18,733 - INFO - Request method: OPTIONS, URL: http://127.0.0.1:5000/api/product/106/inventory
+2026-11-17 22:09:18,752 - INFO - Request method: POST, URL: http://127.0.0.1:5000/api/product/106/inventory
+2026-11-17 22:09:18,752 - INFO - Body: {"actual_quantity":0,"reason":"Продано"}
+2026-11-17 22:09:18,867 - INFO - Request method: GET, URL: http://127.0.0.1:5000/api/get_all_products/
+2026-11-17 22:09:30,747 - INFO - Request method: GET, URL: http://127.0.0.1:5000/api/suppliers/get_suppliers_list
+2026-11-17 22:09:30,750 - INFO - Request method: GET, URL: http://127.0.0.1:5000/api/categories/get_all_categories
+2026-11-17 22:09:30,755 - INFO - Request method: GET, URL: http://127.0.0.1:5000/api/investments/get_all_investments
+2026-11-17 22:09:30,761 - INFO - Request method: GET, URL: http://127.0.0.1:5000/api/packaging/get_all_packaging_materials
+2026-11-17 22:09:30,766 - INFO - Request method: GET, URL: http://127.0.0.1:5000/api/customers/get_all_customers
+2026-11-17 22:09:30,775 - INFO - Request method: GET, URL: http://127.0.0.1:5000/api/suppliers/get_suppliers_list
+2026-11-17 22:09:30,783 - INFO - Request method: GET, URL: http://127.0.0.1:5000/api/categories/get_all_categories
+2026-11-17 22:09:30,999 - INFO - Request method: GET, URL: http://127.0.0.1:5000/api/get_all_products/
+2026-11-17 22:09:31,082 - INFO - Request method: GET, URL: http://127.0.0.1:5000/api/get_all_products/
+2026-11-17 22:10:40,302 - INFO - Request method: GET, URL: http://127.0.0.1:5000/api/product/106/history
