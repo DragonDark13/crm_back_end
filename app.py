@@ -10,7 +10,6 @@ import uuid
 import logging
 
 from flask_cors import CORS
-from werkzeug.security import generate_password_hash, check_password_hash
 
 from api.categories_api import categories_ns
 from api.customer_api import customers_ns
@@ -59,13 +58,16 @@ api = Api(
 
 
 # Configure database (PostgreSQL)
-app.config['SQLALCHEMY_DATABASE_URI'] = os.getenv('DATABASE_URL',
-                                                  'postgresql://postgres:admin@localhost:5432/shop_crm_post')
+app.config['SQLALCHEMY_DATABASE_URI'] = os.getenv('DATABASE_URL')
+if not app.config['SQLALCHEMY_DATABASE_URI']:
+    raise RuntimeError('DATABASE_URL environment variable is required')
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
 # JWT Configuration
 app.config['SECRET_KEY'] = os.getenv('SECRET_KEY')
 app.config['JWT_SECRET_KEY'] = os.getenv('JWT_SECRET_KEY')
+if not app.config['SECRET_KEY'] or not app.config['JWT_SECRET_KEY']:
+    raise RuntimeError('SECRET_KEY and JWT_SECRET_KEY environment variables are required')
 app.config['JWT_ACCESS_TOKEN_EXPIRES'] = timedelta(hours=1)
 
 # Initialize extensions
@@ -139,7 +141,12 @@ app.register_blueprint(statistics_services_bp,url_prefix='/api/statistics')
 
 @app.route('/update_server', methods=['POST'])
 def webhook():
-    logging.info('POST request received on /update_server')
+    webhook_secret = os.getenv('WEBHOOK_SECRET')
+    if not webhook_secret:
+        return 'Webhook is disabled', 503
+    if request.headers.get('X-Webhook-Secret') != webhook_secret:
+        return 'Unauthorized', 401
+    logging.info('Authorized POST request received on /update_server')
     try:
         subprocess.run(['git', 'fetch', 'origin'], cwd='/home/aleksandrForUpwork/crm_back_end')
         subprocess.run(['git', 'pull', 'origin', 'main'], cwd='/home/aleksandrForUpwork/crm_back_end',
@@ -173,15 +180,13 @@ def create_roles_and_users():
             guest_user.email = "guest@example.com"
             guest_user.active = 1
             guest_user.fs_uniquifier = str(uuid.uuid4())
-            guest_user.set_password(
-                os.getenv("GUEST_PASSWORD", "default_guest_password")
-            )
-
-            guest_user.set_password(
-                os.getenv("GUEST_PASSWORD", "default_guest_password")
-            )
-            guest_user.roles.append(guest_role)
-            db.session.add(guest_user)
+            guest_password = os.getenv("GUEST_PASSWORD")
+            if guest_password:
+                guest_user.set_password(guest_password)
+                guest_user.roles.append(guest_role)
+                db.session.add(guest_user)
+            else:
+                logger.warning("GUEST_PASSWORD is not configured; default guest user was not created.")
 
         if not User.query.filter_by(email="manager@example.com").first():
             manager_user = User(
@@ -190,11 +195,13 @@ def create_roles_and_users():
                 fs_uniquifier=str(uuid.uuid4()),
                 active=1,
             )
-            manager_user.set_password(
-                os.getenv("MANAGER_PASSWORD", "default_manager_password")
-            )
-            manager_user.roles.append(manager_role)
-            db.session.add(manager_user)
+            manager_password = os.getenv("MANAGER_PASSWORD")
+            if manager_password:
+                manager_user.set_password(manager_password)
+                manager_user.roles.append(manager_role)
+                db.session.add(manager_user)
+            else:
+                logger.warning("MANAGER_PASSWORD is not configured; default manager user was not created.")
 
         # --- ONE COMMIT ---
         db.session.commit()
@@ -209,12 +216,6 @@ with app.app_context():
 def login():
     username = request.json.get('username')
     password = request.json.get('password')
-    hash_password = generate_password_hash(password)
-
-    print("Hash:", hash_password)
-    print("Valid:", check_password_hash(hash_password, password))
-    print("password from request:", repr(password))
-    print("Equal to 'managerpassword':", password == 'managerpassword')
     user = User.query.filter_by(username=username).first()
     if user and user.verify_password(password):
         access_token = create_access_token(
@@ -229,18 +230,14 @@ def login():
 @jwt_required()
 def logout():
     current_user = get_jwt_identity()  # Extract the identity from the JWT token
-    print(f"Current user: {current_user}")  # Log the identity to verify it's being extracted
     if not isinstance(current_user, str):
-        raise Exception("Subject must be a string")
-    print(f"User {current_user} logged out")
+        return jsonify(message="Invalid user identity"), 400
     return jsonify(message="Logout successful"), 200
 
 
 @app.before_request
 def log_request_info():
-    logger.info(f"Request method: {request.method}, URL: {request.url}")
-    if request.method in ["POST", "PUT", "PATCH"]:
-        logger.info(f"Body: {request.get_data(as_text=True)}")
+    logger.info("Request method: %s, path: %s", request.method, request.path)
 
 
 
@@ -253,4 +250,4 @@ api.add_namespace(packaging_ns, path="/api/packaging")
 
 
 if __name__ == '__main__':
-    app.run(debug=True)
+    app.run(debug=os.getenv('FLASK_DEBUG', 'false').lower() == 'true')
