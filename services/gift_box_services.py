@@ -228,121 +228,112 @@ def update_gift_set(gift_set_id):
 
 @gift_box_services_bp.route('/remove_gift_set/<int:gift_set_id>', methods=['DELETE'])
 def dismantle_gift_set(gift_set_id):
-    # Знаходимо подарунковий набір
     from postgreSQLConnect import db_session
 
-    gift_set = db_session.query(GiftSet).filter(
-        GiftSet.id == gift_set_id
-    ).with_for_update().populate_existing().one_or_none()
-    if not gift_set:
-        return jsonify({"error": "Gift set not found"}), 404
+    try:
+        # Знаходимо подарунковий набір
+        gift_set = db_session.query(GiftSet).filter(
+            GiftSet.id == gift_set_id
+        ).with_for_update().populate_existing().one_or_none()
+        if not gift_set:
+            return jsonify({"error": "Gift set not found"}), 404
 
-    # Повертаємо кількість товарів та пакувань на склад
-    gift_set_products = db_session.query(GiftSetProduct).filter_by(gift_set_id=gift_set.id).all()
-    for item in gift_set_products:
-        product = db_session.query(Product).get(item.product_id)
-        if product:
-            product.available_quantity += item.quantity
-            product.reserved_quantity -= item.quantity
-        db_session.delete(item)  # Видаляємо запис про товари в наборі
+        # Повертаємо кількість товарів та пакувань на склад.
+        gift_set_products = db_session.query(GiftSetProduct).filter_by(gift_set_id=gift_set.id).all()
+        for item in gift_set_products:
+            product = db_session.query(Product).get(item.product_id)
+            if product:
+                product.available_quantity += item.quantity
+                product.reserved_quantity -= item.quantity
+            db_session.delete(item)
 
-    gift_set_packagings = db_session.query(GiftSetPackaging).filter_by(gift_set_id=gift_set.id).all()
-    for item in gift_set_packagings:
-        packaging = db_session.query(PackagingMaterial).get(item.packaging_id)
-        if packaging:
-            packaging.available_quantity += item.quantity
-            packaging.reserved_quantity -= item.quantity
-        db_session.delete(item)  # Видаляємо запис про пакування в наборі
+        gift_set_packagings = db_session.query(GiftSetPackaging).filter_by(gift_set_id=gift_set.id).all()
+        for item in gift_set_packagings:
+            packaging = db_session.query(PackagingMaterial).get(item.packaging_id)
+            if packaging:
+                packaging.available_quantity += item.quantity
+                packaging.reserved_quantity -= item.quantity
+            db_session.delete(item)
 
+        # Видаляємо історію продажів для цього подарункового набору.
+        gift_set_sales_history = db_session.query(GiftSetSalesHistory).filter_by(gift_set_id=gift_set.id).all()
+        for record in gift_set_sales_history:
+            db_session.delete(record)
+
+        # Видаляємо сам набір.
+        db_session.delete(gift_set)
+
+        # Повернення залишків, видалення історії та набору — одна транзакція.
         db_session.commit()
 
-    # Видаляємо історію продажів для цього подарункового набору
-    gift_set_sales_history = db_session.query(GiftSetSalesHistory).filter_by(gift_set_id=gift_set.id).all()
-    for record in gift_set_sales_history:
-        db_session.delete(record)
-
-        db_session.commit()
-
-    # Видаляємо сам подарунковий набір
-    db_session.delete(gift_set)
-    db_session.commit()
-
-    return jsonify({"message": "Gift set and all related data dismantled successfully"}), 200
-
+        return jsonify({"message": "Gift set and all related data dismantled successfully"}), 200
+    except Exception as e:
+        db_session.rollback()
+        return jsonify({"error": str(e)}), 500
 
 @gift_box_services_bp.route('/sell_gift_set/<int:gift_set_id>', methods=['POST'])
 def sell_gift_set(gift_set_id):
     from postgreSQLConnect import db_session
 
-    gift_set = db_session.query(GiftSet).filter(
-        GiftSet.id == gift_set_id
-    ).with_for_update().populate_existing().one_or_none()
+    try:
+        gift_set = db_session.query(GiftSet).filter(
+            GiftSet.id == gift_set_id
+        ).with_for_update().populate_existing().one_or_none()
 
-    if not gift_set:
-        return jsonify({"error": "Gift set not found"}), 404
+        if not gift_set:
+            return jsonify({"error": "Gift set not found"}), 404
 
-    data = request.json
+        data = request.json
+        customer = db_session.query(Customer).filter(Customer.id == data['customer_id']).one()
 
-    customer = db_session.query(Customer).filter(Customer.id == data['customer_id']).one()
-
-    # Створення запису в історії продажів
-    sales_record = GiftSetSalesHistory(
-        gift_set_id=gift_set.id,
-        sold_price=data['selling_price'],
-        quantity=1,  # Ми продаємо один набір (можна додати можливість продавати більше)
-        customer_id=customer.id,
-    )
-    db_session.add(sales_record)
-
-    # Зміна кількості зарезервованих і проданих товарів та пакувань
-    for gift_set_product in gift_set.gift_set_products:
-        product = gift_set_product.product
-        # Перевіряємо чи об'єкт прив'язаний до поточної сесії
-        if not db_session.is_modified(product, False):
-            # Зливаємо об'єкт із поточною сесією
-            product = db_session.merge(product)
-        # Перевірка чи об'єкт прив'язаний до іншої сесії
-        product.reserved_quantity -= gift_set_product.quantity  # Зменшуємо кількість зарезервовану
-        product.sold_quantity += gift_set_product.quantity  # Збільшуємо кількість продану
-        # product.available_quantity -= gift_set_product.quantity  # Зменшуємо кількість в наявності
-
-        # Додаємо запис про цей товар у історію продажів через зворотний зв'язок
-        sales_product = GiftSetSalesHistoryProduct(
-            gift_set_product=gift_set_product,
-            quantity=gift_set_product.quantity
+        # Створення запису в історії продажів.
+        sales_record = GiftSetSalesHistory(
+            gift_set_id=gift_set.id,
+            sold_price=data['selling_price'],
+            quantity=1,  # Ми продаємо один набір (можна додати можливість продавати більше)
+            customer_id=customer.id,
         )
+        db_session.add(sales_record)
 
-        # Додаємо цей товар до списку sales_history_products
-        sales_record.sales_history_products.append(sales_product)
+        # Зміна кількості зарезервованих і проданих товарів та пакувань.
+        for gift_set_product in gift_set.gift_set_products:
+            product = gift_set_product.product
+            product.reserved_quantity -= gift_set_product.quantity
+            product.sold_quantity += gift_set_product.quantity
 
-    db_session.commit()
+            sales_product = GiftSetSalesHistoryProduct(
+                gift_set_product=gift_set_product,
+                quantity=gift_set_product.quantity
+            )
+            sales_record.sales_history_products.append(sales_product)
 
-    # Записуємо історію продажів пакувань
-    for gift_set_packaging in gift_set.gift_set_packagings:
-        packaging = gift_set_packaging.packaging
-        packaging.reserved_quantity -= gift_set_packaging.quantity  # Зменшуємо кількість зарезервовану
-        # Перевіряємо, чи є значення в полях і, якщо вони None, ініціалізуємо їх.
-        if packaging.sold_quantity is None:
-            packaging.sold_quantity = 0  # Якщо sold_quantity дорівнює None, ініціалізуємо його як 0
-        packaging.sold_quantity += gift_set_packaging.quantity  # Збільшуємо кількість продану
-        packaging.available_quantity -= gift_set_packaging.quantity  # Зменшуємо кількість в наявності
+        # Записуємо історію продажів пакувань.
+        for gift_set_packaging in gift_set.gift_set_packagings:
+            packaging = gift_set_packaging.packaging
+            packaging.reserved_quantity -= gift_set_packaging.quantity
+            if packaging.sold_quantity is None:
+                packaging.sold_quantity = 0
+            packaging.sold_quantity += gift_set_packaging.quantity
+            packaging.available_quantity -= gift_set_packaging.quantity
 
-        # Додаємо запис про це пакування в історію продажів
-        sales_packaging = GiftSetSalesHistoryPackaging(
-            gift_set_packaging=gift_set_packaging,
-            quantity=gift_set_packaging.quantity
-        )
-        sales_record.sales_history_packagings.append(sales_packaging)
+            sales_packaging = GiftSetSalesHistoryPackaging(
+                gift_set_packaging=gift_set_packaging,
+                quantity=gift_set_packaging.quantity
+            )
+            sales_record.sales_history_packagings.append(sales_packaging)
 
-    # Записуємо зміни в базу даних
-    gift_set.is_sold = True
-    db_session.commit()
+        gift_set.is_sold = True
 
-    return jsonify({
-        "message": "Gift set sold successfully",
-        "sales_record": sales_record.to_dict()
-    }), 200
+        # Історія продажу, залишки товарів і пакувань фіксуються атомарно.
+        db_session.commit()
 
+        return jsonify({
+            "message": "Gift set sold successfully",
+            "sales_record": sales_record.to_dict()
+        }), 200
+    except Exception as e:
+        db_session.rollback()
+        return jsonify({"error": str(e)}), 500
 
 @gift_box_services_bp.route('/get_all_gift_sets', methods=['GET'])
 def get_gift_sets():
