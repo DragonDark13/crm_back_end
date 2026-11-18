@@ -30,6 +30,6 @@ jobs:
           python -m pip install --upgrade pip
           python -m pip install -r requirements.txt
 
-      - name: Run authorization tests
+      - name: Run authorization and product creation tests
         run: |
-          python -m pytest -v tests/test_authorization.py
+          python -m pytest -v tests/test_authorization.py tests/test_product_creation.py
