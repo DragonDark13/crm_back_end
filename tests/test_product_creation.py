@@ -47,6 +47,7 @@ def clean_database():
     db_session.remove()
     db_session.query(StockHistory).delete()
     db_session.query(PurchaseHistory).delete()
+    db_session.execute(product_categories_table.delete())
     db_session.query(Product).delete()
     db_session.query(Category).delete()
     db_session.query(Supplier).delete()
