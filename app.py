@@ -33,7 +33,7 @@ from services.supplier_routes import supplier_bp
 from flask_restx import Api, Resource
 from api.products_api import products_ns
 
-# Load environment variables
+# Load environment variables from .env
 load_dotenv()
 
 # Logger setup
@@ -59,16 +59,30 @@ api = Api(
 
 
 # Configure database (PostgreSQL)
-app.config['SQLALCHEMY_DATABASE_URI'] = os.getenv('DATABASE_URL')
-if not app.config['SQLALCHEMY_DATABASE_URI']:
-    raise RuntimeError('DATABASE_URL environment variable is required')
+database_url = os.getenv('DATABASE_URL')
+if not database_url:
+    db_host = os.getenv('DB_HOST', 'localhost')
+    db_port = os.getenv('DB_PORT', '5432')
+    db_name = os.getenv('DB_NAME')
+    db_user = os.getenv('DB_USER')
+    db_password = os.getenv('DB_PASSWORD')
+    if not all([db_name, db_user, db_password]):
+        raise RuntimeError('DATABASE_URL or DB_NAME, DB_USER and DB_PASSWORD environment variables are required')
+    from urllib.parse import quote_plus
+    database_url = f"postgresql://{quote_plus(db_user)}:{quote_plus(db_password)}@{db_host}:{db_port}/{db_name}"
+
+app.config['SQLALCHEMY_DATABASE_URI'] = database_url
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
-# JWT Configuration
+# Flask security configuration
 app.config['SECRET_KEY'] = os.getenv('SECRET_KEY')
-app.config['JWT_SECRET_KEY'] = os.getenv('JWT_SECRET_KEY')
-if not app.config['SECRET_KEY'] or not app.config['JWT_SECRET_KEY']:
-    raise RuntimeError('SECRET_KEY and JWT_SECRET_KEY environment variables are required')
+app.config['SECURITY_PASSWORD_SALT'] = os.getenv('SECURITY_PASSWORD_SALT')
+
+if not app.config['SECRET_KEY']:
+    raise RuntimeError('SECRET_KEY environment variable is required')
+
+# JWT uses SECRET_KEY unless a separate JWT_SECRET_KEY is explicitly provided
+app.config['JWT_SECRET_KEY'] = os.getenv('JWT_SECRET_KEY') or app.config['SECRET_KEY']
 app.config['JWT_ACCESS_TOKEN_EXPIRES'] = timedelta(hours=1)
 
 # Initialize extensions
@@ -110,9 +124,6 @@ def protected():
     return jsonify(logged_in_as=current_user), 200
 
 
-
-
-
 @app.route('/api/product/<int:product_id>', methods=['GET'])
 def get_product(product_id):
     product_data, status_code = ProductService.get_product_by_id(product_id)
@@ -138,7 +149,7 @@ app.register_blueprint(purchase_history_bp, url_prefix='/api')
 app.register_blueprint(export_to_excel_bp, url_prefix='/api')
 app.register_blueprint(sales_history_services_bp, url_prefix='/api')
 app.register_blueprint(gift_box_services_bp, url_prefix='/api')
-app.register_blueprint(statistics_services_bp,url_prefix='/api/statistics')
+app.register_blueprint(statistics_services_bp, url_prefix='/api/statistics')
 
 @app.route('/update_server', methods=['POST'])
 def webhook():
@@ -172,7 +183,7 @@ def create_roles_and_users():
             manager_role = Role(name="manager", description="Full access")
             db.session.add(manager_role)
 
-        db.session.flush()  # ролі вже в сесії, але без commit
+        db.session.flush()
 
         # --- USERS ---
         if not User.query.filter_by(email="guest@example.com").first():
@@ -204,7 +215,6 @@ def create_roles_and_users():
             else:
                 logger.warning("MANAGER_PASSWORD is not configured; default manager user was not created.")
 
-        # --- ONE COMMIT ---
         db.session.commit()
 
 
@@ -230,7 +240,7 @@ def login():
 @app.route('/api/logout', methods=['POST'])
 @jwt_required()
 def logout():
-    current_user = get_jwt_identity()  # Extract the identity from the JWT token
+    current_user = get_jwt_identity()
     if not isinstance(current_user, str):
         return jsonify(message="Invalid user identity"), 400
     return jsonify(message="Logout successful"), 200
@@ -239,7 +249,6 @@ def logout():
 @app.before_request
 def log_request_info():
     logger.info("Request method: %s, path: %s", request.method, request.path)
-
 
 
 api.add_namespace(products_ns, path="/api/get_all_products")
@@ -251,4 +260,4 @@ api.add_namespace(packaging_ns, path="/api/packaging")
 
 
 if __name__ == '__main__':
-    app.run(debug=os.getenv('FLASK_DEBUG', 'false').lower() == 'true')
+    app.run(debug=os.getenv('FLASK_DEBUG', 'false').lower() == 'true' or os.getenv('FLASK_ENV') == 'development')
