@@ -258,6 +258,12 @@ def dismantle_gift_set(gift_set_id):
         # Видаляємо історію продажів для цього подарункового набору.
         gift_set_sales_history = db_session.query(GiftSetSalesHistory).filter_by(gift_set_id=gift_set.id).all()
         for record in gift_set_sales_history:
+            db_session.query(GiftSetSalesHistoryProduct).filter_by(
+                sales_history_id=record.id
+            ).delete(synchronize_session=False)
+            db_session.query(GiftSetSalesHistoryPackaging).filter_by(
+                sales_history_id=record.id
+            ).delete(synchronize_session=False)
             db_session.delete(record)
 
         # Видаляємо сам набір.
