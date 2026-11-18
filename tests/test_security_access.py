@@ -6,7 +6,8 @@ The test suite never falls back to the application's normal DATABASE_URL.
 """
 import os
 import unittest
-from datetime import datetime, timezone
+from concurrent.futures import ThreadPoolExecutor
+from datetime import datetime, timedelta, timezone
 
 TEST_DATABASE_URL = os.getenv("TEST_DATABASE_URL")
 
@@ -14,7 +15,7 @@ if TEST_DATABASE_URL:
     os.environ["DATABASE_URL"] = TEST_DATABASE_URL
     os.environ.setdefault("SECRET_KEY", "test-only-secret-key")
     os.environ.setdefault("JWT_SECRET_KEY", "test-only-jwt-secret")
-    from app import app
+    from app import app, _increment_login_counter
     from models import db, User, Role, LoginAttempt, LoginIPAttempt
 
 
@@ -172,6 +173,92 @@ class SecurityAccessTests(unittest.TestCase):
             environ_overrides={"REMOTE_ADDR": "198.51.100.1"},
         )
         self.assertEqual(response.status_code, 429)
+
+
+    def test_login_counter_resets_after_window_expires(self):
+        username = "security-expired-lockout"
+        for _ in range(5):
+            response = self.client.post(
+                "/api/login",
+                json={"username": username, "password": "incorrect"},
+            )
+            self.assertEqual(response.status_code, 401)
+
+        with app.app_context():
+            attempt = LoginAttempt.query.filter_by(
+                username=username,
+                ip_address="127.0.0.1",
+            ).one()
+            attempt.window_started_at = datetime.now(timezone.utc) - timedelta(minutes=16)
+            attempt.locked_until = datetime.now(timezone.utc) - timedelta(minutes=1)
+            db.session.commit()
+
+        response = self.client.post(
+            "/api/login",
+            json={"username": username, "password": "incorrect"},
+        )
+        self.assertEqual(response.status_code, 401)
+
+        with app.app_context():
+            attempt = LoginAttempt.query.filter_by(
+                username=username,
+                ip_address="127.0.0.1",
+            ).one()
+            self.assertEqual(attempt.attempts, 1)
+            self.assertIsNone(attempt.locked_until)
+
+    def test_successful_login_resets_account_counter(self):
+        username = "security_test_guest"
+        for attempt_number in range(19):
+            response = self.client.post(
+                "/api/login",
+                json={"username": username, "password": "incorrect"},
+                environ_overrides={"REMOTE_ADDR": f"192.0.2.{attempt_number + 1}"},
+            )
+            self.assertEqual(response.status_code, 401)
+
+        response = self.client.post(
+            "/api/login",
+            json={"username": username, "password": "test-password"},
+            environ_overrides={"REMOTE_ADDR": "198.51.100.10"},
+        )
+        self.assertEqual(response.status_code, 200)
+
+        with app.app_context():
+            account_attempt = LoginAttempt.query.filter_by(
+                username=username,
+                ip_address="__all_ips__",
+            ).first()
+            self.assertIsNone(account_attempt)
+
+        response = self.client.post(
+            "/api/login",
+            json={"username": username, "password": "incorrect"},
+            environ_overrides={"REMOTE_ADDR": "198.51.100.11"},
+        )
+        self.assertEqual(response.status_code, 401)
+
+    def test_login_counter_updates_are_atomic_under_concurrency(self):
+        ip_address = "203.0.113.25"
+        now = datetime.now(timezone.utc)
+
+        def increment_counter(_):
+            with app.app_context():
+                _increment_login_counter(
+                    LoginIPAttempt,
+                    {"ip_address": ip_address},
+                    now,
+                    100,
+                )
+                db.session.commit()
+
+        with ThreadPoolExecutor(max_workers=10) as executor:
+            list(executor.map(increment_counter, range(25)))
+
+        with app.app_context():
+            attempt = LoginIPAttempt.query.filter_by(ip_address=ip_address).one()
+            self.assertEqual(attempt.attempts, 25)
+
 
 
 if __name__ == "__main__":
