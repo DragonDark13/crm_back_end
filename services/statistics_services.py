@@ -84,9 +84,9 @@ def get_stock_levels():
 
 @statistics_services_bp.route("/profit-expense", methods=["GET"])
 def get_profit_expense_by_month():
-    # Продажі по місяцях
     from postgreSQLConnect import db_session
 
+    # Продажі по місяцях
     sales = (
         db_session.query(
             extract('year', SaleHistory.sale_date).label("year"),
@@ -95,7 +95,6 @@ def get_profit_expense_by_month():
             func.sum(SaleHistory.profit).label("total_profit")
         )
         .group_by(extract('year', SaleHistory.sale_date), extract('month', SaleHistory.sale_date))
-        .order_by(extract('year', SaleHistory.sale_date), extract('month', SaleHistory.sale_date))
         .all()
     )
 
@@ -110,20 +109,34 @@ def get_profit_expense_by_month():
         .all()
     )
 
-    # Об’єднуємо дані по місяцях
-    stats = []
-    for s in sales:
-        month_purchase = next((p for p in purchases if int(p.year) == int(s.year) and int(p.month) == int(s.month)),
-                              None)
-        stats.append({
-            "year": int(s.year),
-            "month": int(s.month),
-            "sales": float(s.total_sales),
-            "profit": float(s.total_profit),
-            "expenses": float(month_purchase.total_spent) if month_purchase else 0
-        })
-    return stats
+    # Об'єднуємо за ключем (рік, місяць), включно з місяцями лише із закупівлями.
+    stats_by_month = {}
 
+    for sale in sales:
+        month_key = (int(sale.year), int(sale.month))
+        stats_by_month[month_key] = {
+            "year": month_key[0],
+            "month": month_key[1],
+            "sales": float(sale.total_sales or 0),
+            "profit": float(sale.total_profit or 0),
+            "expenses": 0
+        }
+
+    for purchase in purchases:
+        month_key = (int(purchase.year), int(purchase.month))
+        month_stats = stats_by_month.setdefault(month_key, {
+            "year": month_key[0],
+            "month": month_key[1],
+            "sales": 0,
+            "profit": 0,
+            "expenses": 0
+        })
+        month_stats["expenses"] = float(purchase.total_spent or 0)
+
+    return [
+        stats_by_month[month_key]
+        for month_key in sorted(stats_by_month)
+    ]
 
 @statistics_services_bp.route("/customer-activity", methods=["GET"])
 def get_customer_activity():
