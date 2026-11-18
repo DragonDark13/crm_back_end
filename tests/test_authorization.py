@@ -207,13 +207,18 @@ def test_unauthenticated_user_cannot_read_or_write_protected_api(
         assert client.get(path).status_code == 401, path
 
 
-def test_login_is_public_and_options_preflight_does_not_require_jwt(client):
-    login_response = client.post(
-        "/api/login",
-        json={"username": "missing-test-user", "password": "invalid"},
+def test_login_is_public_and_options_preflight_does_not_require_jwt(client, monkeypatch):
+    # The login handler uses PostgreSQL-specific upsert statements for
+    # brute-force counters. Stub its body here and test the public-route
+    # exemption in the real authorization middleware.
+    monkeypatch.setitem(
+        app.view_functions,
+        "login",
+        lambda: (jsonify({"public_login_route": True}), 200),
     )
-    assert login_response.status_code == 401
-    assert login_response.get_json().get("message") == "Invalid credentials"
+    login_response = client.post("/api/login")
+    assert login_response.status_code == 200
+    assert login_response.get_json().get("public_login_route") is True
 
     options_response = client.options("/api/integration/read")
     assert options_response.status_code != 401
