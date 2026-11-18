@@ -111,5 +111,8 @@ def upgrade():
 
 def downgrade():
     # This revision may adopt tables that existed before Alembic was introduced.
-    # Dropping them would destroy login throttling and token revocation state.
-    pass
+    # A generic downgrade cannot safely determine which objects predated it.
+    raise RuntimeError(
+        "This security schema migration is intentionally irreversible; "
+        "dropping these tables could destroy login throttling and token revocation state."
+    )
