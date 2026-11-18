@@ -30,7 +30,7 @@ def get_sales_history():
     # Завантажуємо пов'язані дані пакетно, щоб не виконувати запити для кожного продажу.
     query = db_session.query(SaleHistory).join(Product).join(Customer).options(
         joinedload(SaleHistory.product).joinedload(Product.supplier),
-        selectinload(SaleHistory.product).selectinload(Product.categories),
+        joinedload(SaleHistory.product).selectinload(Product.categories),
         joinedload(SaleHistory.customer),
         selectinload(SaleHistory.packaging_sale_history)
         .joinedload(PackagingSaleHistory.packaging_material)
