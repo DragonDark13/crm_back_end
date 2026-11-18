@@ -605,11 +605,10 @@ def get_product_history(product_id):
 
 @product_history_bp.route('/product/<int:product_id>/purchase', methods=['POST'])
 def purchase_product(product_id):
-    """Handle product purchase and record in history."""
+    """Handle product purchase and record it atomically with stock and cost updates."""
     data = request.get_json()
     from postgreSQLConnect import db_session
 
-    # Validate data
     errors = validate_purchase_data(data)
     if errors:
         return jsonify({'errors': errors}), 400
@@ -623,25 +622,25 @@ def purchase_product(product_id):
         purchase_price_per_item = Decimal(data['purchase_price_per_item'])
         purchase_total_price = Decimal(data['purchase_total_price'])
         supplier_id = data.get('supplier_id')
+        supplier = None
 
-        # Convert purchase_date string to Python date object
         purchase_date_str = data.get('purchase_date', datetime.now().strftime('%Y-%m-%d'))
         purchase_date = datetime.strptime(purchase_date_str, '%Y-%m-%d').date()
 
         if supplier_id:
-            supplier = db_session.query(Supplier).filter(Supplier.id == supplier_id).one_or_none()
+            supplier = db_session.query(Supplier).filter(
+                Supplier.id == supplier_id
+            ).one_or_none()
             if supplier is None:
+                db_session.rollback()
                 return jsonify({'error': 'Supplier not found'}), 404
             product.supplier = supplier
 
         product.total_quantity += quantity
         product.available_quantity += quantity
         product.purchase_total_price += purchase_total_price
-        product.purchase_price_per_item = purchase_price_per_item  # Update to new price per item
+        product.purchase_price_per_item = purchase_price_per_item
 
-        db_session.commit()
-
-        # Create PurchaseHistory record
         purchase_history = PurchaseHistory(
             product_id=product.id,
             purchase_price_per_item=purchase_price_per_item,
@@ -651,22 +650,30 @@ def purchase_product(product_id):
             quantity_purchase=quantity
         )
         db_session.add(purchase_history)
-        db_session.commit()
 
+        # Stock, financial totals and history are persisted in one transaction.
+        db_session.commit()
         return jsonify({'message': 'Purchase recorded successfully'}), 201
     except NoResultFound:
+        db_session.rollback()
         return jsonify({'error': 'Product not found'}), 404
     except KeyError as e:
+        db_session.rollback()
         return jsonify({'error': f'Missing field: {str(e)}'}), 400
+    except SQLAlchemyError:
+        db_session.rollback()
+        return jsonify({'error': 'Database error during purchase'}), 500
+    except Exception:
+        db_session.rollback()
+        return jsonify({'error': 'Unexpected error during purchase'}), 500
 
 
 @product_history_bp.route('/product/<int:product_id>/sale', methods=['POST'])
 def record_sale(product_id):
-    """Record a sale for a product and update sale history."""
+    """Record a sale and all related stock/history changes atomically."""
     data = request.get_json()
     from postgreSQLConnect import db_session
 
-    # Validate data
     errors = validate_sale_data(data)
     if errors:
         return jsonify({'errors': errors}), 400
@@ -679,47 +686,51 @@ def record_sale(product_id):
         quantity_sold = data['quantity']
         selling_price_per_item = Decimal(data['selling_price_per_item'])
         selling_total_price = Decimal(data['selling_total_price'])
+        total_packaging_cost = Decimal(data.get('total_packaging_cost', 0))
+        packaging_material_id = data.get('packaging_id') or None
+        packaging_quantity = data.get('packaging_quantity', 0)
 
-        # Default values for optional fields (packaging)
-        total_packaging_cost = Decimal(data.get('total_packaging_cost', 0))  # Optional packaging material
-        packaging_material_id = data.get('packaging_id', None)  # Optional packaging material
-        packaging_quantity = data.get('packaging_quantity', 0)  # Default to 0 if not provided
-
+        if quantity_sold <= 0:
+            db_session.rollback()
+            return jsonify({'error': 'Quantity sold must be greater than zero'}), 400
+        if selling_price_per_item <= 0:
+            db_session.rollback()
+            return jsonify({'error': 'Selling price must be greater than zero'}), 400
         if product.available_quantity < quantity_sold:
+            db_session.rollback()
             return jsonify({'error': 'Not enough quantity in stock'}), 400
+
+        customer = db_session.query(Customer).filter(
+            Customer.id == data['customer']
+        ).one_or_none()
+        if customer is None:
+            db_session.rollback()
+            return jsonify({'error': 'Customer not found'}), 404
+
+        sale_date_str = data.get('sale_date')
+        sale_date = (
+            datetime.strptime(sale_date_str, '%Y-%m-%d')
+            if sale_date_str else datetime.now()
+        )
+
+        packaging_material = None
+        if packaging_material_id:
+            packaging_material = db_session.query(PackagingMaterial).filter(
+                PackagingMaterial.id == packaging_material_id
+            ).with_for_update().one_or_none()
+            if packaging_material is None:
+                db_session.rollback()
+                return jsonify({'error': 'Packaging material not found'}), 404
+            if packaging_material.available_quantity < packaging_quantity:
+                db_session.rollback()
+                return jsonify({'error': 'Not enough packaging material available'}), 400
 
         product.available_quantity -= quantity_sold
         product.selling_quantity += quantity_sold
         product.sold_quantity += quantity_sold
         product.selling_price_per_item = selling_price_per_item
         product.selling_total_price += selling_total_price
-        db_session.commit()
 
-        customer = db_session.query(Customer).filter(Customer.id == data['customer']).one()
-
-        # Convert sale_date string to a datetime object if it's provided
-        sale_date_str = data.get('sale_date', None)
-        if sale_date_str:
-            sale_date = datetime.strptime(sale_date_str, '%Y-%m-%d')
-        else:
-            sale_date = datetime.now()
-
-        if not product.id or not customer.id:
-            return jsonify({'error': 'Missing product or customer information'}), 400
-        if quantity_sold <= 0:
-            return jsonify({'error': 'Quantity sold must be greater than zero'}), 400
-        if selling_price_per_item <= 0:
-            return jsonify({'error': 'Selling price must be greater than zero'}), 400
-
-        # Конвертуємо порожній рядок у None
-        if packaging_material_id == "":
-            packaging_material_id = None
-
-        print(f"packaging_material_id: {packaging_material_id}")
-        if packaging_material_id is None:
-            print("No packaging material provided, setting as None.")
-
-        # Create SaleHistory entry
         sale_history = SaleHistory(
             product_id=product.id,
             customer_id=customer.id,
@@ -728,52 +739,44 @@ def record_sale(product_id):
             selling_total_price=selling_total_price,
             sale_date=sale_date,
             packaging_material_id=packaging_material_id,
-            profit=((
-                            product.selling_price_per_item - product.purchase_price_per_item) * quantity_sold) - total_packaging_cost,
+            profit=(
+                (selling_price_per_item - product.purchase_price_per_item) * quantity_sold
+            ) - total_packaging_cost,
             packaging_quantity=packaging_quantity,
             total_packaging_cost=total_packaging_cost
         )
-
-        print(f"Sale history object: {sale_history}")
         db_session.add(sale_history)
+        db_session.flush()
+
+        if packaging_material is not None:
+            packaging_material.available_quantity -= packaging_quantity
+            packaging_material.available_stock_cost -= total_packaging_cost
+            if packaging_material.available_quantity == 0:
+                packaging_material.status = 'used'
+
+            db_session.add(PackagingSaleHistory(
+                sale_id=sale_history.id,
+                packaging_material_id=packaging_material_id,
+                packaging_quantity=packaging_quantity,
+                total_packaging_cost=total_packaging_cost,
+                sale_date=sale_date
+            ))
+
+        # Product, packaging and both history records share one commit boundary.
         db_session.commit()
-
-        # Record packaging material sale if packaging is provided
-        if packaging_material_id:
-            packaging_material = db_session.query(PackagingMaterial).filter(
-                PackagingMaterial.id == packaging_material_id).one()
-            if packaging_material:
-
-                # Check if the packaging material exists and has sufficient quantity
-                if packaging_material.available_quantity < packaging_quantity:
-                    return jsonify({'error': 'Not enough packaging material available'}), 400
-
-                packaging_material.available_quantity -= packaging_quantity  # Deduct the packaging material
-                packaging_material.available_stock_cost -= total_packaging_cost
-
-                # Mark the packaging as 'used' if no stock left
-                if packaging_material.available_quantity == 0:
-                    packaging_material.status = 'used'
-
-                db_session.add(packaging_material)
-
-                # Add record to PackagingSaleHistory
-                packaging_sale_history = PackagingSaleHistory(
-                    sale_id=sale_history.id,
-                    packaging_material_id=packaging_material_id,
-                    packaging_quantity=packaging_quantity,
-                    total_packaging_cost=total_packaging_cost,
-                    sale_date=sale_date
-                )
-                db_session.add(packaging_sale_history)
-
-                db_session.commit()
-
         return jsonify({'message': 'Sale recorded successfully'}), 201
     except NoResultFound:
+        db_session.rollback()
         return jsonify({'error': 'Product or Customer not found'}), 404
     except KeyError as e:
+        db_session.rollback()
         return jsonify({'error': f'Missing field: {str(e)}'}), 400
+    except SQLAlchemyError:
+        db_session.rollback()
+        return jsonify({'error': 'Database error during sale'}), 500
+    except Exception:
+        db_session.rollback()
+        return jsonify({'error': 'Unexpected error during sale'}), 500
 
 
 @product_history_bp.route('/delete-history/<int:product_id>/<string:history_type>/<int:history_id>',

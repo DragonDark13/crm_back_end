@@ -5,6 +5,8 @@ from datetime import datetime
 from decimal import Decimal
 
 import pytest
+from sqlalchemy import event
+from sqlalchemy.exc import SQLAlchemyError
 
 # Initialize the isolated SQLite database and Flask app used by backend tests.
 auth_module = importlib.import_module("test_authorization")
@@ -373,3 +375,137 @@ def test_sale_profit_includes_packaging_cost_and_updates_packaging_stock(
     assert updated_packaging.available_stock_cost == Decimal("12.00")
     assert packaging_history.packaging_quantity == 2
     assert packaging_history.total_packaging_cost == Decimal("3.00")
+
+
+
+def test_purchase_rolls_back_stock_and_money_when_history_write_fails(
+    client, auth_tokens, financial_dependencies
+):
+    product, supplier, _customer = financial_dependencies
+    product_id = product.id
+    session = db_session()
+
+    def fail_purchase_history_write(session, flush_context, instances):
+        if any(isinstance(item, PurchaseHistory) for item in session.new):
+            raise SQLAlchemyError("simulated purchase history write failure")
+
+    event.listen(session, "before_flush", fail_purchase_history_write)
+    try:
+        response = client.post(
+            f"/api/product/{product_id}/purchase",
+            headers=_manager_headers(auth_tokens),
+            json={
+                "quantity": 5,
+                "purchase_price_per_item": "12.50",
+                "purchase_total_price": "62.50",
+                "supplier_id": supplier.id,
+                "purchase_date": "2026-11-18",
+            },
+        )
+    finally:
+        event.remove(session, "before_flush", fail_purchase_history_write)
+
+    assert response.status_code == 500
+
+    db_session.expire_all()
+    updated_product = db_session.query(Product).filter_by(id=product_id).one()
+    assert updated_product.total_quantity == 10
+    assert updated_product.available_quantity == 10
+    assert updated_product.purchase_total_price == Decimal("100.00")
+    assert updated_product.purchase_price_per_item == Decimal("10.00")
+    assert db_session.query(PurchaseHistory).filter_by(product_id=product_id).count() == 0
+
+
+def test_sale_rolls_back_stock_and_revenue_when_history_write_fails(
+    client, auth_tokens, financial_dependencies
+):
+    product, _supplier, customer = financial_dependencies
+    product_id = product.id
+    session = db_session()
+
+    def fail_sale_history_write(session, flush_context, instances):
+        if any(isinstance(item, SaleHistory) for item in session.new):
+            raise SQLAlchemyError("simulated sale history write failure")
+
+    event.listen(session, "before_flush", fail_sale_history_write)
+    try:
+        response = client.post(
+            f"/api/product/{product_id}/sale",
+            headers=_manager_headers(auth_tokens),
+            json={
+                "customer": customer.id,
+                "quantity": 3,
+                "selling_price_per_item": "20.00",
+                "selling_total_price": "60.00",
+                "sale_date": "2026-11-18",
+            },
+        )
+    finally:
+        event.remove(session, "before_flush", fail_sale_history_write)
+
+    assert response.status_code == 500
+
+    db_session.expire_all()
+    updated_product = db_session.query(Product).filter_by(id=product_id).one()
+    assert updated_product.available_quantity == 10
+    assert updated_product.sold_quantity == 0
+    assert updated_product.selling_quantity == 0
+    assert updated_product.selling_total_price == Decimal("0.00")
+    assert db_session.query(SaleHistory).filter_by(product_id=product_id).count() == 0
+
+
+def test_sale_rolls_back_product_and_packaging_when_packaging_history_write_fails(
+    client, auth_tokens, financial_dependencies
+):
+    product, _supplier, customer = financial_dependencies
+    product_id = product.id
+    packaging = PackagingMaterial(
+        name="Atomicity test packaging",
+        total_quantity=10,
+        available_quantity=10,
+        purchase_price_per_unit=Decimal("1.50"),
+        total_purchase_cost=Decimal("15.00"),
+        available_stock_cost=Decimal("15.00"),
+    )
+    db_session.add(packaging)
+    db_session.commit()
+    packaging_id = packaging.id
+    session = db_session()
+
+    def fail_packaging_history_write(session, flush_context, instances):
+        if any(isinstance(item, PackagingSaleHistory) for item in session.new):
+            raise SQLAlchemyError("simulated packaging history write failure")
+
+    event.listen(session, "before_flush", fail_packaging_history_write)
+    try:
+        response = client.post(
+            f"/api/product/{product_id}/sale",
+            headers=_manager_headers(auth_tokens),
+            json={
+                "customer": customer.id,
+                "quantity": 3,
+                "selling_price_per_item": "20.00",
+                "selling_total_price": "60.00",
+                "packaging_id": packaging_id,
+                "packaging_quantity": 2,
+                "total_packaging_cost": "3.00",
+                "sale_date": "2026-11-18",
+            },
+        )
+    finally:
+        event.remove(session, "before_flush", fail_packaging_history_write)
+
+    assert response.status_code == 500
+
+    db_session.expire_all()
+    updated_product = db_session.query(Product).filter_by(id=product_id).one()
+    updated_packaging = db_session.query(PackagingMaterial).filter_by(id=packaging_id).one()
+
+    assert updated_product.available_quantity == 10
+    assert updated_product.sold_quantity == 0
+    assert updated_product.selling_quantity == 0
+    assert updated_product.selling_total_price == Decimal("0.00")
+    assert updated_packaging.available_quantity == 10
+    assert updated_packaging.available_stock_cost == Decimal("15.00")
+    assert db_session.query(SaleHistory).filter_by(product_id=product_id).count() == 0
+    assert db_session.query(PackagingSaleHistory).count() == 0
