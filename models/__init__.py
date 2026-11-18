@@ -1,5 +1,5 @@
 from .base import db, Base
-from .security import TokenBlocklist, LoginAttempt
+from .security import TokenBlocklist, LoginAttempt, LoginIPAttempt
 from .roleUser import User, Role
 from .product import Product
 from .supplier import Supplier
