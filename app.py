@@ -289,18 +289,11 @@ def enforce_api_authorization():
         return None
 
     if 'guest' in role_names:
-        guest_read_paths = (
-            '/api/protected',
-            '/api/get_all_products',
-            '/api/product/',
-            '/api/categories/get_all_categories',
-            '/api/suppliers/get_suppliers_list',
-            '/api/packaging/get_all_packaging_materials',
-            '/api/statistics/stock',
-        )
-        if request.method in ('GET', 'HEAD', 'OPTIONS') and request.path.startswith(guest_read_paths):
+        # Guest має read-only доступ до API: лише безпечні HTTP-методи.
+        # Усі API GET-маршрути залишаються захищеними JWT та перевіркою активного користувача.
+        if request.method in ('GET', 'HEAD'):
             return None
-        return jsonify(message="Manager role required"), 403
+        return jsonify(message="Read-only access; manager role required for this operation"), 403
 
     return jsonify(message="User has no permitted role"), 403
 
