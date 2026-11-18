@@ -15,7 +15,7 @@ if TEST_DATABASE_URL:
     os.environ.setdefault("SECRET_KEY", "test-only-secret-key")
     os.environ.setdefault("JWT_SECRET_KEY", "test-only-jwt-secret")
     from app import app
-    from models import db, User, Role
+    from models import db, User, Role, LoginAttempt, LoginIPAttempt
 
 
 @unittest.skipUnless(TEST_DATABASE_URL, "Set TEST_DATABASE_URL to a dedicated test database")
@@ -63,6 +63,9 @@ class SecurityAccessTests(unittest.TestCase):
     def setUp(self):
         self.client = app.test_client()
         with app.app_context():
+            LoginAttempt.query.delete()
+            LoginIPAttempt.query.delete()
+            db.session.commit()
             from flask_jwt_extended import create_access_token
             self.guest_token = create_access_token(
                 identity=str(self.guest.id),
@@ -131,6 +134,23 @@ class SecurityAccessTests(unittest.TestCase):
         response = self.client.post(
             "/api/login",
             json={"username": username, "password": "incorrect"},
+        )
+        self.assertEqual(response.status_code, 429)
+
+    def test_login_throttles_ip_after_thirty_failed_attempts_across_usernames(self):
+        for attempt_number in range(30):
+            response = self.client.post(
+                "/api/login",
+                json={
+                    "username": f"security-ip-lockout-{attempt_number}",
+                    "password": "incorrect",
+                },
+            )
+            self.assertEqual(response.status_code, 401)
+
+        response = self.client.post(
+            "/api/login",
+            json={"username": "security-ip-lockout-final", "password": "incorrect"},
         )
         self.assertEqual(response.status_code, 429)
 
