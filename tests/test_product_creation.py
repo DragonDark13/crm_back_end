@@ -1,18 +1,13 @@
 """Integration tests for atomic product creation and purchase history."""
 
-import os
-import tempfile
-from datetime import date
-from pathlib import Path
+import importlib
 
 import pytest
-from sqlalchemy import create_engine
 
-_db_fd, _db_path = tempfile.mkstemp(prefix="crm-product-tests-", suffix=".sqlite3")
-os.close(_db_fd)
-os.environ["DATABASE_URL"] = f"sqlite:///{Path(_db_path).as_posix()}"
-os.environ.setdefault("SECRET_KEY", "product-test-secret-key")
-os.environ.setdefault("JWT_SECRET_KEY", "product-test-jwt-secret")
+# Reuse the isolated SQLite database initialized by the authorization tests.
+# app.py imports postgreSQLConnect during that setup, so both test modules
+# must share the same engine and database file.
+importlib.import_module("test_authorization")
 
 from models import (  # noqa: E402
     Category,
@@ -23,10 +18,11 @@ from models import (  # noqa: E402
     db,
     product_categories_table,
 )
+from postgreSQLConnect import db_session, engine  # noqa: E402
+from services.product_service import ProductService  # noqa: E402
 
-_engine = create_engine(os.environ["DATABASE_URL"])
 db.metadata.create_all(
-    bind=_engine,
+    bind=engine,
     tables=[
         Supplier.__table__,
         Category.__table__,
@@ -36,11 +32,6 @@ db.metadata.create_all(
         StockHistory.__table__,
     ],
 )
-_engine.dispose()
-
-from postgreSQLConnect import db_session  # noqa: E402
-from services.product_service import ProductService  # noqa: E402
-
 
 @pytest.fixture(autouse=True)
 def clean_database():
