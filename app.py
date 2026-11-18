@@ -285,7 +285,16 @@ def enforce_api_authorization():
         return None
 
     if 'guest' in role_names:
-        if request.method in ('GET', 'HEAD', 'OPTIONS'):
+        guest_read_paths = (
+            '/api/protected',
+            '/api/get_all_products',
+            '/api/product/',
+            '/api/categories/get_all_categories',
+            '/api/suppliers/get_suppliers_list',
+            '/api/packaging/get_all_packaging_materials',
+            '/api/statistics/stock',
+        )
+        if request.method in ('GET', 'HEAD', 'OPTIONS') and request.path.startswith(guest_read_paths):
             return None
         return jsonify(message="Manager role required"), 403
 
