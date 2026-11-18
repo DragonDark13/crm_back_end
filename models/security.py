@@ -12,6 +12,10 @@ class TokenBlocklist(Base):
     jti = Column(String(36), nullable=False, unique=True, index=True)
     expires_at = Column(DateTime(timezone=True), nullable=False)
 
+    __table_args__ = (
+        Index("ix_jwt_token_blocklist_expires_at", "expires_at"),
+    )
+
 
 class LoginAttempt(Base):
     __tablename__ = "login_attempts"
