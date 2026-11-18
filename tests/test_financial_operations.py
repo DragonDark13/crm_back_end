@@ -22,6 +22,17 @@ from postgreSQLConnect import db_session, engine  # noqa: E402
 db.metadata.create_all(bind=engine)
 
 
+@pytest.fixture
+def client():
+    with auth_module.app.test_client() as test_client:
+        yield test_client
+
+
+@pytest.fixture
+def auth_tokens():
+    return auth_module.auth_tokens.__wrapped__()
+
+
 @pytest.fixture(autouse=True)
 def clean_financial_operation_records():
     db_session.remove()
