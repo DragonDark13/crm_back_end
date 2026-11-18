@@ -251,7 +251,7 @@ def create_roles_and_users():
 with app.app_context():
     db.metadata.create_all(
         bind=db.engine,
-        tables=[TokenBlocklist.__table__, LoginAttempt.__table__]
+        tables=[TokenBlocklist.__table__, LoginAttempt.__table__, LoginIPAttempt.__table__]
     )
 
 
@@ -278,7 +278,7 @@ def _increment_login_counter(model, key_values, now, max_attempts):
         else_=table.c.attempts + 1
     )
 
-    statement = postgresql_insert(model).values(
+    statement = postgresql_insert(table).values(
         **key_values,
         attempts=1,
         window_started_at=now,
