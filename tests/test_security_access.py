@@ -1,6 +1,6 @@
 """Integration tests for authentication and role-based API access.
 
-Run against a dedicated, disposable database:
+Run against a dedicated database with the application's existing schema already migrated:
     TEST_DATABASE_URL=postgresql://... python -m unittest tests.test_security_access
 The test suite never falls back to the application's normal DATABASE_URL.
 """
