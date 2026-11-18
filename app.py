@@ -1,10 +1,10 @@
 import subprocess
 import os
-from datetime import timedelta
+from datetime import datetime, timedelta, timezone
 
 from dotenv import load_dotenv
 from flask import Flask, jsonify, request
-from flask_jwt_extended import JWTManager, create_access_token, jwt_required, get_jwt_identity
+from flask_jwt_extended import JWTManager, create_access_token, jwt_required, get_jwt_identity, get_jwt
 from flask_login import LoginManager
 import uuid
 import logging
@@ -17,7 +17,7 @@ from api.customer_api import customers_ns
 from api.investment_api import investments_ns
 from api.packaging_routes import packaging_ns
 from api.supplier_routes import supplier_ns
-from models import db, User, Role
+from models import db, User, Role, TokenBlocklist, LoginAttempt
 from services.category_routes import category_bp
 from services.customer_routes import customer_bp
 from services.export_to_excel_services import export_to_excel_bp
@@ -94,10 +94,16 @@ if not app.config['SECRET_KEY']:
 # JWT uses SECRET_KEY unless a separate JWT_SECRET_KEY is explicitly provided
 app.config['JWT_SECRET_KEY'] = os.getenv('JWT_SECRET_KEY') or app.config['SECRET_KEY']
 app.config['JWT_ACCESS_TOKEN_EXPIRES'] = timedelta(hours=1)
+app.config['JWT_BLOCKLIST_TOKEN_CHECKS'] = ['access']
 
 # Initialize extensions
 db.init_app(app)
 jwt = JWTManager(app)
+
+
+@jwt.token_in_blocklist_loader
+def is_token_revoked(_jwt_header, jwt_payload):
+    return db.session.query(TokenBlocklist.id).filter_by(jti=jwt_payload['jti']).scalar() is not None
 
 
 @jwt.unauthorized_loader
@@ -122,6 +128,20 @@ login_manager.init_app(app)
 @login_manager.user_loader
 def load_user(user_id):
     return User.query.get(user_id)
+
+
+@app.route('/api/me', methods=['GET'])
+@jwt_required()
+def current_user_profile():
+    identity = get_jwt_identity()
+    user = User.query.get(int(identity))
+    if not user or not user.active:
+        return jsonify(message="User is inactive or no longer exists"), 401
+    return jsonify(
+        id=user.id,
+        username=user.username,
+        roles=[role.name for role in user.roles]
+    ), 200
 
 
 @app.route('/api/protected', methods=['GET'])
@@ -225,6 +245,14 @@ def create_roles_and_users():
         db.session.commit()
 
 
+# Create only the dedicated security tables; no existing business tables are modified.
+with app.app_context():
+    db.metadata.create_all(
+        bind=db.engine,
+        tables=[TokenBlocklist.__table__, LoginAttempt.__table__]
+    )
+
+
 # Initialize database with roles and users
 with app.app_context():
     create_roles_and_users()
@@ -239,22 +267,59 @@ def login():
     if not isinstance(username, str) or not username.strip() or not isinstance(password, str) or not password:
         return jsonify(message="Invalid credentials"), 401
 
-    user = User.query.filter_by(username=username.strip()).first()
+    normalized_username = username.strip()
+    client_ip = request.remote_addr or "unknown"
+    attempt = LoginAttempt.query.filter_by(
+        username=normalized_username,
+        ip_address=client_ip
+    ).first()
+    now = datetime.now(timezone.utc)
+
+    if attempt and attempt.locked_until and attempt.locked_until > now:
+        return jsonify(message="Too many failed login attempts. Try again later."), 429
+
+    if attempt and attempt.window_started_at and now - attempt.window_started_at > timedelta(minutes=15):
+        attempt.attempts = 0
+        attempt.window_started_at = now
+        attempt.locked_until = None
+
+    user = User.query.filter_by(username=normalized_username).first()
     if user and user.active and user.verify_password(password):
+        if attempt:
+            db.session.delete(attempt)
+        db.session.commit()
+        role_names = [role.name for role in user.roles]
         access_token = create_access_token(
             identity=str(user.id),
-            additional_claims={"username": user.username}
+            additional_claims={"username": user.username, "roles": role_names}
         )
         return jsonify(message="Login successful", token=access_token), 200
+
+    if not attempt:
+        attempt = LoginAttempt(
+            username=normalized_username,
+            ip_address=client_ip,
+            attempts=0,
+            window_started_at=now
+        )
+        db.session.add(attempt)
+
+    attempt.attempts += 1
+    if attempt.attempts >= 5:
+        attempt.locked_until = now + timedelta(minutes=15)
+    db.session.commit()
     return jsonify(message="Invalid credentials"), 401
 
 
 @app.route('/api/logout', methods=['POST'])
 @jwt_required()
 def logout():
-    current_user = get_jwt_identity()
-    if not isinstance(current_user, str):
-        return jsonify(message="Invalid user identity"), 400
+    token_data = get_jwt()
+    db.session.add(TokenBlocklist(
+        jti=token_data['jti'],
+        expires_at=datetime.fromtimestamp(token_data['exp'], tz=timezone.utc)
+    ))
+    db.session.commit()
     return jsonify(message="Logout successful"), 200
 
 
