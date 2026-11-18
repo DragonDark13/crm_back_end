@@ -273,9 +273,9 @@ def dismantle_gift_set(gift_set_id):
         db_session.commit()
 
         return jsonify({"message": "Gift set and all related data dismantled successfully"}), 200
-    except Exception as e:
+    except Exception:
         db_session.rollback()
-        return jsonify({"error": str(e)}), 500
+        return jsonify({"error": "Failed to dismantle gift set"}), 500
 
 @gift_box_services_bp.route('/sell_gift_set/<int:gift_set_id>', methods=['POST'])
 def sell_gift_set(gift_set_id):
@@ -337,9 +337,9 @@ def sell_gift_set(gift_set_id):
             "message": "Gift set sold successfully",
             "sales_record": sales_record.to_dict()
         }), 200
-    except Exception as e:
+    except Exception:
         db_session.rollback()
-        return jsonify({"error": str(e)}), 500
+        return jsonify({"error": "Failed to sell gift set"}), 500
 
 @gift_box_services_bp.route('/get_all_gift_sets', methods=['GET'])
 def get_gift_sets():
