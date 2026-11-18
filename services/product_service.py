@@ -636,7 +636,6 @@ def purchase_product(product_id):
 
         product.total_quantity += quantity
         product.available_quantity += quantity
-        product.selling_total_price += purchase_total_price
         product.purchase_total_price += purchase_total_price
         product.purchase_price_per_item = purchase_price_per_item  # Update to new price per item
 
