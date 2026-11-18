@@ -38,7 +38,7 @@ class ProductService:
         try:
             product = db_session.query(Product).filter(
             Product.id == product_id
-        ).with_for_update().populate_existing().one()
+        ).populate_existing().one()
             product_dict = product.to_dict()  # Assuming you have a method for dict conversion
             product_dict['category_ids'] = [category.id for category in product.categories]
             product_dict['supplier'] = product.supplier.to_dict() if product.supplier else None
@@ -104,32 +104,31 @@ class ProductService:
             else:
                 created_date = datetime.today().date()  # Default to today's date if not provided
 
+            # Перевіряємо всі зовнішні залежності до додавання нового товару в сесію.
+            category_ids = data.get('category_ids', [])
+            categories = []
+            if category_ids:
+                categories = db_session.query(Category).filter(Category.id.in_(category_ids)).all()
+                if len(categories) != len(category_ids):
+                    return {'error': 'Some categories were not found'}, 404
+
+            supplier = db_session.query(Supplier).filter(Supplier.id == data['supplier_id']).one_or_none()
+            if not supplier:
+                return {'error': 'Supplier not found'}, 404
+
             # Create the product
             product = Product(
                 name=data['name'],
                 total_quantity=0,
                 available_quantity=0,
                 created_date=created_date,  # Pass the datetime object
-                article=generate_article_for_new_prod() , # Додаємо артикул тут
-                product_description = data['product_description']
+                article=generate_article_for_new_prod(),  # Додаємо артикул тут
+                product_description=data['product_description']
             )
 
-            # Add product to session before associating categories
             db_session.add(product)
-
-            # Add categories to the product
-            category_ids = data.get('category_ids', [])
-            if category_ids:
-                # Ensure categories exist
-                categories = db_session.query(Category).filter(Category.id.in_(category_ids)).all()
-                if len(categories) != len(category_ids):
-                    return {'error': 'Some categories were not found'}, 404
+            if categories:
                 product.categories.extend(categories)
-
-            # Assign supplier to the product
-            supplier = db_session.query(Supplier).filter(Supplier.id == data['supplier_id']).one_or_none()
-            if not supplier:
-                return {'error': 'Supplier not found'}, 404
 
             product.supplier = supplier
 
@@ -140,10 +139,10 @@ class ProductService:
             product.available_quantity = data['available_quantity']
             product.selling_price_per_item = Decimal(data.get('selling_price_per_item', 0))
 
-            # Commit the product to the session
-            db_session.commit()
+            # Отримуємо ID товару, не фіксуючи транзакцію.
+            db_session.flush()
 
-            # Create purchase and stock history entries
+            # Create purchase and stock history entries in the same transaction.
             purchase_history = PurchaseHistory(
                 product_id=product.id,
                 purchase_price_per_item=Decimal(data['purchase_price_per_item']),
@@ -162,10 +161,12 @@ class ProductService:
             )
             db_session.add(stock_history)
 
+            # Product, purchase history and stock history are committed atomically.
             db_session.commit()
 
             return product.to_dict(), 201
         except NoResultFound:
+            db_session.rollback()
             return {'error': 'Supplier not found'}, 404
         except Exception as e:
             db_session.rollback()
