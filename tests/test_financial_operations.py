@@ -11,6 +11,8 @@ auth_module = importlib.import_module("test_authorization")
 
 from models import (  # noqa: E402
     Customer,
+    PackagingMaterial,
+    PackagingSaleHistory,
     Product,
     PurchaseHistory,
     SaleHistory,
@@ -36,8 +38,10 @@ def auth_tokens():
 @pytest.fixture(autouse=True)
 def clean_financial_operation_records():
     db_session.remove()
+    db_session.query(PackagingSaleHistory).delete()
     db_session.query(SaleHistory).delete()
     db_session.query(PurchaseHistory).delete()
+    db_session.query(PackagingMaterial).delete()
     db_session.query(Product).delete()
     db_session.query(Customer).delete()
     db_session.query(Supplier).delete()
@@ -198,3 +202,158 @@ def test_sale_rejects_quantity_above_available_stock_without_changing_stock(
     assert updated_product.sold_quantity == 0
     assert updated_product.selling_total_price == Decimal("0.00")
     assert db_session.query(SaleHistory).filter_by(product_id=product.id).count() == 0
+
+
+
+def test_repeated_purchases_accumulate_purchase_cost_without_increasing_sales_revenue(
+    client, auth_tokens, financial_dependencies
+):
+    product, supplier, _customer = financial_dependencies
+
+    purchases = [
+        {
+            "quantity": 2,
+            "purchase_price_per_item": "12.50",
+            "purchase_total_price": "25.00",
+            "supplier_id": supplier.id,
+            "purchase_date": "2026-11-18",
+        },
+        {
+            "quantity": 3,
+            "purchase_price_per_item": "13.00",
+            "purchase_total_price": "39.00",
+            "supplier_id": supplier.id,
+            "purchase_date": "2026-11-19",
+        },
+    ]
+
+    for purchase_data in purchases:
+        response = client.post(
+            f"/api/product/{product.id}/purchase",
+            headers=_manager_headers(auth_tokens),
+            json=purchase_data,
+        )
+        assert response.status_code == 201
+
+    db_session.expire_all()
+    updated_product = db_session.query(Product).filter_by(id=product.id).one()
+    purchase_history = (
+        db_session.query(PurchaseHistory)
+        .filter_by(product_id=product.id)
+        .order_by(PurchaseHistory.id)
+        .all()
+    )
+
+    assert updated_product.total_quantity == 15
+    assert updated_product.available_quantity == 15
+    assert updated_product.purchase_total_price == Decimal("164.00")
+    assert updated_product.purchase_price_per_item == Decimal("13.00")
+    assert updated_product.selling_total_price == Decimal("0.00")
+    assert len(purchase_history) == 2
+    assert [item.purchase_total_price for item in purchase_history] == [
+        Decimal("25.00"),
+        Decimal("39.00"),
+    ]
+
+
+def test_sequential_purchases_and_sale_keep_stock_and_financial_totals_consistent(
+    client, auth_tokens, financial_dependencies
+):
+    product, supplier, customer = financial_dependencies
+
+    first_purchase = client.post(
+        f"/api/product/{product.id}/purchase",
+        headers=_manager_headers(auth_tokens),
+        json={
+            "quantity": 2,
+            "purchase_price_per_item": "12.50",
+            "purchase_total_price": "25.00",
+            "supplier_id": supplier.id,
+            "purchase_date": "2026-11-18",
+        },
+    )
+    second_purchase = client.post(
+        f"/api/product/{product.id}/purchase",
+        headers=_manager_headers(auth_tokens),
+        json={
+            "quantity": 3,
+            "purchase_price_per_item": "13.00",
+            "purchase_total_price": "39.00",
+            "supplier_id": supplier.id,
+            "purchase_date": "2026-11-19",
+        },
+    )
+
+    assert first_purchase.status_code == 201
+    assert second_purchase.status_code == 201
+
+    sale_response = client.post(
+        f"/api/product/{product.id}/sale",
+        headers=_manager_headers(auth_tokens),
+        json={
+            "customer": customer.id,
+            "quantity": 4,
+            "selling_price_per_item": "20.00",
+            "selling_total_price": "80.00",
+            "sale_date": "2026-11-20",
+        },
+    )
+    assert sale_response.status_code == 201
+
+    db_session.expire_all()
+    updated_product = db_session.query(Product).filter_by(id=product.id).one()
+    sale = db_session.query(SaleHistory).filter_by(product_id=product.id).one()
+
+    assert updated_product.total_quantity == 15
+    assert updated_product.available_quantity == 11
+    assert updated_product.sold_quantity == 4
+    assert updated_product.purchase_total_price == Decimal("164.00")
+    assert updated_product.selling_total_price == Decimal("80.00")
+    assert sale.profit == Decimal("28.00")
+
+
+def test_sale_profit_includes_packaging_cost_and_updates_packaging_stock(
+    client, auth_tokens, financial_dependencies
+):
+    product, _supplier, customer = financial_dependencies
+    product.purchase_price_per_item = Decimal("10.01")
+    packaging = PackagingMaterial(
+        name="Financial test packaging",
+        total_quantity=10,
+        available_quantity=10,
+        purchase_price_per_unit=Decimal("1.50"),
+        total_purchase_cost=Decimal("15.00"),
+        available_stock_cost=Decimal("15.00"),
+    )
+    db_session.add(packaging)
+    db_session.commit()
+
+    response = client.post(
+        f"/api/product/{product.id}/sale",
+        headers=_manager_headers(auth_tokens),
+        json={
+            "customer": customer.id,
+            "quantity": 3,
+            "selling_price_per_item": "19.99",
+            "selling_total_price": "59.97",
+            "packaging_id": packaging.id,
+            "packaging_quantity": 2,
+            "total_packaging_cost": "3.00",
+            "sale_date": "2026-11-18",
+        },
+    )
+
+    assert response.status_code == 201
+
+    db_session.expire_all()
+    sale = db_session.query(SaleHistory).filter_by(product_id=product.id).one()
+    updated_packaging = db_session.query(PackagingMaterial).filter_by(id=packaging.id).one()
+    packaging_history = db_session.query(PackagingSaleHistory).filter_by(sale_id=sale.id).one()
+
+    assert sale.selling_total_price == Decimal("59.97")
+    assert sale.profit == Decimal("26.97")
+    assert sale.total_packaging_cost == 3.0
+    assert updated_packaging.available_quantity == 8
+    assert updated_packaging.available_stock_cost == Decimal("12.00")
+    assert packaging_history.packaging_quantity == 2
+    assert packaging_history.total_packaging_cost == Decimal("3.00")
