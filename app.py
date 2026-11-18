@@ -265,16 +265,8 @@ def create_roles_and_users():
         db.session.commit()
 
 
-# Create only the dedicated security tables; no existing business tables are modified.
-with app.app_context():
-    db.metadata.create_all(
-        bind=db.engine,
-        tables=[TokenBlocklist.__table__, LoginAttempt.__table__, LoginIPAttempt.__table__]
-    )
-    next(
-        index for index in TokenBlocklist.__table__.indexes
-        if index.name == "ix_jwt_token_blocklist_expires_at"
-    ).create(bind=db.engine, checkfirst=True)
+# Security tables are managed by Alembic migrations.
+# Run "alembic upgrade head" before starting the application.
 
 
 # Initialize database with roles and users
