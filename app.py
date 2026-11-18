@@ -8,6 +8,7 @@ from flask_jwt_extended import JWTManager, create_access_token, jwt_required, ge
 from flask_login import LoginManager
 import uuid
 import logging
+import hmac
 
 from flask_cors import CORS
 
@@ -144,7 +145,7 @@ def webhook():
     webhook_secret = os.getenv('WEBHOOK_SECRET')
     if not webhook_secret:
         return 'Webhook is disabled', 503
-    if request.headers.get('X-Webhook-Secret') != webhook_secret:
+    if not hmac.compare_digest(request.headers.get('X-Webhook-Secret', ''), webhook_secret):
         return 'Unauthorized', 401
     logging.info('Authorized POST request received on /update_server')
     try:
