@@ -85,15 +85,17 @@ def test_purchase_updates_stock_cost_and_purchase_history(
     client, auth_tokens, financial_dependencies
 ):
     product, supplier, _customer = financial_dependencies
+    product_id = product_id
+    supplier_id = supplier_id
 
     response = client.post(
-        f"/api/product/{product.id}/purchase",
+        f"/api/product/{product_id}/purchase",
         headers=_manager_headers(auth_tokens),
         json={
             "quantity": 5,
             "purchase_price_per_item": "12.50",
             "purchase_total_price": "62.50",
-            "supplier_id": supplier.id,
+            "supplier_id": supplier_id,
             "purchase_date": "2026-11-18",
         },
     )
@@ -101,8 +103,8 @@ def test_purchase_updates_stock_cost_and_purchase_history(
     assert response.status_code == 201
 
     db_session.expire_all()
-    updated_product = db_session.query(Product).filter_by(id=product.id).one()
-    purchase = db_session.query(PurchaseHistory).filter_by(product_id=product.id).one()
+    updated_product = db_session.query(Product).filter_by(id=product_id).one()
+    purchase = db_session.query(PurchaseHistory).filter_by(product_id=product_id).one()
 
     assert updated_product.total_quantity == 15
     assert updated_product.available_quantity == 15
@@ -112,19 +114,21 @@ def test_purchase_updates_stock_cost_and_purchase_history(
     assert purchase.quantity_purchase == 5
     assert purchase.purchase_price_per_item == Decimal("12.50")
     assert purchase.purchase_total_price == Decimal("62.50")
-    assert purchase.supplier_id == supplier.id
+    assert purchase.supplier_id == supplier_id
 
 
 def test_sale_updates_stock_revenue_and_profit(
     client, auth_tokens, financial_dependencies
 ):
     product, _supplier, customer = financial_dependencies
+    product_id = product_id
+    customer_id = customer_id
 
     response = client.post(
-        f"/api/product/{product.id}/sale",
+        f"/api/product/{product_id}/sale",
         headers=_manager_headers(auth_tokens),
         json={
-            "customer": customer.id,
+            "customer": customer_id,
             "quantity": 3,
             "selling_price_per_item": "20.00",
             "selling_total_price": "60.00",
@@ -135,8 +139,8 @@ def test_sale_updates_stock_revenue_and_profit(
     assert response.status_code == 201
 
     db_session.expire_all()
-    updated_product = db_session.query(Product).filter_by(id=product.id).one()
-    sale = db_session.query(SaleHistory).filter_by(product_id=product.id).one()
+    updated_product = db_session.query(Product).filter_by(id=product_id).one()
+    sale = db_session.query(SaleHistory).filter_by(product_id=product_id).one()
 
     assert updated_product.available_quantity == 7
     assert updated_product.sold_quantity == 3
@@ -152,14 +156,16 @@ def test_sale_calculates_profit_to_cent_precision(
     client, auth_tokens, financial_dependencies
 ):
     product, _supplier, customer = financial_dependencies
+    product_id = product_id
+    customer_id = customer_id
     product.purchase_price_per_item = Decimal("10.01")
     db_session.commit()
 
     response = client.post(
-        f"/api/product/{product.id}/sale",
+        f"/api/product/{product_id}/sale",
         headers=_manager_headers(auth_tokens),
         json={
-            "customer": customer.id,
+            "customer": customer_id,
             "quantity": 3,
             "selling_price_per_item": "19.99",
             "selling_total_price": "59.97",
@@ -170,7 +176,7 @@ def test_sale_calculates_profit_to_cent_precision(
     assert response.status_code == 201
 
     db_session.expire_all()
-    sale = db_session.query(SaleHistory).filter_by(product_id=product.id).one()
+    sale = db_session.query(SaleHistory).filter_by(product_id=product_id).one()
 
     assert sale.selling_total_price == Decimal("59.97")
     assert sale.profit == Decimal("29.94")
@@ -180,12 +186,14 @@ def test_sale_rejects_quantity_above_available_stock_without_changing_stock(
     client, auth_tokens, financial_dependencies
 ):
     product, _supplier, customer = financial_dependencies
+    product_id = product_id
+    customer_id = customer_id
 
     response = client.post(
-        f"/api/product/{product.id}/sale",
+        f"/api/product/{product_id}/sale",
         headers=_manager_headers(auth_tokens),
         json={
-            "customer": customer.id,
+            "customer": customer_id,
             "quantity": 11,
             "selling_price_per_item": "20.00",
             "selling_total_price": "220.00",
@@ -196,12 +204,12 @@ def test_sale_rejects_quantity_above_available_stock_without_changing_stock(
     assert response.status_code == 400
 
     db_session.expire_all()
-    updated_product = db_session.query(Product).filter_by(id=product.id).one()
+    updated_product = db_session.query(Product).filter_by(id=product_id).one()
 
     assert updated_product.available_quantity == 10
     assert updated_product.sold_quantity == 0
     assert updated_product.selling_total_price == Decimal("0.00")
-    assert db_session.query(SaleHistory).filter_by(product_id=product.id).count() == 0
+    assert db_session.query(SaleHistory).filter_by(product_id=product_id).count() == 0
 
 
 
@@ -209,37 +217,39 @@ def test_repeated_purchases_accumulate_purchase_cost_without_increasing_sales_re
     client, auth_tokens, financial_dependencies
 ):
     product, supplier, _customer = financial_dependencies
+    product_id = product_id
+    supplier_id = supplier_id
 
     purchases = [
         {
             "quantity": 2,
             "purchase_price_per_item": "12.50",
             "purchase_total_price": "25.00",
-            "supplier_id": supplier.id,
+            "supplier_id": supplier_id,
             "purchase_date": "2026-11-18",
         },
         {
             "quantity": 3,
             "purchase_price_per_item": "13.00",
             "purchase_total_price": "39.00",
-            "supplier_id": supplier.id,
+            "supplier_id": supplier_id,
             "purchase_date": "2026-11-19",
         },
     ]
 
     for purchase_data in purchases:
         response = client.post(
-            f"/api/product/{product.id}/purchase",
+            f"/api/product/{product_id}/purchase",
             headers=_manager_headers(auth_tokens),
             json=purchase_data,
         )
         assert response.status_code == 201
 
     db_session.expire_all()
-    updated_product = db_session.query(Product).filter_by(id=product.id).one()
+    updated_product = db_session.query(Product).filter_by(id=product_id).one()
     purchase_history = (
         db_session.query(PurchaseHistory)
-        .filter_by(product_id=product.id)
+        .filter_by(product_id=product_id)
         .order_by(PurchaseHistory.id)
         .all()
     )
@@ -262,7 +272,7 @@ def test_sequential_purchases_and_sale_keep_stock_and_financial_totals_consisten
     product, supplier, customer = financial_dependencies
 
     first_purchase = client.post(
-        f"/api/product/{product.id}/purchase",
+        f"/api/product/{product_id}/purchase",
         headers=_manager_headers(auth_tokens),
         json={
             "quantity": 2,
@@ -273,7 +283,7 @@ def test_sequential_purchases_and_sale_keep_stock_and_financial_totals_consisten
         },
     )
     second_purchase = client.post(
-        f"/api/product/{product.id}/purchase",
+        f"/api/product/{product_id}/purchase",
         headers=_manager_headers(auth_tokens),
         json={
             "quantity": 3,
@@ -288,10 +298,10 @@ def test_sequential_purchases_and_sale_keep_stock_and_financial_totals_consisten
     assert second_purchase.status_code == 201
 
     sale_response = client.post(
-        f"/api/product/{product.id}/sale",
+        f"/api/product/{product_id}/sale",
         headers=_manager_headers(auth_tokens),
         json={
-            "customer": customer.id,
+            "customer": customer_id,
             "quantity": 4,
             "selling_price_per_item": "20.00",
             "selling_total_price": "80.00",
@@ -301,8 +311,8 @@ def test_sequential_purchases_and_sale_keep_stock_and_financial_totals_consisten
     assert sale_response.status_code == 201
 
     db_session.expire_all()
-    updated_product = db_session.query(Product).filter_by(id=product.id).one()
-    sale = db_session.query(SaleHistory).filter_by(product_id=product.id).one()
+    updated_product = db_session.query(Product).filter_by(id=product_id).one()
+    sale = db_session.query(SaleHistory).filter_by(product_id=product_id).one()
 
     assert updated_product.total_quantity == 15
     assert updated_product.available_quantity == 11
@@ -316,6 +326,8 @@ def test_sale_profit_includes_packaging_cost_and_updates_packaging_stock(
     client, auth_tokens, financial_dependencies
 ):
     product, _supplier, customer = financial_dependencies
+    product_id = product_id
+    customer_id = customer_id
     product.purchase_price_per_item = Decimal("10.01")
     packaging = PackagingMaterial(
         name="Financial test packaging",
@@ -327,16 +339,17 @@ def test_sale_profit_includes_packaging_cost_and_updates_packaging_stock(
     )
     db_session.add(packaging)
     db_session.commit()
+    packaging_id = packaging.id
 
     response = client.post(
-        f"/api/product/{product.id}/sale",
+        f"/api/product/{product_id}/sale",
         headers=_manager_headers(auth_tokens),
         json={
-            "customer": customer.id,
+            "customer": customer_id,
             "quantity": 3,
             "selling_price_per_item": "19.99",
             "selling_total_price": "59.97",
-            "packaging_id": packaging.id,
+            "packaging_id": packaging_id,
             "packaging_quantity": 2,
             "total_packaging_cost": "3.00",
             "sale_date": "2026-11-18",
@@ -346,8 +359,8 @@ def test_sale_profit_includes_packaging_cost_and_updates_packaging_stock(
     assert response.status_code == 201
 
     db_session.expire_all()
-    sale = db_session.query(SaleHistory).filter_by(product_id=product.id).one()
-    updated_packaging = db_session.query(PackagingMaterial).filter_by(id=packaging.id).one()
+    sale = db_session.query(SaleHistory).filter_by(product_id=product_id).one()
+    updated_packaging = db_session.query(PackagingMaterial).filter_by(id=packaging_id).one()
     packaging_history = db_session.query(PackagingSaleHistory).filter_by(sale_id=sale.id).one()
 
     assert sale.selling_total_price == Decimal("59.97")
