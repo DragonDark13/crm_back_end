@@ -9,6 +9,8 @@ from flask_login import LoginManager
 import uuid
 import logging
 import hmac
+import threading
+import time
 
 from flask_cors import CORS
 from sqlalchemy import case
@@ -106,6 +108,22 @@ jwt = JWTManager(app)
 @jwt.token_in_blocklist_loader
 def is_token_revoked(_jwt_header, jwt_payload):
     return db.session.query(TokenBlocklist.id).filter_by(jti=jwt_payload['jti']).scalar() is not None
+
+JWT_BLOCKLIST_CLEANUP_INTERVAL_SECONDS = max(
+    60,
+    int(os.getenv("JWT_BLOCKLIST_CLEANUP_INTERVAL_SECONDS", "86400"))
+)
+_jwt_blocklist_cleanup_lock = threading.Lock()
+_jwt_blocklist_last_cleanup = 0.0
+
+
+def cleanup_expired_tokens():
+    now = datetime.now(timezone.utc)
+    deleted_count = db.session.query(TokenBlocklist).filter(
+        TokenBlocklist.expires_at <= now
+    ).delete(synchronize_session=False)
+    db.session.commit()
+    return deleted_count
 
 
 @jwt.unauthorized_loader
@@ -253,6 +271,10 @@ with app.app_context():
         bind=db.engine,
         tables=[TokenBlocklist.__table__, LoginAttempt.__table__, LoginIPAttempt.__table__]
     )
+    next(
+        index for index in TokenBlocklist.__table__.indexes
+        if index.name == "ix_jwt_token_blocklist_expires_at"
+    ).create(bind=db.engine, checkfirst=True)
 
 
 # Initialize database with roles and users
@@ -392,6 +414,37 @@ def logout():
 # The decorated helper applies Flask-JWT-Extended validation to every protected API request.
 @jwt_required()
 def _require_api_jwt():
+    return None
+
+
+@app.before_request
+def cleanup_expired_tokens_periodically():
+    global _jwt_blocklist_last_cleanup
+
+    if not request.path.startswith('/api/'):
+        return None
+
+    now_monotonic = time.monotonic()
+    if now_monotonic - _jwt_blocklist_last_cleanup < JWT_BLOCKLIST_CLEANUP_INTERVAL_SECONDS:
+        return None
+
+    if not _jwt_blocklist_cleanup_lock.acquire(blocking=False):
+        return None
+
+    try:
+        now_monotonic = time.monotonic()
+        if now_monotonic - _jwt_blocklist_last_cleanup >= JWT_BLOCKLIST_CLEANUP_INTERVAL_SECONDS:
+            _jwt_blocklist_last_cleanup = now_monotonic
+            try:
+                deleted_count = cleanup_expired_tokens()
+                if deleted_count:
+                    logger.info("Removed %s expired JWT blocklist entries", deleted_count)
+            except Exception:
+                db.session.rollback()
+                logger.exception("Failed to clean expired JWT blocklist entries")
+    finally:
+        _jwt_blocklist_cleanup_lock.release()
+
     return None
 
 
