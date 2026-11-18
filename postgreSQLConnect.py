@@ -1,15 +1,21 @@
+import os
+from dotenv import load_dotenv
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker, scoped_session
 
 from models import db
 
+load_dotenv()
+
 # Налаштування підключення до PostgreSQL
-DATABASE_URI = "postgresql://postgres:admin@localhost:5432/shop_crm_post"  # Замініть на свої дані
+DATABASE_URI = os.getenv("DATABASE_URL")
+if not DATABASE_URI:
+    raise RuntimeError("DATABASE_URL environment variable is required")
 
 # Створення двигуна (engine)
 engine = create_engine(
     DATABASE_URI,
-    echo=True,  # Логи SQL-запитів у консоль
+    echo=False,  # SQL query logging is disabled by default
     pool_size=25,  # Розмір пулу з'єднань
     max_overflow=20,  # Додаткові з'єднання при навантаженні
     pool_timeout=30  # Час очікування перед помилкою
