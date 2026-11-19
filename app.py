@@ -1,10 +1,10 @@
 import subprocess
 import os
-from datetime import timedelta
+from datetime import datetime, timedelta, timezone
 
 from dotenv import load_dotenv
 from flask import Flask, jsonify, request
-from flask_jwt_extended import JWTManager, create_access_token, jwt_required, get_jwt_identity, verify_jwt_in_request
+from flask_jwt_extended import JWTManager, create_access_token, get_jwt, get_jwt_identity, jwt_required, verify_jwt_in_request
 from flask_login import LoginManager
 import uuid
 import logging
@@ -16,7 +16,7 @@ from api.customer_api import customers_ns
 from api.investment_api import investments_ns
 from api.packaging_routes import packaging_ns
 from api.supplier_routes import supplier_ns
-from models import db, User, Role
+from models import db, RevokedToken, User, Role
 from services.category_routes import category_bp
 from services.customer_routes import customer_bp
 from services.export_to_excel_services import export_to_excel_bp
@@ -70,6 +70,14 @@ app.config['JWT_ACCESS_TOKEN_EXPIRES'] = timedelta(hours=1)
 # Initialize extensions
 db.init_app(app)
 jwt = JWTManager(app)
+
+
+@jwt.token_in_blocklist_loader
+def is_token_revoked(jwt_header, jwt_payload):
+    token_jti = jwt_payload.get("jti")
+    if not token_jti:
+        return True
+    return db.session.query(RevokedToken.id).filter_by(jti=token_jti).scalar() is not None
 
 
 @jwt.unauthorized_loader
@@ -256,7 +264,7 @@ def login():
     username = request.json.get('username')
     password = request.json.get('password')
     user = User.query.filter_by(username=username).first()
-    if user and user.verify_password(password):
+    if user and user.active and user.verify_password(password):
         access_token = create_access_token(
             identity=str(user.id),
             additional_claims={"username": user.username}
@@ -268,11 +276,16 @@ def login():
 @app.route('/api/logout', methods=['POST'])
 @jwt_required()
 def logout():
-    current_user = get_jwt_identity()  # Extract the identity from the JWT token
-    print(f"Current user: {current_user}")  # Log the identity to verify it's being extracted
-    if not isinstance(current_user, str):
-        raise Exception("Subject must be a string")
-    print(f"User {current_user} logged out")
+    token_data = get_jwt()
+    revoked_token = RevokedToken(
+        jti=token_data["jti"],
+        token_type=token_data.get("type", "access"),
+        user_identity=str(get_jwt_identity()),
+        revoked_at=datetime.now(timezone.utc),
+        expires_at=datetime.fromtimestamp(token_data["exp"], tz=timezone.utc),
+    )
+    db.session.add(revoked_token)
+    db.session.commit()
     return jsonify(message="Logout successful"), 200
 
 
