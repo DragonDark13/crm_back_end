@@ -1,5 +1,6 @@
 import os
 import unittest
+from unittest.mock import patch
 from uuid import uuid4
 
 os.environ["DATABASE_URL"] = "sqlite:////tmp/crm_backend_auth_tests.db"
@@ -73,11 +74,16 @@ class AuthenticationApiTests(unittest.TestCase):
         token = self._login("test_guest")
         headers = self._headers(token)
 
-        catalog_response = self.client.get(
-            "/api/product/2147483647",
-            headers=headers,
-        )
-        self.assertNotEqual(catalog_response.status_code, 403)
+        with patch.object(
+            crm_app_module.ProductService,
+            "get_product_by_id",
+            return_value=({"id": 1}, 200),
+        ):
+            catalog_response = self.client.get(
+                "/api/product/1",
+                headers=headers,
+            )
+        self.assertEqual(catalog_response.status_code, 200)
 
         protected_response = self.client.get("/api/protected", headers=headers)
         self.assertEqual(protected_response.status_code, 403)
