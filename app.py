@@ -135,9 +135,8 @@ def enforce_api_authorization():
     is_catalog_read = (
         request.method == 'GET'
         and (
-            request.path == '/api/get_all_products'
-            or request.path.startswith('/api/get_all_products/')
-            or request.path.startswith('/api/product/')
+            request.path.rstrip('/') == '/api/get_all_products'
+            or (request.path.startswith('/api/product/') and len(request.path.strip('/').split('/')) == 3)
             or request.path == '/api/categories/get_all_categories'
             or request.path == '/api/suppliers/get_suppliers_list'
         )
