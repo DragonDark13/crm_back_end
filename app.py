@@ -1,23 +1,22 @@
 import subprocess
 import os
-from datetime import timedelta
+from datetime import datetime, timedelta, timezone
 
 from dotenv import load_dotenv
 from flask import Flask, jsonify, request
-from flask_jwt_extended import JWTManager, create_access_token, jwt_required, get_jwt_identity
+from flask_jwt_extended import JWTManager, create_access_token, get_jwt, get_jwt_identity, jwt_required, verify_jwt_in_request
 from flask_login import LoginManager
 import uuid
 import logging
 
 from flask_cors import CORS
-from werkzeug.security import generate_password_hash, check_password_hash
 
 from api.categories_api import categories_ns
 from api.customer_api import customers_ns
 from api.investment_api import investments_ns
 from api.packaging_routes import packaging_ns
 from api.supplier_routes import supplier_ns
-from models import db, User, Role
+from models import db, RevokedToken, User, Role
 from services.category_routes import category_bp
 from services.customer_routes import customer_bp
 from services.export_to_excel_services import export_to_excel_bp
@@ -73,6 +72,14 @@ db.init_app(app)
 jwt = JWTManager(app)
 
 
+@jwt.token_in_blocklist_loader
+def is_token_revoked(jwt_header, jwt_payload):
+    token_jti = jwt_payload.get("jti")
+    if not token_jti:
+        return True
+    return db.session.query(RevokedToken.id).filter_by(jti=token_jti).scalar() is not None
+
+
 @jwt.unauthorized_loader
 def custom_unauthorized_response(err):
     print(f"Unauthorized: {err}")
@@ -98,6 +105,53 @@ login_manager.init_app(app)
 @login_manager.user_loader
 def load_user(user_id):
     return User.query.get(user_id)
+
+
+@app.route('/api/me', methods=['GET'])
+@jwt_required()
+def current_user_profile():
+    user_id = get_jwt_identity()
+    user = User.query.get(user_id)
+    if not user or not user.active:
+        return jsonify(message="User is inactive or does not exist"), 401
+    return jsonify(id=user.id, username=user.username, roles=sorted(role.name for role in user.roles)), 200
+
+
+@app.before_request
+def enforce_api_authorization():
+    if not request.path.startswith('/api/'):
+        return None
+
+    if request.method == 'OPTIONS' or request.path in {
+        '/api/login',
+        '/api/me',
+        '/api/logout',
+    }:
+        return None
+
+    verify_jwt_in_request()
+    user = User.query.get(get_jwt_identity())
+
+    if not user or not user.active:
+        return jsonify(message="User is inactive or does not exist"), 401
+
+    role_names = {role.name for role in user.roles}
+    if 'manager' in role_names:
+        return None
+
+    is_catalog_read = (
+        request.method == 'GET'
+        and (
+            request.path.rstrip('/') == '/api/get_all_products'
+            or (request.path.startswith('/api/product/') and len(request.path.strip('/').split('/')) == 3)
+            or request.path == '/api/categories/get_all_categories'
+            or request.path == '/api/suppliers/get_suppliers_list'
+        )
+    )
+    if 'guest' in role_names and is_catalog_read:
+        return None
+
+    return jsonify(message="Insufficient permissions"), 403
 
 
 @app.route('/api/protected', methods=['GET'])
@@ -209,14 +263,8 @@ with app.app_context():
 def login():
     username = request.json.get('username')
     password = request.json.get('password')
-    hash_password = generate_password_hash(password)
-
-    print("Hash:", hash_password)
-    print("Valid:", check_password_hash(hash_password, password))
-    print("password from request:", repr(password))
-    print("Equal to 'managerpassword':", password == 'managerpassword')
     user = User.query.filter_by(username=username).first()
-    if user and user.verify_password(password):
+    if user and user.active and user.verify_password(password):
         access_token = create_access_token(
             identity=str(user.id),
             additional_claims={"username": user.username}
@@ -228,11 +276,16 @@ def login():
 @app.route('/api/logout', methods=['POST'])
 @jwt_required()
 def logout():
-    current_user = get_jwt_identity()  # Extract the identity from the JWT token
-    print(f"Current user: {current_user}")  # Log the identity to verify it's being extracted
-    if not isinstance(current_user, str):
-        raise Exception("Subject must be a string")
-    print(f"User {current_user} logged out")
+    token_data = get_jwt()
+    revoked_token = RevokedToken(
+        jti=token_data["jti"],
+        token_type=token_data.get("type", "access"),
+        user_identity=str(get_jwt_identity()),
+        revoked_at=datetime.now(timezone.utc),
+        expires_at=datetime.fromtimestamp(token_data["exp"], tz=timezone.utc),
+    )
+    db.session.add(revoked_token)
+    db.session.commit()
     return jsonify(message="Logout successful"), 200
 
 
@@ -240,7 +293,10 @@ def logout():
 def log_request_info():
     logger.info(f"Request method: {request.method}, URL: {request.url}")
     if request.method in ["POST", "PUT", "PATCH"]:
-        logger.info(f"Body: {request.get_data(as_text=True)}")
+        if request.path == '/api/login':
+            logger.info("Body: [redacted]")
+        else:
+            logger.info(f"Body: {request.get_data(as_text=True)}")
 
 
 
