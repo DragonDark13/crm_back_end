@@ -10,7 +10,6 @@ import uuid
 import logging
 
 from flask_cors import CORS
-from werkzeug.security import generate_password_hash, check_password_hash
 
 from api.categories_api import categories_ns
 from api.customer_api import customers_ns
@@ -256,12 +255,6 @@ with app.app_context():
 def login():
     username = request.json.get('username')
     password = request.json.get('password')
-    hash_password = generate_password_hash(password)
-
-    print("Hash:", hash_password)
-    print("Valid:", check_password_hash(hash_password, password))
-    print("password from request:", repr(password))
-    print("Equal to 'managerpassword':", password == 'managerpassword')
     user = User.query.filter_by(username=username).first()
     if user and user.verify_password(password):
         access_token = create_access_token(
@@ -287,7 +280,10 @@ def logout():
 def log_request_info():
     logger.info(f"Request method: {request.method}, URL: {request.url}")
     if request.method in ["POST", "PUT", "PATCH"]:
-        logger.info(f"Body: {request.get_data(as_text=True)}")
+        if request.path == '/api/login':
+            logger.info("Body: [redacted]")
+        else:
+            logger.info(f"Body: {request.get_data(as_text=True)}")
 
 
 
