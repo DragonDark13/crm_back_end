@@ -4,7 +4,7 @@
 BEGIN;
 
 CREATE TABLE IF NOT EXISTS revoked_tokens (
-    id BIGSERIAL PRIMARY KEY,
+    id SERIAL PRIMARY KEY,
     jti VARCHAR(36) NOT NULL UNIQUE,
     token_type VARCHAR(16) NOT NULL,
     user_identity VARCHAR(255) NOT NULL,
