@@ -110,6 +110,42 @@ def current_user_profile():
     return jsonify(id=user.id, username=user.username, roles=sorted(role.name for role in user.roles)), 200
 
 
+@app.before_request
+def enforce_api_authorization():
+    if not request.path.startswith('/api/'):
+        return None
+
+    if request.method == 'OPTIONS' or request.path in {
+        '/api/login',
+        '/api/me',
+        '/api/logout',
+    }:
+        return None
+
+    verify_jwt_in_request()
+    user = User.query.get(get_jwt_identity())
+
+    if not user or not user.active:
+        return jsonify(message="User is inactive or does not exist"), 401
+
+    role_names = {role.name for role in user.roles}
+    if 'manager' in role_names:
+        return None
+
+    is_catalog_read = (
+        request.method == 'GET'
+        and (
+            request.path == '/api/get_all_products'
+            or request.path.startswith('/api/get_all_products/')
+            or request.path.startswith('/api/product/')
+        )
+    )
+    if 'guest' in role_names and is_catalog_read:
+        return None
+
+    return jsonify(message="Insufficient permissions"), 403
+
+
 @app.route('/api/protected', methods=['GET'])
 @jwt_required()
 def protected():
