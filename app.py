@@ -138,6 +138,8 @@ def enforce_api_authorization():
             request.path == '/api/get_all_products'
             or request.path.startswith('/api/get_all_products/')
             or request.path.startswith('/api/product/')
+            or request.path == '/api/categories/get_all_categories'
+            or request.path == '/api/suppliers/get_suppliers_list'
         )
     )
     if 'guest' in role_names and is_catalog_read:
