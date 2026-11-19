@@ -139,5 +139,65 @@ class AuthenticationApiTests(unittest.TestCase):
         self.assertEqual(response.status_code, 401)
 
 
+    def test_login_response_matches_frontend_contract(self):
+        response = self.client.post(
+            "/api/login",
+            json={"username": "test_manager", "password": "test-password"},
+        )
+
+        self.assertEqual(response.status_code, 200)
+        payload = response.get_json()
+        self.assertEqual(payload["message"], "Login successful")
+        self.assertIsInstance(payload["token"], str)
+        self.assertTrue(payload["token"])
+
+    def test_me_response_matches_frontend_role_contract(self):
+        token = self._login("test_manager")
+        response = self.client.get("/api/me", headers=self._headers(token))
+
+        self.assertEqual(response.status_code, 200)
+        payload = response.get_json()
+        self.assertEqual(set(payload), {"id", "username", "roles"})
+        self.assertEqual(payload["username"], "test_manager")
+        self.assertEqual(payload["roles"], ["manager"])
+
+    def test_guest_cannot_mutate_catalog(self):
+        token = self._login("test_guest")
+        response = self.client.post(
+            "/api/add_new_product",
+            json={"name": "Forbidden product"},
+            headers=self._headers(token),
+        )
+
+        self.assertEqual(response.status_code, 403)
+
+    def test_expired_access_token_is_rejected(self):
+        from datetime import timedelta
+        from flask_jwt_extended import create_access_token
+
+        with crm_app_module.app.app_context():
+            user = User.query.filter_by(username="test_manager").first()
+            token = create_access_token(
+                identity=str(user.id),
+                expires_delta=timedelta(seconds=-1),
+            )
+
+        response = self.client.get(
+            "/api/protected",
+            headers=self._headers(token),
+        )
+        self.assertEqual(response.status_code, 401)
+
+    def test_logout_cannot_be_replayed_with_revoked_token(self):
+        token = self._login("test_manager")
+        headers = self._headers(token)
+
+        first_logout = self.client.post("/api/logout", headers=headers)
+        second_logout = self.client.post("/api/logout", headers=headers)
+
+        self.assertEqual(first_logout.status_code, 200)
+        self.assertEqual(second_logout.status_code, 401)
+
+
 if __name__ == "__main__":
     unittest.main()
