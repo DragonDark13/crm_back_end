@@ -1,5 +1,6 @@
 from .base import db, Base
 from .roleUser import User, Role
+from .revokedToken import RevokedToken
 from .product import Product
 from .supplier import Supplier
 from .category import Category
