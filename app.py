@@ -4,7 +4,7 @@ from datetime import timedelta
 
 from dotenv import load_dotenv
 from flask import Flask, jsonify, request
-from flask_jwt_extended import JWTManager, create_access_token, jwt_required, get_jwt_identity
+from flask_jwt_extended import JWTManager, create_access_token, jwt_required, get_jwt_identity, verify_jwt_in_request
 from flask_login import LoginManager
 import uuid
 import logging
@@ -98,6 +98,16 @@ login_manager.init_app(app)
 @login_manager.user_loader
 def load_user(user_id):
     return User.query.get(user_id)
+
+
+@app.route('/api/me', methods=['GET'])
+@jwt_required()
+def current_user_profile():
+    user_id = get_jwt_identity()
+    user = User.query.get(user_id)
+    if not user or not user.active:
+        return jsonify(message="User is inactive or does not exist"), 401
+    return jsonify(id=user.id, username=user.username, roles=sorted(role.name for role in user.roles)), 200
 
 
 @app.route('/api/protected', methods=['GET'])
