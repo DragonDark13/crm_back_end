@@ -12,9 +12,6 @@ CREATE TABLE IF NOT EXISTS revoked_tokens (
     expires_at TIMESTAMPTZ NULL
 );
 
-CREATE INDEX IF NOT EXISTS ix_revoked_tokens_jti
-    ON revoked_tokens (jti);
-
 CREATE INDEX IF NOT EXISTS ix_revoked_tokens_expires_at
     ON revoked_tokens (expires_at);
 
