@@ -256,34 +256,34 @@ def create_roles_and_users():
         db.session.flush()  # ролі вже в сесії, але без commit
 
         # --- USERS ---
+        guest_password = os.getenv("GUEST_PASSWORD")
         if not User.query.filter_by(email="guest@example.com").first():
-            guest_user = User()
-            guest_user.username = "guest_user"
-            guest_user.email = "guest@example.com"
-            guest_user.active = 1
-            guest_user.fs_uniquifier = str(uuid.uuid4())
-            guest_user.set_password(
-                os.getenv("GUEST_PASSWORD", "default_guest_password")
-            )
+            if guest_password:
+                guest_user = User()
+                guest_user.username = "guest_user"
+                guest_user.email = "guest@example.com"
+                guest_user.active = 1
+                guest_user.fs_uniquifier = str(uuid.uuid4())
+                guest_user.set_password(guest_password)
+                guest_user.roles.append(guest_role)
+                db.session.add(guest_user)
+            else:
+                logger.warning("GUEST_PASSWORD is not configured; default guest user was not created.")
 
-            guest_user.set_password(
-                os.getenv("GUEST_PASSWORD", "default_guest_password")
-            )
-            guest_user.roles.append(guest_role)
-            db.session.add(guest_user)
-
+        manager_password = os.getenv("MANAGER_PASSWORD")
         if not User.query.filter_by(email="manager@example.com").first():
-            manager_user = User(
-                username="manager",
-                email="manager@example.com",
-                fs_uniquifier=str(uuid.uuid4()),
-                active=1,
-            )
-            manager_user.set_password(
-                os.getenv("MANAGER_PASSWORD", "default_manager_password")
-            )
-            manager_user.roles.append(manager_role)
-            db.session.add(manager_user)
+            if manager_password:
+                manager_user = User(
+                    username="manager",
+                    email="manager@example.com",
+                    fs_uniquifier=str(uuid.uuid4()),
+                    active=1,
+                )
+                manager_user.set_password(manager_password)
+                manager_user.roles.append(manager_role)
+                db.session.add(manager_user)
+            else:
+                logger.warning("MANAGER_PASSWORD is not configured; default manager user was not created.")
 
         # --- ONE COMMIT ---
         db.session.commit()
