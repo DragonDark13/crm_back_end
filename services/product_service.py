@@ -316,11 +316,20 @@ def delete_all_products():
     from postgreSQLConnect import db_session
 
     try:
-        # Видалення записів з пов'язаних таблиць
-        db_session.execute(delete(ReturnHistory))
-        db_session.execute(delete(SaleHistory))
-        db_session.execute(delete(StockHistory))
-        db_session.execute(delete(PurchaseHistory))
+        # Не дозволяємо масове видалення, якщо воно знищить історичні записи.
+        has_history = any((
+            db_session.query(ReturnHistory.id).first(),
+            db_session.query(SaleHistory.id).first(),
+            db_session.query(StockHistory.id).first(),
+            db_session.query(PurchaseHistory.id).first(),
+            db_session.query(GiftSetSalesHistory.id).first(),
+            db_session.query(GiftSetProduct.id).first(),
+        ))
+        if has_history:
+            return jsonify({
+                'error': 'Products cannot be bulk-deleted while historical records or gift set references exist. Archive functionality is required instead.'
+            }), 409
+
         db_session.execute(delete(Product))
 
         # Коміт транзакції
@@ -351,20 +360,34 @@ def delete_product(product_id):
             Product.id == product_id
         ).with_for_update().populate_existing().one()
 
-        # Delete related records
-        # Ensure the column name in the filter is correct (e.g., product_id or product_fk)
-        db_session.query(product_categories_table).filter(product_categories_table.c.product_id == product.id).delete()
-        db_session.query(SaleHistory).filter(SaleHistory.product_id == product.id).delete()
-        db_session.query(PurchaseHistory).filter(PurchaseHistory.product_id == product.id).delete()
-        db_session.query(StockHistory).filter(StockHistory.product_id == product.id).delete()
+        # Перевіряємо всі записи, які можуть містити історію або посилатися на товар.
+        has_history = any((
+            db_session.query(SaleHistory.id).filter(SaleHistory.product_id == product.id).first(),
+            db_session.query(PurchaseHistory.id).filter(PurchaseHistory.product_id == product.id).first(),
+            db_session.query(StockHistory.id).filter(StockHistory.product_id == product.id).first(),
+            db_session.query(ReturnHistory.id).filter(ReturnHistory.product_id == product.id).first(),
+            db_session.query(GiftSetProduct.id).filter(GiftSetProduct.product_id == product.id).first(),
+        ))
+        if has_history:
+            db_session.rollback()
+            return jsonify({
+                'error': 'Product has historical records or is used in a gift set and cannot be deleted. Archive functionality is required instead.'
+            }), 409
 
-        # Delete the product itself
+        # Видаляємо лише зв'язки з категоріями та сам товар. Історію не видаляємо.
+        db_session.query(product_categories_table).filter(
+            product_categories_table.c.product_id == product.id
+        ).delete()
         db_session.delete(product)
         db_session.commit()
 
-        return jsonify({'message': 'Product and related records deleted successfully'}), 200
+        return jsonify({'message': 'Product deleted successfully'}), 200
     except NoResultFound:
+        db_session.rollback()
         return jsonify({'error': 'Product not found'}), 404
+    except SQLAlchemyError:
+        db_session.rollback()
+        return jsonify({'error': 'Database error while deleting product'}), 500
 
 
 class InventoryConflict(Exception):

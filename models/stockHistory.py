@@ -10,7 +10,7 @@ class StockHistory(Base):
     __tablename__ = 'stock_history'
 
     id = Column(Integer, primary_key=True)
-    product_id = Column(Integer, ForeignKey('products.id', ondelete='CASCADE'))
+    product_id = Column(Integer, ForeignKey('products.id', ondelete='RESTRICT'))
     change_amount = Column(Integer, nullable=False)
     change_type = Column(String, nullable=False)
     timestamp = Column(DateTime, default=datetime.now)

@@ -9,8 +9,8 @@ class SaleHistory(Base):
     __tablename__ = 'sale_history'
 
     id = Column(Integer, primary_key=True)
-    product_id = Column(Integer, ForeignKey('products.id', ondelete='CASCADE'))
-    customer_id = Column(Integer, ForeignKey('customers.id', ondelete='CASCADE'))
+    product_id = Column(Integer, ForeignKey('products.id', ondelete='RESTRICT'))
+    customer_id = Column(Integer, ForeignKey('customers.id', ondelete='RESTRICT'))
     quantity_sold = Column(Integer, nullable=False)
     selling_price_per_item = Column(DECIMAL(10, 2), default=0.00)
     selling_total_price = Column(DECIMAL(12, 2), default=0.00)

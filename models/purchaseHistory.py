@@ -7,7 +7,7 @@ class PurchaseHistory(Base):
     __tablename__ = 'purchase_history'
 
     id = Column(Integer, primary_key=True)
-    product_id = Column(Integer, ForeignKey('products.id', ondelete='CASCADE'))
+    product_id = Column(Integer, ForeignKey('products.id', ondelete='RESTRICT'))
     supplier_id = Column(Integer, ForeignKey('suppliers.id', ondelete='CASCADE'))
     purchase_price_per_item = Column(DECIMAL(10, 2), default=0.00)
     purchase_total_price = Column(DECIMAL(10, 2), default=0.00)

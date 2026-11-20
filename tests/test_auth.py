@@ -12,7 +12,7 @@ os.environ["MANAGER_PASSWORD"] = "test-manager-password"
 
 from flask import Flask
 
-from models import db, Role, User, RevokedToken
+from models import db, Role, User, RevokedToken, Product, Customer, SaleHistory
 
 # Create the SQLite schema before importing app.py, whose current startup
 # sequence creates the default users immediately.
@@ -226,6 +226,66 @@ class AuthenticationApiTests(unittest.TestCase):
 
         self.assertEqual(bulk_delete.status_code, 403)
         self.assertEqual(history_delete.status_code, 403)
+
+    def test_product_with_sales_history_cannot_be_deleted(self):
+        with crm_app_module.app.app_context():
+            product = Product(
+                name="Historical product",
+                article="TEST-HISTORY-001",
+                product_description="",
+            )
+            customer = Customer(name="Historical customer")
+            db.session.add_all([product, customer])
+            db.session.flush()
+            sale = SaleHistory(
+                product_id=product.id,
+                customer_id=customer.id,
+                quantity_sold=1,
+                selling_price_per_item=10,
+                selling_total_price=10,
+            )
+            db.session.add(sale)
+            db.session.commit()
+            product_id = product.id
+            sale_id = sale.id
+
+        headers = self._headers(self._login("test_manager"))
+        response = self.client.delete(f"/api/product/{product_id}", headers=headers)
+
+        self.assertEqual(response.status_code, 409)
+        with crm_app_module.app.app_context():
+            self.assertIsNotNone(db.session.get(Product, product_id))
+            self.assertIsNotNone(db.session.get(SaleHistory, sale_id))
+
+    def test_customer_with_sales_history_cannot_be_deleted(self):
+        with crm_app_module.app.app_context():
+            product = Product(
+                name="Customer history product",
+                article="TEST-HISTORY-002",
+                product_description="",
+            )
+            customer = Customer(name="Customer with sales")
+            db.session.add_all([product, customer])
+            db.session.flush()
+            sale = SaleHistory(
+                product_id=product.id,
+                customer_id=customer.id,
+                quantity_sold=1,
+                selling_price_per_item=10,
+                selling_total_price=10,
+            )
+            db.session.add(sale)
+            db.session.commit()
+            customer_id = customer.id
+            sale_id = sale.id
+
+        headers = self._headers(self._login("test_manager"))
+        response = self.client.delete(f"/api/delete_customers/{customer_id}", headers=headers)
+
+        self.assertEqual(response.status_code, 409)
+        with crm_app_module.app.app_context():
+            self.assertIsNotNone(db.session.get(Customer, customer_id))
+            self.assertIsNotNone(db.session.get(SaleHistory, sale_id))
 
     def test_deployment_webhook_requires_secret(self):
         with patch.dict(os.environ, {}, clear=False):
