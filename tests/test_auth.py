@@ -1,5 +1,6 @@
 import os
 import unittest
+from datetime import datetime, timedelta, timezone
 from unittest.mock import patch
 from uuid import uuid4
 
@@ -11,7 +12,7 @@ os.environ["MANAGER_PASSWORD"] = "test-manager-password"
 
 from flask import Flask
 
-from models import db, Role, User
+from models import db, Role, User, RevokedToken
 
 # Create the SQLite schema before importing app.py, whose current startup
 # sequence creates the default users immediately.
@@ -254,6 +255,37 @@ class AuthenticationApiTests(unittest.TestCase):
 
             self.assertIsNone(User.query.filter_by(email="guest@example.com").first())
             self.assertIsNone(User.query.filter_by(email="manager@example.com").first())
+
+
+    def test_expired_revoked_tokens_are_cleaned_up(self):
+        now = datetime.now(timezone.utc)
+        with crm_app_module.app.app_context():
+            expired = RevokedToken(
+                jti="expired-test-token",
+                token_type="access",
+                user_identity="1",
+                revoked_at=now - timedelta(hours=2),
+                expires_at=now - timedelta(hours=1),
+            )
+            active = RevokedToken(
+                jti="active-test-token",
+                token_type="access",
+                user_identity="1",
+                revoked_at=now,
+                expires_at=now + timedelta(hours=1),
+            )
+            db.session.add_all([expired, active])
+            db.session.commit()
+
+            deleted_count = crm_app_module.cleanup_expired_revoked_tokens()
+
+            self.assertEqual(deleted_count, 1)
+            self.assertIsNone(
+                RevokedToken.query.filter_by(jti="expired-test-token").first()
+            )
+            self.assertIsNotNone(
+                RevokedToken.query.filter_by(jti="active-test-token").first()
+            )
 
 
 if __name__ == "__main__":

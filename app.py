@@ -9,6 +9,8 @@ from flask_login import LoginManager
 import uuid
 import logging
 import hmac
+import threading
+import time
 
 from flask_cors import CORS
 from sqlalchemy import case
@@ -182,6 +184,54 @@ def enforce_api_authorization():
         return None
 
     return jsonify(message="Insufficient permissions"), 403
+
+
+JWT_BLOCKLIST_CLEANUP_INTERVAL_SECONDS = max(
+    60,
+    int(os.getenv("JWT_BLOCKLIST_CLEANUP_INTERVAL_SECONDS", "86400"))
+)
+_revoked_token_cleanup_lock = threading.Lock()
+_revoked_token_last_cleanup = 0.0
+
+
+def cleanup_expired_revoked_tokens():
+    now = datetime.now(timezone.utc)
+    deleted_count = db.session.query(RevokedToken).filter(
+        RevokedToken.expires_at <= now
+    ).delete(synchronize_session=False)
+    db.session.commit()
+    return deleted_count
+
+
+@app.before_request
+def cleanup_expired_revoked_tokens_periodically():
+    global _revoked_token_last_cleanup
+
+    if not request.path.startswith('/api/'):
+        return None
+
+    now_monotonic = time.monotonic()
+    if now_monotonic - _revoked_token_last_cleanup < JWT_BLOCKLIST_CLEANUP_INTERVAL_SECONDS:
+        return None
+
+    if not _revoked_token_cleanup_lock.acquire(blocking=False):
+        return None
+
+    try:
+        now_monotonic = time.monotonic()
+        if now_monotonic - _revoked_token_last_cleanup >= JWT_BLOCKLIST_CLEANUP_INTERVAL_SECONDS:
+            _revoked_token_last_cleanup = now_monotonic
+            try:
+                deleted_count = cleanup_expired_revoked_tokens()
+                if deleted_count:
+                    logger.info("Removed %s expired JWT revocation entries", deleted_count)
+            except Exception:
+                db.session.rollback()
+                logger.exception("Failed to clean expired JWT revocation entries")
+    finally:
+        _revoked_token_cleanup_lock.release()
+
+    return None
 
 
 @app.route('/api/protected', methods=['GET'])
