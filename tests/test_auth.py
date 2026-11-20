@@ -240,5 +240,21 @@ class AuthenticationApiTests(unittest.TestCase):
         self.assertEqual(unauthorized.status_code, 401)
 
 
+    def test_bootstrap_does_not_create_accounts_with_default_passwords(self):
+        with crm_app_module.app.app_context():
+            User.query.filter(
+                User.email.in_(["guest@example.com", "manager@example.com"])
+            ).delete(synchronize_session=False)
+            db.session.commit()
+
+            with patch.dict(os.environ, {}, clear=False):
+                os.environ.pop("GUEST_PASSWORD", None)
+                os.environ.pop("MANAGER_PASSWORD", None)
+                crm_app_module.create_roles_and_users()
+
+            self.assertIsNone(User.query.filter_by(email="guest@example.com").first())
+            self.assertIsNone(User.query.filter_by(email="manager@example.com").first())
+
+
 if __name__ == "__main__":
     unittest.main()
