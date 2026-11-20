@@ -13,8 +13,8 @@ class Customer(Base):
     address = Column(String, nullable=True)
     email = Column(String, nullable=True)
     phone_number = Column(String, nullable=True)
-    sales = relationship("SaleHistory", back_populates="customer", cascade="all, delete-orphan")
-    gift_set_sales = relationship('GiftSetSalesHistory', back_populates='customer')  # <-- змінено ім'я
+    sales = relationship("SaleHistory", back_populates="customer", passive_deletes="all")
+    gift_set_sales = relationship('GiftSetSalesHistory', back_populates='customer', passive_deletes='all')  # <-- змінено ім'я
 
     def to_dict(self, include_sales=False):
         customer_data = {
