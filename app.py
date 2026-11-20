@@ -68,14 +68,31 @@ api = Api(
 )
 
 
-# Configure database (PostgreSQL)
-app.config['SQLALCHEMY_DATABASE_URI'] = os.getenv('DATABASE_URL',
-                                                  'postgresql://postgres:admin@localhost:5432/shop_crm_post')
+# Configure database and application secrets from the environment.
+database_url = os.getenv('DATABASE_URL')
+if not database_url:
+    db_host = os.getenv('DB_HOST', 'localhost')
+    db_port = os.getenv('DB_PORT', '5432')
+    db_name = os.getenv('DB_NAME')
+    db_user = os.getenv('DB_USER')
+    db_password = os.getenv('DB_PASSWORD')
+    if not all([db_name, db_user, db_password]):
+        raise RuntimeError(
+            'DATABASE_URL or DB_NAME, DB_USER and DB_PASSWORD environment variables are required'
+        )
+    from urllib.parse import quote_plus
+    database_url = (
+        f"postgresql://{quote_plus(db_user)}:{quote_plus(db_password)}"
+        f"@{db_host}:{db_port}/{db_name}"
+    )
+
+app.config['SQLALCHEMY_DATABASE_URI'] = database_url
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
-# JWT Configuration
 app.config['SECRET_KEY'] = os.getenv('SECRET_KEY')
-app.config['JWT_SECRET_KEY'] = os.getenv('JWT_SECRET_KEY')
+if not app.config['SECRET_KEY']:
+    raise RuntimeError('SECRET_KEY environment variable is required')
+app.config['JWT_SECRET_KEY'] = os.getenv('JWT_SECRET_KEY') or app.config['SECRET_KEY']
 app.config['JWT_ACCESS_TOKEN_EXPIRES'] = timedelta(hours=1)
 
 # Initialize extensions
