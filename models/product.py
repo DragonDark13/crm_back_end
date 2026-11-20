@@ -23,9 +23,9 @@ class Product(Base):
     selling_quantity = Column(Integer, default=0)
     created_date = Column(DateTime, default=datetime.now)
     supplier = relationship("Supplier", back_populates="products")
-    stock_history = relationship("StockHistory", back_populates="product", cascade="all, delete-orphan")
-    purchases = relationship("PurchaseHistory", back_populates="product", cascade="all, delete-orphan")
-    sales = relationship("SaleHistory", back_populates="product", cascade="all, delete-orphan")
+    stock_history = relationship("StockHistory", back_populates="product", passive_deletes="all")
+    purchases = relationship("PurchaseHistory", back_populates="product", passive_deletes="all")
+    sales = relationship("SaleHistory", back_populates="product", passive_deletes="all")
     categories = relationship("Category", secondary=product_categories_table, back_populates="products")
     reorder_level = Column(Integer, default=0)
     reserved_quantity = Column(Integer, nullable=False, default=0)  # Додайте default=0
