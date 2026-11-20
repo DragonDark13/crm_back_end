@@ -91,66 +91,61 @@ class ProductService:
         if missing_purchase_fields:
             return {'error': f"Missing required fields for purchase: {', '.join(missing_purchase_fields)}"}, 400
 
-        # Валідація даних
         errors = ProductService.validate_product_data(data)
         if errors:
             return {'errors': errors}, 400
 
         try:
-            # Convert the 'created_date' string to a datetime object
             created_date_str = data.get('created_date')
             if created_date_str:
                 created_date = datetime.strptime(created_date_str, '%Y-%m-%d').date()
             else:
-                created_date = datetime.today().date()  # Default to today's date if not provided
+                created_date = datetime.today().date()
 
-            # Create the product
+            # Validate all foreign-key dependencies before creating the product.
+            category_ids = data.get('category_ids', [])
+            categories = []
+            if category_ids:
+                categories = db_session.query(Category).filter(Category.id.in_(category_ids)).all()
+                if len(categories) != len(category_ids):
+                    return {'error': 'Some categories were not found'}, 404
+
+            supplier = db_session.query(Supplier).filter(
+                Supplier.id == data['supplier_id']
+            ).one_or_none()
+            if not supplier:
+                return {'error': 'Supplier not found'}, 404
+
             product = Product(
                 name=data['name'],
                 total_quantity=0,
                 available_quantity=0,
-                created_date=created_date,  # Pass the datetime object
-                article=generate_article_for_new_prod() , # Додаємо артикул тут
-                product_description = data['product_description']
+                created_date=created_date,
+                article=generate_article_for_new_prod(),
+                product_description=data['product_description']
             )
 
-            # Add product to session before associating categories
             db_session.add(product)
-
-            # Add categories to the product
-            category_ids = data.get('category_ids', [])
-            if category_ids:
-                # Ensure categories exist
-                categories = db_session.query(Category).filter(Category.id.in_(category_ids)).all()
-                if len(categories) != len(category_ids):
-                    return {'error': 'Some categories were not found'}, 404
+            if categories:
                 product.categories.extend(categories)
 
-            # Assign supplier to the product
-            supplier = db_session.query(Supplier).filter(Supplier.id == data['supplier_id']).one_or_none()
-            if not supplier:
-                return {'error': 'Supplier not found'}, 404
-
             product.supplier = supplier
-
-            # Set purchase price and quantity values
             product.purchase_total_price = Decimal(data['purchase_total_price'])
             product.purchase_price_per_item = Decimal(data['purchase_price_per_item'])
             product.total_quantity = data['available_quantity']
             product.available_quantity = data['available_quantity']
             product.selling_price_per_item = Decimal(data.get('selling_price_per_item', 0))
 
-            # Commit the product to the session
-            db_session.commit()
+            # Obtain the generated ID without committing partial product state.
+            db_session.flush()
 
-            # Create purchase and stock history entries
             purchase_history = PurchaseHistory(
                 product_id=product.id,
                 purchase_price_per_item=Decimal(data['purchase_price_per_item']),
                 purchase_total_price=Decimal(data['purchase_total_price']),
                 supplier_id=supplier.id,
                 quantity_purchase=data['available_quantity'],
-                purchase_date=created_date,  # Use the created_date here as well
+                purchase_date=created_date,
             )
             db_session.add(purchase_history)
 
@@ -158,14 +153,15 @@ class ProductService:
                 product_id=product.id,
                 change_amount=data['available_quantity'],
                 change_type='create',
-                timestamp=created_date  # Use the created_date here
+                timestamp=created_date
             )
             db_session.add(stock_history)
 
+            # Product and both history records are committed atomically.
             db_session.commit()
-
             return product.to_dict(), 201
         except NoResultFound:
+            db_session.rollback()
             return {'error': 'Supplier not found'}, 404
         except Exception as e:
             db_session.rollback()

@@ -4,7 +4,13 @@ from flask import jsonify, Blueprint
 
 from decimal import Decimal
 
-from models import SaleHistory, Product, Customer, PackagingSaleHistory, GiftSetSalesHistory
+from sqlalchemy.orm import joinedload, selectinload
+
+from models import (
+    SaleHistory, Product, Customer, PackagingSaleHistory, GiftSetSalesHistory,
+    PackagingMaterial, GiftSetSalesHistoryProduct, GiftSetSalesHistoryPackaging,
+    GiftSetProduct, GiftSetPackaging
+)
 
 sales_history_services_bp = Blueprint('sales_history', __name__)
 
@@ -21,12 +27,30 @@ def add_sale_history_id(sales_data):
 def get_sales_history():
     from postgreSQLConnect import db_session
 
-    # Отримуємо всі записи історії продажів одиничних товарів
-    query = db_session.query(SaleHistory).join(Product).join(Customer)
+    # Завантажуємо пов'язані дані пакетно, щоб не виконувати запити для кожного продажу.
+    query = db_session.query(SaleHistory).join(Product).join(Customer).options(
+        joinedload(SaleHistory.product).joinedload(Product.supplier),
+        joinedload(SaleHistory.product).selectinload(Product.categories),
+        joinedload(SaleHistory.customer),
+        selectinload(SaleHistory.packaging_sale_history)
+        .joinedload(PackagingSaleHistory.packaging_material)
+        .joinedload(PackagingMaterial.packaging_material_supplier)
+    )
     sales_history = query.all()
 
-    # Отримуємо всі записи історії продажів подарункових наборів
-    gift_set_sales_history = db_session.query(GiftSetSalesHistory).all()
+    # Історія продажів подарункових наборів також завантажується з потрібними зв'язками.
+    gift_set_sales_history = db_session.query(GiftSetSalesHistory).options(
+        joinedload(GiftSetSalesHistory.gift_set),
+        joinedload(GiftSetSalesHistory.customer),
+        selectinload(GiftSetSalesHistory.sales_history_products)
+        .joinedload(GiftSetSalesHistoryProduct.gift_set_product)
+        .joinedload(GiftSetProduct.product)
+        .joinedload(Product.supplier),
+        selectinload(GiftSetSalesHistory.sales_history_packagings)
+        .joinedload(GiftSetSalesHistoryPackaging.gift_set_packaging)
+        .joinedload(GiftSetPackaging.packaging)
+        .joinedload(PackagingMaterial.packaging_material_supplier)
+    ).all()
 
     # Функція для обчислення собівартості товару
     def calculate_product_cost(item):
@@ -64,14 +88,17 @@ def get_sales_history():
             }
         }
 
-    # Підготовка даних для одиничних товарів
+    # Підготовка даних про одиничні товари
     sales_data = []
     for sale in sales_history:
-        # Знаходимо відповідне пакування для кожного запису в історії продажу
-        packaging_sale = db_session.query(PackagingSaleHistory).filter(
-            PackagingSaleHistory.sale_id == sale.id,
-            PackagingSaleHistory.packaging_material_id == sale.packaging_material_id
-        ).first()
+        # Відповідне пакування вже завантажене разом із продажами.
+        packaging_sale = next(
+            (
+                item for item in sale.packaging_sale_history
+                if item.packaging_material_id == sale.packaging_material_id
+            ),
+            None
+        )
 
         # Собівартість товару (ціна закупівлі)
         product_cost = sale.product.purchase_price_per_item * sale.quantity_sold
@@ -160,7 +187,7 @@ def get_sales_history():
         }
         sales_data.append(gift_set_sale_data)
 
-        # Додаємо унікальні sale_history_id до кожного елемента
+    # Додаємо унікальні sale_history_id до кожного елемента.
     combined_sales_data_with_id = add_sale_history_id(sales_data)
 
     return jsonify(combined_sales_data_with_id)
