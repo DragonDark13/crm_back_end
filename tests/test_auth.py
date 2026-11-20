@@ -249,7 +249,8 @@ class AuthenticationApiTests(unittest.TestCase):
             product_id = product.id
             sale_id = sale.id
 
-        response = self.client.delete(f"/api/product/{product_id}")
+        headers = self._headers(self._login("test_manager"))
+        response = self.client.delete(f"/api/product/{product_id}", headers=headers)
 
         self.assertEqual(response.status_code, 409)
         with crm_app_module.app.app_context():
@@ -278,7 +279,8 @@ class AuthenticationApiTests(unittest.TestCase):
             customer_id = customer.id
             sale_id = sale.id
 
-        response = self.client.delete(f"/api/delete_customers/{customer_id}")
+        headers = self._headers(self._login("test_manager"))
+        response = self.client.delete(f"/api/delete_customers/{customer_id}", headers=headers)
 
         self.assertEqual(response.status_code, 409)
         with crm_app_module.app.app_context():
