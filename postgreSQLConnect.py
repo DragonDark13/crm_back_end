@@ -1,10 +1,12 @@
+import os
+
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker, scoped_session
 
 from models import db
 
 # Налаштування підключення до PostgreSQL
-DATABASE_URI = "postgresql://postgres:admin@localhost:5432/shop_crm_post"  # Замініть на свої дані
+DATABASE_URI = os.getenv('DATABASE_URL', 'postgresql://postgres:admin@localhost:5432/shop_crm_post')
 
 # Створення двигуна (engine)
 engine = create_engine(
