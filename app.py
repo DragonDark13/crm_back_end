@@ -8,15 +8,18 @@ from flask_jwt_extended import JWTManager, create_access_token, get_jwt, get_jwt
 from flask_login import LoginManager
 import uuid
 import logging
+import hmac
 
 from flask_cors import CORS
+from sqlalchemy import case
+from sqlalchemy.dialects.postgresql import insert as postgresql_insert
 
 from api.categories_api import categories_ns
 from api.customer_api import customers_ns
 from api.investment_api import investments_ns
 from api.packaging_routes import packaging_ns
 from api.supplier_routes import supplier_ns
-from models import db, RevokedToken, User, Role
+from models import db, RevokedToken, User, Role, LoginAttempt, LoginIPAttempt
 from services.category_routes import category_bp
 from services.customer_routes import customer_bp
 from services.export_to_excel_services import export_to_excel_bp
@@ -48,7 +51,15 @@ logger.addHandler(console_handler)
 
 # Flask app initialization
 app = Flask(__name__)
-CORS(app)
+allowed_origins = [
+    origin.strip()
+    for origin in os.getenv(
+        "CORS_ALLOWED_ORIGINS",
+        "http://localhost:5173,http://127.0.0.1:5173,https://aleksandrforupwork.pythonanywhere.com"
+    ).split(",")
+    if origin.strip()
+]
+CORS(app, resources={r"/api/*": {"origins": allowed_origins}})
 api = Api(
     app,
     title="CRM API",
@@ -57,14 +68,31 @@ api = Api(
 )
 
 
-# Configure database (PostgreSQL)
-app.config['SQLALCHEMY_DATABASE_URI'] = os.getenv('DATABASE_URL',
-                                                  'postgresql://postgres:admin@localhost:5432/shop_crm_post')
+# Configure database and application secrets from the environment.
+database_url = os.getenv('DATABASE_URL')
+if not database_url:
+    db_host = os.getenv('DB_HOST', 'localhost')
+    db_port = os.getenv('DB_PORT', '5432')
+    db_name = os.getenv('DB_NAME')
+    db_user = os.getenv('DB_USER')
+    db_password = os.getenv('DB_PASSWORD')
+    if not all([db_name, db_user, db_password]):
+        raise RuntimeError(
+            'DATABASE_URL or DB_NAME, DB_USER and DB_PASSWORD environment variables are required'
+        )
+    from urllib.parse import quote_plus
+    database_url = (
+        f"postgresql://{quote_plus(db_user)}:{quote_plus(db_password)}"
+        f"@{db_host}:{db_port}/{db_name}"
+    )
+
+app.config['SQLALCHEMY_DATABASE_URI'] = database_url
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
-# JWT Configuration
 app.config['SECRET_KEY'] = os.getenv('SECRET_KEY')
-app.config['JWT_SECRET_KEY'] = os.getenv('JWT_SECRET_KEY')
+if not app.config['SECRET_KEY']:
+    raise RuntimeError('SECRET_KEY environment variable is required')
+app.config['JWT_SECRET_KEY'] = os.getenv('JWT_SECRET_KEY') or app.config['SECRET_KEY']
 app.config['JWT_ACCESS_TOKEN_EXPIRES'] = timedelta(hours=1)
 
 # Initialize extensions
@@ -137,6 +165,8 @@ def enforce_api_authorization():
 
     role_names = {role.name for role in user.roles}
     if 'manager' in role_names:
+        if request.path.startswith('/api/delete_all_') or request.path.startswith('/api/delete-history/'):
+            return jsonify(message="Administrator role required"), 403
         return None
 
     is_catalog_read = (
@@ -193,7 +223,12 @@ app.register_blueprint(statistics_services_bp,url_prefix='/api/statistics')
 
 @app.route('/update_server', methods=['POST'])
 def webhook():
-    logging.info('POST request received on /update_server')
+    webhook_secret = os.getenv('WEBHOOK_SECRET')
+    if not webhook_secret:
+        return 'Webhook is disabled', 503
+    if not hmac.compare_digest(request.headers.get('X-Webhook-Secret', ''), webhook_secret):
+        return 'Unauthorized', 401
+    logging.info('Authorized POST request received on /update_server')
     try:
         subprocess.run(['git', 'fetch', 'origin'], cwd='/home/aleksandrForUpwork/crm_back_end')
         subprocess.run(['git', 'pull', 'origin', 'main'], cwd='/home/aleksandrForUpwork/crm_back_end',
@@ -259,17 +294,140 @@ with app.app_context():
     create_roles_and_users()
 
 
+LOGIN_WINDOW = timedelta(minutes=15)
+LOGIN_LOCKOUT = timedelta(minutes=15)
+LOGIN_USERNAME_MAX_ATTEMPTS = int(os.getenv("LOGIN_USERNAME_MAX_ATTEMPTS", "5"))
+LOGIN_IP_MAX_ATTEMPTS = int(os.getenv("LOGIN_IP_MAX_ATTEMPTS", "30"))
+LOGIN_ACCOUNT_MAX_ATTEMPTS = int(os.getenv("LOGIN_ACCOUNT_MAX_ATTEMPTS", "20"))
+LOGIN_ACCOUNT_IP_KEY = "__all_ips__"
+
+
+def _is_login_locked(attempt, now):
+    locked_until = attempt.locked_until if attempt else None
+    if locked_until and locked_until.tzinfo is None:
+        locked_until = locked_until.replace(tzinfo=timezone.utc)
+    return bool(locked_until and locked_until > now)
+
+
+def _increment_login_counter(model, key_values, now, max_attempts):
+    table = model.__table__
+
+    if db.engine.dialect.name == "postgresql":
+        window_expired = table.c.window_started_at <= now - LOGIN_WINDOW
+        next_attempts = case((window_expired, 1), else_=table.c.attempts + 1)
+        statement = postgresql_insert(table).values(
+            **key_values,
+            attempts=1,
+            window_started_at=now,
+            locked_until=None
+        )
+
+        conflict_columns = (
+            [table.c.username, table.c.ip_address]
+            if model is LoginAttempt else [table.c.ip_address]
+        )
+        statement = statement.on_conflict_do_update(
+            index_elements=conflict_columns,
+            set_={
+                "attempts": next_attempts,
+                "window_started_at": case(
+                    (window_expired, now),
+                    else_=table.c.window_started_at
+                ),
+                "locked_until": case(
+                    (window_expired, None),
+                    (next_attempts >= max_attempts, now + LOGIN_LOCKOUT),
+                    else_=table.c.locked_until
+                )
+            }
+        )
+        db.session.execute(statement)
+        return
+
+    # Portable fallback for SQLite-based tests and local development.
+    attempt = model.query.filter_by(**key_values).with_for_update().first()
+    if attempt is None:
+        attempt = model(**key_values, attempts=1, window_started_at=now)
+    else:
+        window_started_at = attempt.window_started_at
+        if window_started_at.tzinfo is None:
+            window_started_at = window_started_at.replace(tzinfo=timezone.utc)
+        if window_started_at <= now - LOGIN_WINDOW:
+            attempt.attempts = 1
+            attempt.window_started_at = now
+            attempt.locked_until = None
+        else:
+            attempt.attempts += 1
+    if attempt.attempts >= max_attempts:
+        attempt.locked_until = now + LOGIN_LOCKOUT
+    db.session.add(attempt)
+
+
 @app.route('/api/login', methods=['POST'])
 def login():
-    username = request.json.get('username')
-    password = request.json.get('password')
-    user = User.query.filter_by(username=username).first()
+    credentials = request.get_json(silent=True) or {}
+    username = credentials.get('username')
+    password = credentials.get('password')
+
+    if not isinstance(username, str) or not username.strip() or not isinstance(password, str) or not password:
+        return jsonify(message="Invalid credentials"), 401
+
+    normalized_username = username.strip()
+    client_ip = request.remote_addr or "unknown"
+    now = datetime.now(timezone.utc)
+
+    username_attempt = LoginAttempt.query.filter_by(
+        username=normalized_username,
+        ip_address=client_ip
+    ).first()
+    ip_attempt = LoginIPAttempt.query.filter_by(ip_address=client_ip).first()
+    account_attempt = LoginAttempt.query.filter_by(
+        username=normalized_username,
+        ip_address=LOGIN_ACCOUNT_IP_KEY
+    ).first()
+
+    if (
+        _is_login_locked(username_attempt, now)
+        or _is_login_locked(ip_attempt, now)
+        or _is_login_locked(account_attempt, now)
+    ):
+        return jsonify(message="Too many failed login attempts. Try again later."), 429
+
+    user = User.query.filter_by(username=normalized_username).first()
     if user and user.active and user.verify_password(password):
+        if username_attempt:
+            db.session.delete(username_attempt)
+        if account_attempt:
+            db.session.delete(account_attempt)
+        db.session.commit()
         access_token = create_access_token(
             identity=str(user.id),
-            additional_claims={"username": user.username}
+            additional_claims={
+                "username": user.username,
+                "roles": sorted(role.name for role in user.roles)
+            }
         )
         return jsonify(message="Login successful", token=access_token), 200
+
+    _increment_login_counter(
+        LoginAttempt,
+        {"username": normalized_username, "ip_address": client_ip},
+        now,
+        LOGIN_USERNAME_MAX_ATTEMPTS
+    )
+    _increment_login_counter(
+        LoginIPAttempt,
+        {"ip_address": client_ip},
+        now,
+        LOGIN_IP_MAX_ATTEMPTS
+    )
+    _increment_login_counter(
+        LoginAttempt,
+        {"username": normalized_username, "ip_address": LOGIN_ACCOUNT_IP_KEY},
+        now,
+        LOGIN_ACCOUNT_MAX_ATTEMPTS
+    )
+    db.session.commit()
     return jsonify(message="Invalid credentials"), 401
 
 
@@ -291,12 +449,8 @@ def logout():
 
 @app.before_request
 def log_request_info():
-    logger.info(f"Request method: {request.method}, URL: {request.url}")
-    if request.method in ["POST", "PUT", "PATCH"]:
-        if request.path == '/api/login':
-            logger.info("Body: [redacted]")
-        else:
-            logger.info(f"Body: {request.get_data(as_text=True)}")
+    # Never log request bodies or query strings: they may contain credentials or personal data.
+    logger.info("Request method: %s, path: %s", request.method, request.path)
 
 
 

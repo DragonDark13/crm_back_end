@@ -1,4 +1,5 @@
 from .base import db, Base
+from .loginAttempt import LoginAttempt, LoginIPAttempt
 from .roleUser import User, Role
 from .revokedToken import RevokedToken
 from .product import Product
