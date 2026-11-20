@@ -199,5 +199,46 @@ class AuthenticationApiTests(unittest.TestCase):
         self.assertEqual(second_logout.status_code, 401)
 
 
+    def test_login_throttling_locks_after_five_failed_attempts(self):
+        for _ in range(5):
+            response = self.client.post(
+                "/api/login",
+                json={"username": "test_manager", "password": "wrong-password"},
+            )
+            self.assertEqual(response.status_code, 401)
+
+        locked_response = self.client.post(
+            "/api/login",
+            json={"username": "test_manager", "password": "test-password"},
+        )
+        self.assertEqual(locked_response.status_code, 429)
+
+    def test_manager_cannot_bulk_delete_or_delete_history(self):
+        token = self._login("test_manager")
+        headers = self._headers(token)
+
+        bulk_delete = self.client.delete("/api/delete_all_products", headers=headers)
+        history_delete = self.client.delete(
+            "/api/delete-history/1/sale/1",
+            headers=headers,
+        )
+
+        self.assertEqual(bulk_delete.status_code, 403)
+        self.assertEqual(history_delete.status_code, 403)
+
+    def test_deployment_webhook_requires_secret(self):
+        with patch.dict(os.environ, {}, clear=False):
+            os.environ.pop("WEBHOOK_SECRET", None)
+            disabled = self.client.post("/update_server")
+        self.assertEqual(disabled.status_code, 503)
+
+        with patch.dict(os.environ, {"WEBHOOK_SECRET": "expected-secret"}):
+            unauthorized = self.client.post(
+                "/update_server",
+                headers={"X-Webhook-Secret": "wrong-secret"},
+            )
+        self.assertEqual(unauthorized.status_code, 401)
+
+
 if __name__ == "__main__":
     unittest.main()
