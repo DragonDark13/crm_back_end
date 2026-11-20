@@ -38,7 +38,7 @@ class ProductService:
         try:
             product = db_session.query(Product).filter(
             Product.id == product_id
-        ).with_for_update().populate_existing().one()
+        ).populate_existing().one()
             product_dict = product.to_dict()  # Assuming you have a method for dict conversion
             product_dict['category_ids'] = [category.id for category in product.categories]
             product_dict['supplier'] = product.supplier.to_dict() if product.supplier else None
