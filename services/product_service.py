@@ -323,10 +323,11 @@ def delete_all_products():
             db_session.query(StockHistory.id).first(),
             db_session.query(PurchaseHistory.id).first(),
             db_session.query(GiftSetSalesHistory.id).first(),
+            db_session.query(GiftSetProduct.id).first(),
         ))
         if has_history:
             return jsonify({
-                'error': 'Products cannot be bulk-deleted while historical records exist. Archive functionality is required instead.'
+                'error': 'Products cannot be bulk-deleted while historical records or gift set references exist. Archive functionality is required instead.'
             }), 409
 
         db_session.execute(delete(Product))
