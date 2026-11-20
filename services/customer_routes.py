@@ -3,7 +3,7 @@ from flask_restx import Resource
 from flask_sqlalchemy.session import Session
 
 from api.customer_api import customers_ns
-from models import Customer, Supplier
+from models import Customer, Supplier, SaleHistory, ReturnHistory, GiftSetSalesHistory
 from sqlalchemy.exc import IntegrityError
 
 # Create Blueprint for customers
@@ -150,18 +150,37 @@ def update_customer(session: Session, customer_id: int, customer_data: dict):
 def delete_customer_route(customer_id: int):
     from postgreSQLConnect import db_session
 
-    success = delete_customer(db_session, customer_id)
+    try:
+        success = delete_customer(db_session, customer_id)
+    except HistoricalRecordsConflict as e:
+        return jsonify({"error": str(e)}), 409
 
     if not success:
         abort(404, description="Customer not found")
 
-    return jsonify({"message": "Customer deleted successfully"}), 204
+    return jsonify({"message": "Customer deleted successfully"}), 200
+
+
+class HistoricalRecordsConflict(Exception):
+    pass
 
 
 def delete_customer(session: Session, customer_id: int):
     customer = session.query(Customer).get(customer_id)
     if not customer:
         return None  # Клієнт не знайдений
+
+    has_history = any((
+        session.query(SaleHistory.id).filter(SaleHistory.customer_id == customer_id).first(),
+        session.query(ReturnHistory.id).filter(ReturnHistory.customer_id == customer_id).first(),
+        session.query(GiftSetSalesHistory.id).filter(
+            GiftSetSalesHistory.customer_id == customer_id
+        ).first(),
+    ))
+    if has_history:
+        raise HistoricalRecordsConflict(
+            "Customer has historical sales or returns and cannot be deleted. Archive functionality is required instead."
+        )
 
     try:
         session.delete(customer)
