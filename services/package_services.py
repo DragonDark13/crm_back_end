@@ -254,7 +254,7 @@ def get_packaging_supplier_purchase_history_api(supplier_id):
     supplier = db_session.query(PackagingMaterialSupplier).get(supplier_id)
 
     if not supplier:
-        return jsonify({'error': 'Packaging supplier not found'}), 4041
+        return jsonify({'error': 'Packaging supplier not found'}), 404
 
     purchase_history = db_session.query(PackagingPurchaseHistory).filter_by(supplier_id=supplier_id).all()
 
