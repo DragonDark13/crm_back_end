@@ -158,7 +158,7 @@ def delete_customer_route(customer_id: int):
     if not success:
         abort(404, description="Customer not found")
 
-    return jsonify({"message": "Customer deleted successfully"}), 200
+    return jsonify({"message": "Customer deleted successfully"}), 204
 
 
 class HistoricalRecordsConflict(Exception):
