@@ -172,6 +172,17 @@ class ProductService:
             # Obtain the generated ID without committing partial product state.
             db_session.flush()
 
+            record_product_audit(
+                db_session,
+                product,
+                "create",
+                {
+                    "available_quantity": (None, product.available_quantity),
+                    "purchase_price_per_item": (None, product.purchase_price_per_item),
+                    "selling_price_per_item": (None, product.selling_price_per_item),
+                },
+            )
+
             purchase_history = PurchaseHistory(
                 product_id=product.id,
                 purchase_price_per_item=Decimal(data['purchase_price_per_item']),
