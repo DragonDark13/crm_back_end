@@ -2,18 +2,51 @@ from sqlalchemy import insert, delete, or_
 
 from models import Product, product_categories_table, Supplier, PurchaseHistory, StockHistory, Category, SaleHistory, \
     Customer, ReturnHistory, PackagingMaterial, PackagingSaleHistory, GiftSet, GiftSetProduct, GiftSetPackaging, \
-    GiftSetSalesHistory
+    GiftSetSalesHistory, ProductAuditHistory, User
 from flask import Blueprint, request
 from sqlalchemy.orm import joinedload
 from sqlalchemy.exc import NoResultFound, SQLAlchemyError
 from flask import jsonify
-from flask_jwt_extended import jwt_required
+from flask_jwt_extended import jwt_required, get_jwt_identity
 from decimal import Decimal, InvalidOperation
 from datetime import datetime
 
 # Створюємо Blueprint для продуктів
 
 product_bp = Blueprint('products', __name__)
+
+def record_product_audit(db_session, product, action, changes, reason=None):
+    """Append immutable before/after records for each changed product field."""
+    try:
+        identity = get_jwt_identity()
+    except Exception:
+        identity = None
+
+    actor = None
+    if identity is not None:
+        try:
+            actor = db_session.query(User).filter(User.id == int(identity)).one_or_none()
+        except (TypeError, ValueError):
+            actor = None
+
+    for field_name, values in changes.items():
+        old_value, new_value = values
+        old_text = str(old_value) if old_value is not None else None
+        new_text = str(new_value) if new_value is not None else None
+        if old_text == new_text:
+            continue
+
+        db_session.add(ProductAuditHistory(
+            product_id=product.id,
+            changed_by_id=actor.id if actor else None,
+            changed_by_username=actor.username if actor else "Невідомий користувач",
+            action=action,
+            field_name=field_name,
+            old_value=old_text,
+            new_value=new_text,
+            reason=reason,
+        ))
+
 
 
 def generate_article_for_new_prod():
@@ -139,6 +172,17 @@ class ProductService:
             # Obtain the generated ID without committing partial product state.
             db_session.flush()
 
+            record_product_audit(
+                db_session,
+                product,
+                "create",
+                {
+                    "available_quantity": (None, product.available_quantity),
+                    "purchase_price_per_item": (None, product.purchase_price_per_item),
+                    "selling_price_per_item": (None, product.selling_price_per_item),
+                },
+            )
+
             purchase_history = PurchaseHistory(
                 product_id=product.id,
                 purchase_price_per_item=Decimal(data['purchase_price_per_item']),
@@ -254,12 +298,27 @@ def update_product(product_id):
         else:
             product.created_date = datetime.now()
 
-        change_amount = data['available_quantity'] - product.available_quantity
+        previous_values = {
+            "available_quantity": product.available_quantity,
+            "purchase_price_per_item": product.purchase_price_per_item,
+            "selling_price_per_item": product.selling_price_per_item,
+        }
 
         product.available_quantity = available_quantity
         product.purchase_total_price = purchase_total_price
         product.purchase_price_per_item = purchase_price_per_item
         product.selling_price_per_item = selling_price_per_item
+
+        record_product_audit(
+            db_session,
+            product,
+            "manual_edit",
+            {
+                "available_quantity": (previous_values["available_quantity"], product.available_quantity),
+                "purchase_price_per_item": (previous_values["purchase_price_per_item"], product.purchase_price_per_item),
+                "selling_price_per_item": (previous_values["selling_price_per_item"], product.selling_price_per_item),
+            },
+        )
 
         category_ids = data.get('category_ids', [])
         category_ids = data.get('category_ids', [])
@@ -536,6 +595,13 @@ def inventory_product(product_id):
         product.available_quantity = actual_quantity
 
         change_amount = actual_quantity - quantity_before
+        record_product_audit(
+            db_session,
+            product,
+            "inventory",
+            {"available_quantity": (product.available_quantity, actual_quantity)},
+            reason=reason,
+        )
         stock_history = StockHistory(
             product_id=product.id,
             change_amount=change_amount,
@@ -610,10 +676,30 @@ def get_product_history(product_id):
             for record in sale_history
         ]
 
+        audit_history = db_session.query(ProductAuditHistory).filter(
+            ProductAuditHistory.product_id == product.id
+        ).order_by(ProductAuditHistory.changed_at.desc(), ProductAuditHistory.id.desc()).all()
+        audit_history_list = [
+            {
+                'id': record.id,
+                'product_id': record.product_id,
+                'changed_by_id': record.changed_by_id,
+                'changed_by_username': record.changed_by_username,
+                'action': record.action,
+                'field_name': record.field_name,
+                'old_value': record.old_value,
+                'new_value': record.new_value,
+                'reason': record.reason,
+                'changed_at': record.changed_at.strftime('%Y-%m-%d %H:%M:%S'),
+            }
+            for record in audit_history
+        ]
+
         combined_history = {
             'stock_history': stock_history_list,
             'purchase_history': purchase_history_list,
-            'sale_history': sale_history_list
+            'sale_history': sale_history_list,
+            'audit_history': audit_history_list,
         }
 
         return jsonify(combined_history), 200
@@ -654,10 +740,23 @@ def purchase_product(product_id):
                 return jsonify({'error': 'Supplier not found'}), 404
             product.supplier = supplier
 
+        previous_available_quantity = product.available_quantity
+        previous_purchase_price = product.purchase_price_per_item
+
         product.total_quantity += quantity
         product.available_quantity += quantity
         product.purchase_total_price += purchase_total_price
         product.purchase_price_per_item = purchase_price_per_item
+
+        record_product_audit(
+            db_session,
+            product,
+            "purchase",
+            {
+                "available_quantity": (previous_available_quantity, product.available_quantity),
+                "purchase_price_per_item": (previous_purchase_price, product.purchase_price_per_item),
+            },
+        )
 
         purchase_history = PurchaseHistory(
             product_id=product.id,
@@ -743,10 +842,23 @@ def record_sale(product_id):
                 db_session.rollback()
                 return jsonify({'error': 'Not enough packaging material available'}), 400
 
+        previous_available_quantity = product.available_quantity
+        previous_selling_price = product.selling_price_per_item
+
         product.available_quantity -= quantity_sold
         product.selling_quantity += quantity_sold
         product.sold_quantity += quantity_sold
         product.selling_price_per_item = selling_price_per_item
+
+        record_product_audit(
+            db_session,
+            product,
+            "sale",
+            {
+                "available_quantity": (previous_available_quantity, product.available_quantity),
+                "selling_price_per_item": (previous_selling_price, product.selling_price_per_item),
+            },
+        )
         product.selling_total_price += selling_total_price
 
         sale_history = SaleHistory(
