@@ -14,7 +14,7 @@ class ReturnHistory(Base):
     quantity_returned = Column(Integer, nullable=False)
     return_reason = Column(String, nullable=True)
     return_date = Column(DateTime, default=datetime.now, nullable=False)
-    sale_id = Column(Integer, ForeignKey('sale_history.id', ondelete='RESTRICT'), nullable=False)
+    sale_id = Column(Integer, ForeignKey('sale_history.id', ondelete='RESTRICT'))
     return_amount = Column(DECIMAL(12, 2), nullable=True)
     returned_by_id = Column(Integer, ForeignKey('users.id', ondelete='SET NULL'), nullable=True)
     returned_by_username = Column(String(255), nullable=True)
