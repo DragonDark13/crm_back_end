@@ -132,6 +132,8 @@ def get_sales_history():
 
         product_data = {
             'sale_history_id': sale.id,
+            'sale_id': sale.id,
+            'product_id': sale.product_id,
             'product_name': sale.product.name,
             'categories': [{
                 'id': category.id,

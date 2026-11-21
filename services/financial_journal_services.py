@@ -8,6 +8,7 @@ from models import (
     PackagingPurchaseHistory,
     PurchaseHistory,
     SaleHistory,
+    ReturnHistory,
 )
 
 financial_journal_bp = Blueprint("financial_journal", __name__)
@@ -76,6 +77,22 @@ def get_financial_journal():
                 "description": item.product.name if item.product else "Товар",
                 "counterparty": item.customer.name if item.customer else "",
                 "amount": float(item.selling_total_price or 0),
+            })
+
+        for item in db_session.query(ReturnHistory).all():
+            sale = item.sale
+            refund_amount = item.return_amount
+            if refund_amount is None:
+                refund_amount = (sale.selling_price_per_item or 0) * item.quantity_returned if sale else 0
+            operations.append({
+                "id": f"customer-return-{item.id}",
+                "source_id": item.id,
+                "date": _format_date(item.return_date),
+                "direction": "expense",
+                "type": "Повернення клієнту",
+                "description": item.product.name if item.product else "Повернення товару",
+                "counterparty": item.customer.name if item.customer else "",
+                "amount": float(refund_amount or 0),
             })
 
         for item in db_session.query(GiftSetSalesHistory).all():

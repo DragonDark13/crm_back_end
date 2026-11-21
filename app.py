@@ -26,6 +26,7 @@ from services.category_routes import category_bp
 from services.customer_routes import customer_bp
 from services.export_to_excel_services import export_to_excel_bp
 from services.financial_journal_services import financial_journal_bp
+from services.return_history_services import return_history_bp
 from services.gift_box_services import gift_box_services_bp
 from services.other_investments_services import investments_bp
 from services.package_services import package_bp
@@ -269,6 +270,7 @@ app.register_blueprint(investments_bp, url_prefix='/api')
 app.register_blueprint(purchase_history_bp, url_prefix='/api')
 app.register_blueprint(export_to_excel_bp, url_prefix='/api')
 app.register_blueprint(financial_journal_bp, url_prefix='/api')
+app.register_blueprint(return_history_bp, url_prefix='/api')
 app.register_blueprint(sales_history_services_bp, url_prefix='/api')
 app.register_blueprint(gift_box_services_bp, url_prefix='/api')
 app.register_blueprint(statistics_services_bp,url_prefix='/api/statistics')
