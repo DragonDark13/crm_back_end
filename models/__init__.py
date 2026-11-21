@@ -22,3 +22,4 @@ from .giftModels import GiftSet, GiftSetSalesHistoryPackaging, GiftSetSalesHisto
     GiftSetSalesHistory, GiftSetProduct
 from .otherInvestment import OtherInvestment
 from .stockHistory import StockHistory
+from .productAuditHistory import ProductAuditHistory
