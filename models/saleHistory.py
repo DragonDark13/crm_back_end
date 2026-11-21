@@ -26,7 +26,7 @@ class SaleHistory(Base):
     total_packaging_cost = Column(Float, default=0, nullable=True)  # Packaging cost can be null or 0
     packaging_material = relationship("PackagingMaterial")  # Link to packaging material if exists
 
-    returns = relationship("ReturnHistory", back_populates="sale", cascade="all, delete-orphan")
+    returns = relationship("ReturnHistory", back_populates="sale")
     packaging_sale_history = relationship("PackagingSaleHistory", back_populates="sale", cascade="all, delete-orphan")
 
     def to_dict(self, include_customer=False):
