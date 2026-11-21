@@ -665,10 +665,30 @@ def get_product_history(product_id):
             for record in sale_history
         ]
 
+        audit_history = db_session.query(ProductAuditHistory).filter(
+            ProductAuditHistory.product_id == product.id
+        ).order_by(ProductAuditHistory.changed_at.desc(), ProductAuditHistory.id.desc()).all()
+        audit_history_list = [
+            {
+                'id': record.id,
+                'product_id': record.product_id,
+                'changed_by_id': record.changed_by_id,
+                'changed_by_username': record.changed_by_username,
+                'action': record.action,
+                'field_name': record.field_name,
+                'old_value': record.old_value,
+                'new_value': record.new_value,
+                'reason': record.reason,
+                'changed_at': record.changed_at.strftime('%Y-%m-%d %H:%M:%S'),
+            }
+            for record in audit_history
+        ]
+
         combined_history = {
             'stock_history': stock_history_list,
             'purchase_history': purchase_history_list,
-            'sale_history': sale_history_list
+            'sale_history': sale_history_list,
+            'audit_history': audit_history_list,
         }
 
         return jsonify(combined_history), 200
