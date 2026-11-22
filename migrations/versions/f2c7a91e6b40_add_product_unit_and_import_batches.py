@@ -1,4 +1,4 @@
-"""Add product unit of measure and CSV import batch tracking.
+"""Add product unit of measure, import batch tracking and precise purchase prices.
 
 Revision ID: f2c7a91e6b40
 Revises: e8a4c2d91f60
@@ -19,6 +19,20 @@ def upgrade():
         "products",
         sa.Column("unit_of_measure", sa.String(length=50), nullable=True),
     )
+    op.alter_column(
+        "products",
+        "purchase_price_per_item",
+        existing_type=sa.Numeric(10, 2),
+        type_=sa.Numeric(12, 3),
+        existing_nullable=True,
+    )
+    op.alter_column(
+        "purchase_history",
+        "purchase_price_per_item",
+        existing_type=sa.Numeric(10, 2),
+        type_=sa.Numeric(12, 3),
+        existing_nullable=True,
+    )
     op.create_table(
         "product_import_batches",
         sa.Column("id", sa.Integer(), primary_key=True),
@@ -27,15 +41,22 @@ def upgrade():
         sa.Column("rows_imported", sa.Integer(), nullable=False),
         sa.Column("imported_at", sa.DateTime(), nullable=False, server_default=sa.func.now()),
     )
-    op.create_index(
-        "ix_product_import_batches_file_hash",
-        "product_import_batches",
-        ["file_hash"],
-        unique=True,
-    )
 
 
 def downgrade():
-    op.drop_index("ix_product_import_batches_file_hash", table_name="product_import_batches")
     op.drop_table("product_import_batches")
+    op.alter_column(
+        "purchase_history",
+        "purchase_price_per_item",
+        existing_type=sa.Numeric(12, 3),
+        type_=sa.Numeric(10, 2),
+        existing_nullable=True,
+    )
+    op.alter_column(
+        "products",
+        "purchase_price_per_item",
+        existing_type=sa.Numeric(12, 3),
+        type_=sa.Numeric(10, 2),
+        existing_nullable=True,
+    )
     op.drop_column("products", "unit_of_measure")
