@@ -1,5 +1,6 @@
 import csv
 import hashlib
+import io
 import os
 from datetime import date, datetime
 from decimal import Decimal, InvalidOperation
@@ -151,7 +152,7 @@ def load_products_from_csv(file_path, created_date=None):
 
     try:
         text_content = file_content.decode("utf-8-sig")
-        csv_reader = csv.DictReader(text_content.splitlines())
+        csv_reader = csv.DictReader(io.StringIO(text_content))
         if not csv_reader.fieldnames:
             raise ValueError("CSV-файл порожній або не містить заголовків.")
 
@@ -205,6 +206,10 @@ def load_products_from_csv(file_path, created_date=None):
                     product_description=purchase["description"],
                     unit_of_measure=purchase["unit_of_measure"],
                 )
+                product.total_quantity = purchase["quantity"]
+                product.available_quantity = purchase["quantity"]
+                product.purchase_total_price = purchase["total_price"]
+                product.purchase_price_per_item = purchase["price_per_item"]
                 db_session.add(product)
                 db_session.flush()
                 audit_changes = {
@@ -279,7 +284,7 @@ def load_products_from_csv(file_path, created_date=None):
             db_session.add(StockHistory(
                 product_id=product.id,
                 change_amount=purchase["quantity"],
-                change_type="purchase",
+                change_type="create" if audit_action == "import_create" else "update",
                 timestamp=datetime.combine(purchase["purchase_date"], datetime.min.time()),
                 quantity_before=(
                     product.available_quantity - purchase["quantity"]
