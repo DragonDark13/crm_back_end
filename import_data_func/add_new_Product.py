@@ -1,174 +1,337 @@
-import os
-
-from sqlalchemy import inspect
-
-# Функція для завантаження продуктів у базу даних
-
-from datetime import datetime
-from decimal import Decimal
 import csv
+import hashlib
+import os
+from datetime import date, datetime
+from decimal import Decimal, InvalidOperation
+
 from sqlalchemy.exc import IntegrityError
-from models import Product, Supplier, PurchaseHistory, StockHistory, Base
-from postgreSQLConnect import engine, db_session
+
+from models import (
+    Category,
+    Product,
+    ProductAuditHistory,
+    ProductImportBatch,
+    PurchaseHistory,
+    StockHistory,
+    Supplier,
+)
+from postgreSQLConnect import db_session
 
 
-def ensure_table_exists(table_name):
+def _parse_decimal(value, field_name, row_number, required=False):
+    raw_value = (value or "").strip().replace(" ", "")
+    if not raw_value:
+        if required:
+            raise ValueError(f"Рядок {row_number}: не заповнено поле «{field_name}».")
+        return None
+
+    try:
+        return Decimal(raw_value.replace(",", "."))
+    except InvalidOperation as error:
+        raise ValueError(
+            f"Рядок {row_number}: некоректне число у полі «{field_name}»: {value!r}."
+        ) from error
+
+
+def _parse_purchase_row(row, row_number, legacy_created_date=None):
+    # Старий формат залишено для сумісності з example_import_data_func.
+    name = (row.get("Найменування") or row.get("Наименование") or "").strip()
+    if not name:
+        raise ValueError(f"Рядок {row_number}: не заповнено найменування товару.")
+
+    quantity = _parse_decimal(
+        row.get("Кількість") or row.get("Количество"),
+        "Кількість",
+        row_number,
+        required=True,
+    )
+    if quantity <= 0 or quantity != quantity.to_integral_value():
+        raise ValueError(
+            f"Рядок {row_number}: кількість має бути додатним цілим числом."
+        )
+    quantity = int(quantity)
+
+    total_price = _parse_decimal(
+        row.get("Вартість за кількість") or row.get("Стоимость за количество"),
+        "Вартість за кількість",
+        row_number,
+    )
+    price_per_item = _parse_decimal(
+        row.get("Вартість за 1 шт") or row.get("Стоимость за 1 шт"),
+        "Вартість за 1 шт",
+        row_number,
+    )
+
+    if total_price is None and price_per_item is None:
+        raise ValueError(
+            f"Рядок {row_number}: потрібно вказати загальну вартість або вартість одиниці."
+        )
+    if total_price is None:
+        total_price = price_per_item * quantity
+    if price_per_item is None:
+        price_per_item = total_price / quantity
+    if total_price < 0 or price_per_item < 0:
+        raise ValueError(f"Рядок {row_number}: вартість не може бути від'ємною.")
+
+    purchase_date_value = (
+        (row.get("Дата закупівлі") or "").strip()
+        or (legacy_created_date.strftime("%d.%m.%Y") if legacy_created_date else "")
+    )
+    if not purchase_date_value:
+        raise ValueError(f"Рядок {row_number}: не заповнено дату закупівлі.")
+    try:
+        purchase_date = datetime.strptime(purchase_date_value, "%d.%m.%Y").date()
+    except ValueError as error:
+        raise ValueError(
+            f"Рядок {row_number}: дата «{purchase_date_value}» має бути у форматі ДД.ММ.РРРР."
+        ) from error
+
+    supplier_name = (
+        row.get("Постачальник") or row.get("Поставщик") or ""
+    ).strip()
+    if supplier_name.upper() in ("N/A", "—", "-"):
+        supplier_name = ""
+
+    categories_value = (row.get("Категорія") or row.get("Категорії") or "").strip()
+    categories = list(dict.fromkeys(
+        category.strip() for category in categories_value.split(";") if category.strip()
+    ))
+
+    description = (row.get("Опис товару") or "").strip()
+    if len(description) > 500:
+        raise ValueError(
+            f"Рядок {row_number}: опис товару перевищує обмеження 500 символів."
+        )
+
+    unit_of_measure = (row.get("Одиниця виміру") or "").strip() or None
+
+    return {
+        "name": name,
+        "quantity": quantity,
+        "total_price": total_price,
+        "price_per_item": price_per_item,
+        "purchase_date": purchase_date,
+        "supplier_name": supplier_name,
+        "categories": categories,
+        "unit_of_measure": unit_of_measure,
+        "description": description,
+    }
+
+
+def _generate_article():
+    last_product = db_session.query(Product).order_by(Product.id.desc()).first()
+    if last_product and last_product.article.startswith("PRD-"):
+        last_number = int(last_product.article.split("-")[1])
+        new_number = last_number + 1
+    else:
+        new_number = 1
+    return f"PRD-{new_number:04d}"
+
+
+def load_products_from_csv(file_path, created_date=None):
     """
-    Перевіряє, чи існує таблиця у базі даних. Якщо ні — створює її.
-    :param table_name: Назва таблиці.
+    Імпортує всі закупівлі з одного CSV-файлу однією транзакцією.
+
+    Підтримує нові українські заголовки та старий формат для прикладів.
+    Повторний імпорт незміненого файлу блокується за SHA-256.
     """
-    inspector = inspect(engine)
-    if table_name not in inspector.get_table_names():
-        print(f"Таблиця '{table_name}' не знайдена. Створення...")
-        Base.metadata.create_all(bind=engine)
-        print(f"Таблиця '{table_name}' успішно створена.")
+    with open(file_path, mode="rb") as source_file:
+        file_content = source_file.read()
 
+    file_hash = hashlib.sha256(file_content).hexdigest()
+    existing_batch = db_session.query(ProductImportBatch).filter_by(
+        file_hash=file_hash
+    ).one_or_none()
+    if existing_batch:
+        return {
+            "status": "already_imported",
+            "file_name": existing_batch.file_name,
+            "rows_imported": existing_batch.rows_imported,
+        }
 
+    try:
+        text_content = file_content.decode("utf-8-sig")
+        csv_reader = csv.DictReader(text_content.splitlines())
+        if not csv_reader.fieldnames:
+            raise ValueError("CSV-файл порожній або не містить заголовків.")
 
+        required_headers = {
+            "Найменування", "Постачальник", "Кількість",
+            "Вартість за кількість", "Вартість за 1 шт",
+            "Дата закупівлі", "Категорія", "Одиниця виміру", "Опис товару",
+        }
+        legacy_headers = {
+            "Наименование", "Поставщик", "Количество",
+            "Стоимость за количество", "Стоимость за 1 шт",
+        }
+        headers = set(csv_reader.fieldnames)
+        if not required_headers.issubset(headers) and not legacy_headers.issubset(headers):
+            missing = sorted(required_headers - headers)
+            raise ValueError(
+                "CSV має невідповідні заголовки. Відсутні колонки: "
+                + ", ".join(missing)
+            )
 
-
-def load_products_from_csv(file_path, created_date):
-    """
-    Завантажує продукти з CSV-файлу до бази даних.
-
-    Якщо товар вже існує, то оновлює його кількість як надходження.
-
-    :param file_path: Шлях до CSV-файлу.
-    :param created_date: Дата створення або надходження продуктів (тип datetime).
-
-    """
-
-    def generate_article():
-        last_product = db_session.query(Product).order_by(Product.id.desc()).first()
-        if last_product and last_product.article.startswith("PRD-"):
-            last_number = int(last_product.article.split("-")[1])
-            new_number = last_number + 1
-        else:
-            new_number = 1
-        return f"PRD-{new_number:04d}"
-
-    with open(file_path, mode='r', encoding='utf-8') as file:
-        csv_reader = csv.DictReader(file)
-        for row in csv_reader:
-            # Отримання даних з рядка CSV
-            name = row['Наименование'].strip()
-            raw_supplier = row.get('Поставщик')
-            supplier_name = raw_supplier.strip() if raw_supplier and raw_supplier.strip() else "N/A"
-            quantity = int(row['Количество'].split()[0])
-            total_price = Decimal(row['Стоимость за количество'].replace(',', '.'))
-            price_per_item = Decimal(row['Стоимость за 1 шт'].replace(',', '.'))
-
-            ensure_table_exists('suppliers')
-
-            # Створення або отримання постачальника
-            supplier = db_session.query(Supplier).filter_by(name=supplier_name).first()
-            if not supplier:
-                supplier = Supplier(name=supplier_name)
-                db_session.add(supplier)
-                db_session.commit()
-
-            # Перевірка існування продукту
-            product = db_session.query(Product).filter_by(name=name).first()
-            if product:
-                try:
-                    # Оновлення наявної кількості як надходження
-                    product.total_quantity += quantity
-                    product.available_quantity += quantity
-                    product.purchase_price_per_item = price_per_item
-                    product.purchase_total_price += total_price
-                    product.updated_date = created_date
-                    db_session.commit()
-                    print(f"Надходження '{name}' успішно зареєстровано.")
-
-                    # Create PurchaseHistory record for update
-                    purchase_history = PurchaseHistory(
-                        product_id=product.id,
-                        purchase_price_per_item=price_per_item,
-                        purchase_total_price=total_price,
-                        supplier_id=supplier.id,
-                        quantity_purchase=quantity,
-                        purchase_date=created_date
-                    )
-                    db_session.add(purchase_history)
-
-                    # Create StockHistory record for update
-                    stock_history = StockHistory(
-                        product_id=product.id,
-                        change_amount=quantity,
-                        change_type='update',  # Indicating that this is an update
-                        timestamp=created_date
-                    )
-                    db_session.add(stock_history)
-                    db_session.commit()
-
-                except Exception as e:
-                    db_session.rollback()
-                    print(f"Помилка оновлення продукту '{name}': {e}")
+        imported_rows = 0
+        for row_number, row in enumerate(csv_reader, start=2):
+            if not any((value or "").strip() for value in row.values()):
                 continue
 
-            try:
-                # Додавання нового продукту
-                product = Product(
-                    name=name,
-                    supplier=supplier,
-                    total_quantity=quantity,
-                    available_quantity=quantity,
-                    purchase_total_price=total_price,
-                    purchase_price_per_item=price_per_item,
-                    created_date=created_date,
-                    article=generate_article(),
+            purchase = _parse_purchase_row(row, row_number, created_date)
+            supplier = None
+            if purchase["supplier_name"]:
+                supplier = db_session.query(Supplier).filter_by(
+                    name=purchase["supplier_name"]
+                ).one_or_none()
+                if supplier is None:
+                    supplier = Supplier(name=purchase["supplier_name"])
+                    db_session.add(supplier)
+                    db_session.flush()
 
+            product = db_session.query(Product).filter_by(
+                name=purchase["name"]
+            ).with_for_update().one_or_none()
+
+            if product is None:
+                product = Product(
+                    name=purchase["name"],
+                    supplier=supplier,
+                    total_quantity=0,
+                    available_quantity=0,
+                    purchase_total_price=Decimal("0"),
+                    purchase_price_per_item=Decimal("0"),
+                    created_date=datetime.combine(purchase["purchase_date"], datetime.min.time()),
+                    article=_generate_article(),
+                    product_description=purchase["description"],
+                    unit_of_measure=purchase["unit_of_measure"],
                 )
                 db_session.add(product)
-                db_session.commit()
-                print(f"Продукт '{name}' успішно додано.")
+                db_session.flush()
+                audit_changes = {
+                    "total_quantity": (None, purchase["quantity"]),
+                    "available_quantity": (None, purchase["quantity"]),
+                    "purchase_total_price": (None, purchase["total_price"]),
+                    "purchase_price_per_item": (None, purchase["price_per_item"]),
+                }
+                audit_action = "import_create"
+            else:
+                old_total_quantity = product.total_quantity or 0
+                old_available_quantity = product.available_quantity or 0
+                old_purchase_total = Decimal(str(product.purchase_total_price or 0))
+                old_purchase_price = Decimal(str(product.purchase_price_per_item or 0))
 
-                # Create PurchaseHistory record for new product
-                purchase_history = PurchaseHistory(
-                    product_id=product.id,
-                    purchase_price_per_item=price_per_item,
-                    purchase_total_price=total_price,
-                    supplier_id=supplier.id,
-                    quantity_purchase=quantity,
-                    purchase_date=created_date
+                if (
+                    purchase["unit_of_measure"]
+                    and product.unit_of_measure
+                    and product.unit_of_measure != purchase["unit_of_measure"]
+                ):
+                    raise ValueError(
+                        f"Рядок {row_number}: для товару «{product.name}» вже задано "
+                        f"одиницю «{product.unit_of_measure}», у файлі — "
+                        f"«{purchase['unit_of_measure']}»."
+                    )
+
+                product.total_quantity = old_total_quantity + purchase["quantity"]
+                product.available_quantity = old_available_quantity + purchase["quantity"]
+                product.purchase_total_price = old_purchase_total + purchase["total_price"]
+                product.purchase_price_per_item = (
+                    product.purchase_total_price / Decimal(product.total_quantity)
+                    if product.total_quantity else Decimal("0")
                 )
-                db_session.add(purchase_history)
+                if supplier and product.supplier is None:
+                    product.supplier = supplier
+                if purchase["unit_of_measure"] and not product.unit_of_measure:
+                    product.unit_of_measure = purchase["unit_of_measure"]
+                if purchase["description"] and not product.product_description:
+                    product.product_description = purchase["description"]
 
-                # Create StockHistory record for new product
-                stock_history = StockHistory(
-                    product_id=product.id,
-                    change_amount=quantity,
-                    change_type='create',  # Indicating this is a new product
-                    timestamp=created_date
-                )
-                db_session.add(stock_history)
+                audit_changes = {
+                    "total_quantity": (old_total_quantity, product.total_quantity),
+                    "available_quantity": (old_available_quantity, product.available_quantity),
+                    "purchase_total_price": (old_purchase_total, product.purchase_total_price),
+                    "purchase_price_per_item": (old_purchase_price, product.purchase_price_per_item),
+                }
+                audit_action = "import_purchase"
 
-                db_session.commit()
+            existing_category_names = {category.name for category in product.categories}
+            for category_name in purchase["categories"]:
+                if category_name in existing_category_names:
+                    continue
+                category = db_session.query(Category).filter_by(
+                    name=category_name
+                ).one_or_none()
+                if category is None:
+                    category = Category(name=category_name)
+                    db_session.add(category)
+                    db_session.flush()
+                product.categories.append(category)
+                existing_category_names.add(category_name)
 
-            except IntegrityError as e:
-                db_session.rollback()
-                print(f"Помилка додавання продукту '{name}': {e}")
-            except Exception as e:
-                db_session.rollback()
-                print(f"Несподівана помилка: {e}")
+            db_session.add(PurchaseHistory(
+                product_id=product.id,
+                purchase_price_per_item=purchase["price_per_item"],
+                purchase_total_price=purchase["total_price"],
+                supplier_id=supplier.id if supplier else None,
+                quantity_purchase=purchase["quantity"],
+                purchase_date=purchase["purchase_date"],
+            ))
+
+            db_session.add(StockHistory(
+                product_id=product.id,
+                change_amount=purchase["quantity"],
+                change_type="purchase",
+                timestamp=datetime.combine(purchase["purchase_date"], datetime.min.time()),
+                quantity_before=(
+                    product.available_quantity - purchase["quantity"]
+                ),
+                quantity_after=product.available_quantity,
+                reason="Імпорт закупівлі з CSV",
+            ))
+
+            for field_name, (old_value, new_value) in audit_changes.items():
+                old_text = str(old_value) if old_value is not None else None
+                new_text = str(new_value) if new_value is not None else None
+                if old_text != new_text:
+                    db_session.add(ProductAuditHistory(
+                        product_id=product.id,
+                        changed_by_id=None,
+                        changed_by_username="Системний імпорт",
+                        action=audit_action,
+                        field_name=field_name,
+                        old_value=old_text,
+                        new_value=new_text,
+                        reason="Імпорт історичних закупівель з CSV",
+                        changed_at=datetime.combine(purchase["purchase_date"], datetime.min.time()),
+                    ))
+
+            imported_rows += 1
+
+        if imported_rows == 0:
+            raise ValueError("У CSV-файлі немає рядків закупівель для імпорту.")
+
+        db_session.add(ProductImportBatch(
+            file_hash=file_hash,
+            file_name=os.path.basename(file_path),
+            rows_imported=imported_rows,
+        ))
+        db_session.commit()
+
+        return {
+            "status": "imported",
+            "file_name": os.path.basename(file_path),
+            "rows_imported": imported_rows,
+        }
+    except Exception:
+        db_session.rollback()
+        raise
 
 
-def import_all_product():
-    # Базовий шлях до папки з продуктами
-    base_dir = '../import_data_csv/csv_product'
+def import_all_product(file_path=None):
+    """Імпортує єдиний файл з усією історією закупівель."""
+    if file_path is None:
+        base_dir = os.path.join(os.path.dirname(__file__), "..", "import_data_csv", "csv_product")
+        file_path = os.path.join(base_dir, "zakupivli_vsi.csv")
 
-    # Список назв файлів і дат
-    files_data = [
-        ('15.02.2023.csv', "15.02.2023"),
-        ('15.03.2023.csv', "15.03.2023"),
-        ('15.05.2023.csv', "15.05.2023"),
-        ('15.06.2023.csv', "15.06.2023"),
-        ('15.08.2023.csv', "15.08.2023"),
-        ('15.09.2024.csv', "15.09.2024"),
-        ('15.01.2025.csv', "15.01.2025")
-    ]
-
-    for filename, date_str in files_data:
-        file_path = os.path.join(base_dir, filename)
-        created_date = datetime.strptime(date_str, "%d.%m.%Y")
-        load_products_from_csv(file_path, created_date)
+    result = load_products_from_csv(file_path)
+    print(result)
+    return result
