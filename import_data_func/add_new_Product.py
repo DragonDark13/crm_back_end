@@ -2,10 +2,9 @@ import csv
 import hashlib
 import io
 import os
-from datetime import date, datetime
+from datetime import datetime
 from decimal import Decimal, InvalidOperation
 
-from sqlalchemy.exc import IntegrityError
 
 from models import (
     Category,
@@ -217,13 +216,19 @@ def load_products_from_csv(file_path, created_date=None):
                     "available_quantity": (None, purchase["quantity"]),
                     "purchase_total_price": (None, purchase["total_price"]),
                     "purchase_price_per_item": (None, purchase["price_per_item"]),
+                    "unit_of_measure": (None, purchase["unit_of_measure"]),
+                    "product_description": (None, purchase["description"]),
                 }
+                old_category_names = set()
                 audit_action = "import_create"
             else:
                 old_total_quantity = product.total_quantity or 0
                 old_available_quantity = product.available_quantity or 0
                 old_purchase_total = Decimal(str(product.purchase_total_price or 0))
                 old_purchase_price = Decimal(str(product.purchase_price_per_item or 0))
+                old_unit_of_measure = product.unit_of_measure
+                old_description = product.product_description
+                old_category_names = {category.name for category in product.categories}
 
                 if (
                     purchase["unit_of_measure"]
@@ -255,6 +260,8 @@ def load_products_from_csv(file_path, created_date=None):
                     "available_quantity": (old_available_quantity, product.available_quantity),
                     "purchase_total_price": (old_purchase_total, product.purchase_total_price),
                     "purchase_price_per_item": (old_purchase_price, product.purchase_price_per_item),
+                    "unit_of_measure": (old_unit_of_measure, product.unit_of_measure),
+                    "product_description": (old_description, product.product_description),
                 }
                 audit_action = "import_purchase"
 
@@ -271,6 +278,12 @@ def load_products_from_csv(file_path, created_date=None):
                     db_session.flush()
                 product.categories.append(category)
                 existing_category_names.add(category_name)
+
+            if old_category_names != existing_category_names:
+                audit_changes["categories"] = (
+                    "; ".join(sorted(old_category_names)),
+                    "; ".join(sorted(existing_category_names)),
+                )
 
             db_session.add(PurchaseHistory(
                 product_id=product.id,
