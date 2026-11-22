@@ -347,7 +347,7 @@ def load_products_from_csv(file_path, created_date=None):
 def import_all_product(file_path=None):
     """Імпортує єдиний файл з усією історією закупівель."""
     if file_path is None:
-        base_dir = os.path.join(os.path.dirname(__file__), "..", "..", "import_data_csv", "csv_product")
+        base_dir = os.path.join(os.path.dirname(__file__), "..", "import_data_csv", "csv_product")
         file_path = os.path.join(base_dir, "zakupivli_vsi.csv")
 
     result = load_products_from_csv(file_path)
