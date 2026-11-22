@@ -31,6 +31,7 @@ from services.gift_box_services import gift_box_services_bp
 from services.other_investments_services import investments_bp
 from services.package_services import package_bp
 from services.product_service import ProductService, product_bp, product_history_bp
+from services.product_import_routes import product_import_bp
 from services.purchase_history_bp import purchase_history_bp
 from services.sales_history_services import sales_history_services_bp
 from services.statistics_services import statistics_services_bp
@@ -262,6 +263,7 @@ def create_and_purchase_product():
 # Register Blueprints
 app.register_blueprint(product_bp, url_prefix='/api')
 app.register_blueprint(product_history_bp, url_prefix='/api')
+app.register_blueprint(product_import_bp, url_prefix='/api')
 app.register_blueprint(category_bp, url_prefix='/api')
 app.register_blueprint(supplier_bp, url_prefix='/api')
 app.register_blueprint(customer_bp, url_prefix='/api')
