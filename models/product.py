@@ -17,7 +17,7 @@ class Product(Base):
     available_quantity = Column(Integer, default=0)  # Кількість в наявності
     sold_quantity = Column(Integer, default=0)  # Кількість проданого
     purchase_total_price = Column(DECIMAL(10, 2), default=0.00)
-    purchase_price_per_item = Column(DECIMAL(10, 2), default=0.00)
+    purchase_price_per_item = Column(DECIMAL(12, 3), default=0.00)
     selling_total_price = Column(DECIMAL(10, 2), default=0.00)
     selling_price_per_item = Column(DECIMAL(10, 2), default=0.00)
     selling_quantity = Column(Integer, default=0)
@@ -35,6 +35,7 @@ class Product(Base):
         nullable=False,
         default=""
     )
+    unit_of_measure = Column(String(50), nullable=True)
 
     def to_dict(self):
         """Convert product instance to dictionary."""
@@ -52,5 +53,6 @@ class Product(Base):
             'selling_price_per_item': float(self.selling_price_per_item or 0),
             'created_date': self.created_date.isoformat() if self.created_date else None,
             'article': self.article,
-            'product_description': self.product_description
+            'product_description': self.product_description,
+            'unit_of_measure': self.unit_of_measure
         }
