@@ -4,7 +4,8 @@ from import_data_func.add_new_package import import_all_packages
 from import_data_func.add_others_investments import import_all_investment
 from postgreSQLConnect import db_session
 
+# Categories must exist before product import links products to them.
+import_categories_from_csv('../import_data_csv/csv_categories/categories.csv', db_session)
 import_all_product()
 import_all_packages()
 import_all_investment()
-import_categories_from_csv('../import_data_csv/csv_categories/categories.csv', db_session)
