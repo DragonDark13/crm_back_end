@@ -9,7 +9,7 @@ class ProductImportBatch(Base):
     __tablename__ = "product_import_batches"
 
     id = Column(Integer, primary_key=True)
-    file_hash = Column(String(64), nullable=False, unique=True, index=True)
+    file_hash = Column(String(64), nullable=False, unique=True)
     file_name = Column(String(255), nullable=False)
     rows_imported = Column(Integer, nullable=False)
     imported_at = Column(DateTime, nullable=False, default=datetime.now)
