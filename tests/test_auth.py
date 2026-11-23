@@ -97,6 +97,40 @@ class AuthenticationApiTests(unittest.TestCase):
         )
         self.assertEqual(response.status_code, 200)
 
+
+    def test_full_database_reset_is_manager_only_and_recreates_bootstrap_accounts(self):
+        manager_headers = self._headers(self._login("test_manager"))
+        guest_headers = self._headers(self._login("test_guest"))
+
+        with patch.object(crm_app_module, "reset_database") as reset_mock, patch.object(
+            crm_app_module, "create_roles_and_users"
+        ) as bootstrap_mock:
+            missing_confirmation = self.client.post(
+                "/api/reset-database",
+                headers=manager_headers,
+                json={},
+            )
+            manager_response = self.client.post(
+                "/api/reset-database",
+                headers=manager_headers,
+                json={"confirmation": "ОЧИСТИТИ БАЗУ"},
+            )
+
+        self.assertEqual(missing_confirmation.status_code, 400)
+        self.assertEqual(manager_response.status_code, 200)
+        reset_mock.assert_called_once_with()
+        bootstrap_mock.assert_called_once_with()
+
+        guest_response = self.client.post(
+            "/api/reset-database",
+            headers=guest_headers,
+            json={"confirmation": "ОЧИСТИТИ БАЗУ"},
+        )
+        unauthenticated_response = self.client.post("/api/reset-database")
+
+        self.assertEqual(guest_response.status_code, 403)
+        self.assertEqual(unauthenticated_response.status_code, 401)
+
     def test_inactive_user_cannot_login_or_access_api(self):
         login_response = self.client.post(
             "/api/login",
@@ -161,6 +195,20 @@ class AuthenticationApiTests(unittest.TestCase):
         self.assertEqual(set(payload), {"id", "username", "roles"})
         self.assertEqual(payload["username"], "test_manager")
         self.assertEqual(payload["roles"], ["manager"])
+
+
+    def test_access_token_is_invalidated_when_user_identity_is_recreated(self):
+        token = self._login("test_manager")
+        with crm_app_module.app.app_context():
+            user = User.query.filter_by(username="test_manager").first()
+            user.fs_uniquifier = str(uuid4())
+            db.session.commit()
+
+        response = self.client.get(
+            "/api/protected",
+            headers=self._headers(token),
+        )
+        self.assertEqual(response.status_code, 401)
 
     def test_guest_cannot_mutate_catalog(self):
         token = self._login("test_guest")

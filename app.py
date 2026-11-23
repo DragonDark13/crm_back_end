@@ -22,6 +22,7 @@ from api.investment_api import investments_ns
 from api.packaging_routes import packaging_ns
 from api.supplier_routes import supplier_ns
 from models import db, RevokedToken, User, Role, LoginAttempt, LoginIPAttempt
+from reset_all_data import reset_database
 from services.category_routes import category_bp
 from services.customer_routes import customer_bp
 from services.export_to_excel_services import export_to_excel_bp
@@ -108,7 +109,12 @@ jwt = JWTManager(app)
 @jwt.token_in_blocklist_loader
 def is_token_revoked(jwt_header, jwt_payload):
     token_jti = jwt_payload.get("jti")
-    if not token_jti:
+    token_user = User.query.get(jwt_payload.get("sub"))
+    if (
+        not token_jti
+        or not token_user
+        or token_user.fs_uniquifier != jwt_payload.get("fs_uniquifier")
+    ):
         return True
     return db.session.query(RevokedToken.id).filter_by(jti=token_jti).scalar() is not None
 
@@ -242,6 +248,36 @@ def cleanup_expired_revoked_tokens_periodically():
 def protected():
     current_user = get_jwt_identity()
     return jsonify(logged_in_as=current_user), 200
+
+
+@app.route('/api/reset-database', methods=['POST'])
+def reset_database_endpoint():
+    user = User.query.get(get_jwt_identity())
+    if not user or not user.active or 'manager' not in {role.name for role in user.roles}:
+        return jsonify(message="Manager role required"), 403
+
+    confirmation = (request.get_json(silent=True) or {}).get("confirmation")
+    if confirmation != "ОЧИСТИТИ БАЗУ":
+        return jsonify(message="Explicit database reset confirmation is required"), 400
+
+    # Закриваємо транзакцію поточного запиту до DROP SCHEMA,
+    # інакше PostgreSQL може чекати на блокування від цього ж запиту.
+    db.session.remove()
+
+    try:
+        reset_database()
+        # Усі облікові записи також видалені. Відновлюємо лише системні
+        # ролі та облікові записи, для яких задані паролі в environment.
+        db.session.remove()
+        create_roles_and_users()
+    except Exception:
+        db.session.remove()
+        logger.exception("Full database reset failed")
+        return jsonify(message="Database reset failed. Check server logs."), 500
+
+    return jsonify(
+        message="Database reset completed. All business data and user accounts were cleared; configured bootstrap accounts were recreated."
+    ), 200
 
 
 
@@ -460,7 +496,8 @@ def login():
             identity=str(user.id),
             additional_claims={
                 "username": user.username,
-                "roles": sorted(role.name for role in user.roles)
+                "roles": sorted(role.name for role in user.roles),
+                "fs_uniquifier": user.fs_uniquifier
             }
         )
         return jsonify(message="Login successful", token=access_token), 200
