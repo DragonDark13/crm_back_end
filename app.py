@@ -256,6 +256,10 @@ def reset_database_endpoint():
     if not user or not user.active or 'manager' not in {role.name for role in user.roles}:
         return jsonify(message="Manager role required"), 403
 
+    confirmation = (request.get_json(silent=True) or {}).get("confirmation")
+    if confirmation != "ОЧИСТИТИ БАЗУ":
+        return jsonify(message="Explicit database reset confirmation is required"), 400
+
     # Закриваємо транзакцію поточного запиту до DROP SCHEMA,
     # інакше PostgreSQL може чекати на блокування від цього ж запиту.
     db.session.remove()
