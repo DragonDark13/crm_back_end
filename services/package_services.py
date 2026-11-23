@@ -170,8 +170,14 @@ def update_packaging_status():
     quantity_used = data.get('quantity_used')
     from postgreSQLConnect import db_session
 
-    if not material_id or not quantity_used:
+    if not material_id or quantity_used is None:
         return jsonify({'error': 'Required fields are missing'}), 400
+    try:
+        quantity_used = float(quantity_used)
+    except (TypeError, ValueError):
+        return jsonify({'error': 'quantity_used must be a positive number'}), 400
+    if quantity_used <= 0:
+        return jsonify({'error': 'quantity_used must be a positive number'}), 400
 
     try:
         # Знайти матеріал
@@ -191,7 +197,7 @@ def update_packaging_status():
                     material.purchase_price_per_unit or Decimal("0"))
 
         # Встановлюємо статус "used"
-        if material.available_quantity == quantity_used:
+        if material.available_quantity == 0:
             material.status = 'used'
 
         db_session.add(PackagingStockHistory(
