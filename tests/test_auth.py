@@ -97,6 +97,32 @@ class AuthenticationApiTests(unittest.TestCase):
         )
         self.assertEqual(response.status_code, 200)
 
+
+    def test_full_database_reset_is_manager_only_and_recreates_bootstrap_accounts(self):
+        manager_headers = self._headers(self._login("test_manager"))
+        guest_headers = self._headers(self._login("test_guest"))
+
+        with patch.object(crm_app_module, "reset_database") as reset_mock, patch.object(
+            crm_app_module, "create_roles_and_users"
+        ) as bootstrap_mock:
+            manager_response = self.client.post(
+                "/api/reset-database",
+                headers=manager_headers,
+            )
+
+        self.assertEqual(manager_response.status_code, 200)
+        reset_mock.assert_called_once_with()
+        bootstrap_mock.assert_called_once_with()
+
+        guest_response = self.client.post(
+            "/api/reset-database",
+            headers=guest_headers,
+        )
+        unauthenticated_response = self.client.post("/api/reset-database")
+
+        self.assertEqual(guest_response.status_code, 403)
+        self.assertEqual(unauthenticated_response.status_code, 401)
+
     def test_inactive_user_cannot_login_or_access_api(self):
         login_response = self.client.post(
             "/api/login",
