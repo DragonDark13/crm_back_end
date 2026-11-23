@@ -1,4 +1,5 @@
 from decimal import Decimal
+from datetime import datetime
 
 from flask import Blueprint, request
 from flask_restx import Resource
@@ -116,12 +117,22 @@ def purchase_current_packaging_material():
     total_purchase_cost = data.get('total_purchase_cost')
     from postgreSQLConnect import db_session
 
-    if not material_id or not quantity or not purchase_price_per_unit:
+    if not material_id or quantity is None or purchase_price_per_unit is None or total_purchase_cost is None:
         return jsonify({'error': 'Required fields are missing'}), 400
+    try:
+        quantity = float(quantity)
+        purchase_price_per_unit = Decimal(str(purchase_price_per_unit))
+        total_purchase_cost = Decimal(str(total_purchase_cost))
+    except (TypeError, ValueError, ArithmeticError):
+        return jsonify({'error': 'Purchase quantity and prices must be valid numbers'}), 400
+    if quantity <= 0 or purchase_price_per_unit <= 0 or total_purchase_cost <= 0:
+        return jsonify({'error': 'Purchase quantity and prices must be greater than zero'}), 400
 
     try:
         # Find material by ID
-        material = db_session.query(PackagingMaterial).get(material_id)
+        material = db_session.query(PackagingMaterial).filter(
+            PackagingMaterial.id == material_id
+        ).with_for_update().one_or_none()
         if not material:
             return jsonify({'error': 'Packaging material not found'}), 404
 
@@ -144,6 +155,12 @@ def purchase_current_packaging_material():
             purchase_total_price=purchase_total_price
         )
         db_session.add(purchase_history)
+        db_session.add(PackagingStockHistory(
+            material_id=material.id,
+            change_amount=quantity,
+            change_type='purchase',
+            timestamp=datetime.now(),
+        ))
         db_session.commit()
 
         return jsonify({'message': 'Purchase successful', 'material': material.to_dict()}), 200
@@ -161,12 +178,20 @@ def update_packaging_status():
     quantity_used = data.get('quantity_used')
     from postgreSQLConnect import db_session
 
-    if not material_id or not quantity_used:
+    if not material_id or quantity_used is None:
         return jsonify({'error': 'Required fields are missing'}), 400
+    try:
+        quantity_used = float(quantity_used)
+    except (TypeError, ValueError):
+        return jsonify({'error': 'quantity_used must be a positive number'}), 400
+    if quantity_used <= 0:
+        return jsonify({'error': 'quantity_used must be a positive number'}), 400
 
     try:
         # Знайти матеріал
-        material = db_session.query(PackagingMaterial).get(material_id)
+        material = db_session.query(PackagingMaterial).filter(
+            PackagingMaterial.id == material_id
+        ).with_for_update().one_or_none()
         if not material:
             return jsonify({'error': 'Packaging material not found'}), 404
 
@@ -180,9 +205,15 @@ def update_packaging_status():
                     material.purchase_price_per_unit or Decimal("0"))
 
         # Встановлюємо статус "used"
-        if material.available_quantity == quantity_used:
+        if material.available_quantity == 0:
             material.status = 'used'
 
+        db_session.add(PackagingStockHistory(
+            material_id=material.id,
+            change_amount=-float(quantity_used),
+            change_type='used',
+            timestamp=datetime.now(),
+        ))
         db_session.commit()
 
         return jsonify({'message': 'Packaging material marked as used', 'material': material.to_dict()}), 200
@@ -223,10 +254,15 @@ def get_packaging_material_history(packaging_material_id):
 def delete_all_packaging_materials():
     from postgreSQLConnect import db_session
     try:
-        # Видалення всіх упаковочних матеріалів разом з пов'язаними даними
+        has_history = any((
+            db_session.query(PackagingPurchaseHistory.id).first(),
+            db_session.query(PackagingStockHistory.id).first(),
+            db_session.query(PackagingSaleHistory.id).first(),
+        ))
+        if has_history:
+            return jsonify({'error': 'Packaging materials cannot be bulk-deleted while purchase, stock or sale history exists.'}), 409
+
         db_session.query(PackagingMaterial).delete(synchronize_session=False)
-        db_session.query(PackagingStockHistory).delete(synchronize_session=False)
-        db_session.query(PackagingPurchaseHistory).delete(synchronize_session=False)
 
         # Підтвердження змін
         db_session.commit()
@@ -321,6 +357,10 @@ def delete_packaging_supplier(supplier_id):
         return jsonify({'error': 'Packaging supplier not found'}), 404
 
     try:
+        has_purchase_history = db_session.query(PackagingPurchaseHistory.id).filter_by(supplier_id=supplier.id).first()
+        if has_purchase_history:
+            return jsonify({'error': 'Packaging supplier has purchase history and cannot be deleted. Deactivate the supplier instead.'}), 409
+
         db_session.delete(supplier)
         db_session.commit()
         return jsonify({'message': 'Packaging supplier deleted successfully'}), 200

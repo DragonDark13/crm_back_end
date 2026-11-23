@@ -15,8 +15,8 @@ class Supplier(Base):
     address = Column(String, nullable=True)
     is_active = Column(Boolean, nullable=False, default=True)
 
-    products = relationship("Product", back_populates="supplier", cascade="all, delete-orphan")
-    purchase_history = relationship("PurchaseHistory", back_populates="supplier", cascade="all, delete-orphan")
+    products = relationship("Product", back_populates="supplier", passive_deletes="all")
+    purchase_history = relationship("PurchaseHistory", back_populates="supplier", passive_deletes="all")
 
     def to_dict(self):
         return {

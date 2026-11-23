@@ -9,7 +9,7 @@ class PackagingSaleHistory(Base):
     __tablename__ = 'packaging_sale_history'
 
     id = Column(Integer, primary_key=True)
-    sale_id = Column(Integer, ForeignKey('sale_history.id', ondelete='CASCADE'))
+    sale_id = Column(Integer, ForeignKey('sale_history.id', ondelete='RESTRICT'))
     packaging_material_id = Column(Integer, ForeignKey('packaging_materials.id', ondelete='SET NULL'))
     packaging_quantity = Column(Float, nullable=False)
     total_packaging_cost = Column(DECIMAL(12, 2), nullable=False)

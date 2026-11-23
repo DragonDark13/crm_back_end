@@ -336,26 +336,18 @@ def update_product(product_id):
                     insert(product_categories_table).values(product_id=product.id, category_id=category.id)
                 )
 
-            # Commit the transaction
-            db_session.commit()
-        stock_history_record = db_session.query(StockHistory).filter(
-            StockHistory.product_id == product.id,
-            StockHistory.change_type == 'create'
-        ).first()
-
-        if stock_history_record:
-            stock_history_record.timestamp = created_date if created_date else datetime.now()
-            stock_history_record.change_amount = available_quantity
-            db_session.commit()
-
-        else:
-            stock_history = StockHistory(
+        previous_quantity = previous_values["available_quantity"] or 0
+        quantity_difference = available_quantity - previous_quantity
+        if quantity_difference:
+            db_session.add(StockHistory(
                 product_id=product.id,
-                change_amount=available_quantity,
-                change_type='create',
-                timestamp=created_date if created_date else datetime.now()
-            )
-            db_session.add(stock_history)
+                change_amount=quantity_difference,
+                change_type='manual_adjustment',
+                timestamp=datetime.now(),
+                quantity_before=previous_quantity,
+                quantity_after=available_quantity,
+                reason='Manual product edit',
+            ))
 
         db_session.commit()
 
@@ -767,6 +759,15 @@ def purchase_product(product_id):
             quantity_purchase=quantity
         )
         db_session.add(purchase_history)
+        db_session.add(StockHistory(
+            product_id=product.id,
+            change_amount=quantity,
+            change_type='purchase',
+            timestamp=datetime.now(),
+            quantity_before=previous_available_quantity,
+            quantity_after=product.available_quantity,
+            reason='Purchase recorded',
+        ))
 
         # Stock, financial totals and purchase history share one transaction.
         db_session.commit()
@@ -876,6 +877,15 @@ def record_sale(product_id):
             total_packaging_cost=total_packaging_cost
         )
         db_session.add(sale_history)
+        db_session.add(StockHistory(
+            product_id=product.id,
+            change_amount=-quantity_sold,
+            change_type='sale',
+            timestamp=sale_date,
+            quantity_before=previous_available_quantity,
+            quantity_after=product.available_quantity,
+            reason='Sale recorded',
+        ))
         db_session.flush()
 
         if packaging_material is not None:
@@ -914,26 +924,12 @@ def record_sale(product_id):
 def delete_product_history(product_id, history_type, history_id):
     from postgreSQLConnect import db_session
 
-    try:
-        if history_type == 'stock':
-            result = delete_stock_history(product_id, history_id)
-        elif history_type == 'purchase':
-            result = delete_purchase_history(product_id, history_id)
-        elif history_type == 'sale':
-            result = delete_sale_history(product_id, history_id)
-        else:
-            return jsonify({'error': 'Invalid history type'}), 400
+    if history_type not in {'stock', 'purchase', 'sale'}:
+        return jsonify({'error': 'Invalid history type'}), 400
 
-        if result.get('error'):
-            return jsonify({'error': result['error']}), 400
-
-        db_session.commit()
-        return jsonify({'message': 'History record deleted and changes reverted'}), 200
-    except SQLAlchemyError as e:
-        db_session.rollback()
-        return jsonify({'error': 'Database error: ' + str(e)}), 500
-    except Exception as e:
-        return jsonify({'error': 'Unexpected error: ' + str(e)}), 500
+    # Ledger entries are immutable: deleting an old event can invalidate later
+    # stock movements, returns, payments and financial totals.
+    return jsonify({'error': 'Historical records cannot be deleted. Record a correcting inventory adjustment or customer return instead.'}), 409
 
 
 def delete_stock_history(product_id, history_id):

@@ -2,7 +2,7 @@ from flask import Blueprint, jsonify, request
 from flask_restx import Resource
 
 from api.supplier_routes import supplier_ns
-from models import Supplier, PurchaseHistory, Product, PackagingMaterialSupplier
+from models import Supplier, PurchaseHistory, Product, PackagingMaterialSupplier, PackagingPurchaseHistory
 from sqlalchemy.exc import IntegrityError
 
 # Create Blueprint for suppliers
@@ -161,6 +161,10 @@ def delete_supplier(supplier_id):
         return jsonify({'error': 'Supplier not found'}), 404
 
     try:
+        has_purchase_history = db_session.query(PurchaseHistory.id).filter_by(supplier_id=supplier.id).first()
+        if has_purchase_history:
+            return jsonify({'error': 'Supplier has purchase history and cannot be deleted. Deactivate the supplier instead.'}), 409
+
         db_session.delete(supplier)
         db_session.commit()
         return jsonify({'message': 'Supplier deleted successfully'}), 200
@@ -208,6 +212,9 @@ def delete_all_packaging_suppliers():
     from postgreSQLConnect import db_session
 
     try:
+        if db_session.query(PackagingPurchaseHistory.id).first():
+            return {"success": False, "message": "Packaging suppliers cannot be bulk-deleted while purchase history exists. Deactivate suppliers instead.", "deleted_count": 0}
+
         deleted_count = db_session.query(PackagingMaterialSupplier).delete(
             synchronize_session=False
         )
@@ -232,6 +239,9 @@ def delete_all_product_suppliers():
     from postgreSQLConnect import db_session
 
     try:
+        if db_session.query(PurchaseHistory.id).first():
+            return {"success": False, "message": "Product suppliers cannot be bulk-deleted while purchase history exists. Deactivate suppliers instead.", "deleted_count": 0}
+
         deleted_count = db_session.query(Supplier).delete(
             synchronize_session=False
         )

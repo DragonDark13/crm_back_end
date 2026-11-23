@@ -9,7 +9,7 @@ from models.base import Base
 class Payment(Base):
     __tablename__ = 'payments'
     id = Column(Integer, primary_key=True)
-    sale_id = Column(Integer, ForeignKey('sale_history.id', ondelete='CASCADE'))
+    sale_id = Column(Integer, ForeignKey('sale_history.id', ondelete='RESTRICT'))
     amount_paid = Column(DECIMAL(10, 2), nullable=False)
     payment_method = Column(String, nullable=False)  # Наприклад, "Card", "Cash", "Online"
     payment_date = Column(DateTime, default=datetime.now)

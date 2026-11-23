@@ -9,7 +9,7 @@ class PackagingStockHistory(Base):
     __tablename__ = 'packaging_stock_history'
 
     id = Column(Integer, primary_key=True)
-    material_id = Column(Integer, ForeignKey('packaging_materials.id', ondelete='CASCADE'))
+    material_id = Column(Integer, ForeignKey('packaging_materials.id', ondelete='RESTRICT'))
     change_amount = Column(Float, nullable=False)  # Зміна кількості (позитивна або негативна)
     change_type = Column(String, nullable=False)  # Тип зміни (закупівля, списання тощо)
     timestamp = Column(DateTime, default=datetime.now)
