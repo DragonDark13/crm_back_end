@@ -168,7 +168,7 @@ def update_gift_set(gift_set_id):
         total_price = 0
         # Очищуємо попередні записи, але перед цим повертаємо зарезервовані кількості
         for item in gift_set.gift_set_products:
-            existing_product = db_session.query(Product).filter(Product.id == item.product_id).one_or_none()
+            existing_product = db_session.query(Product).filter(Product.id == item.product_id).with_for_update().one_or_none()
             if existing_product:
                 quantity_before = existing_product.available_quantity
                 existing_product.available_quantity += item.quantity
@@ -178,7 +178,7 @@ def update_gift_set(gift_set_id):
 
         for item in gift_set.gift_set_packagings:
             existing_packaging = db_session.query(PackagingMaterial).filter(
-                PackagingMaterial.id == item.packaging_id).one_or_none()
+                PackagingMaterial.id == item.packaging_id).with_for_update().one_or_none()
             if existing_packaging:
                 existing_packaging.available_quantity += item.quantity
                 existing_packaging.reserved_quantity -= item.quantity
@@ -195,7 +195,7 @@ def update_gift_set(gift_set_id):
 
             # Додаємо продукти
             if item_type == "product" and item_id:
-                product = db_session.query(Product).filter(Product.id == item_id).one_or_none()
+                product = db_session.query(Product).filter(Product.id == item_id).with_for_update().one_or_none()
                 if not product:
                     db_session.rollback()
                     return jsonify({"error": f"Product {item_id} not found"}), 400
