@@ -223,10 +223,15 @@ def get_packaging_material_history(packaging_material_id):
 def delete_all_packaging_materials():
     from postgreSQLConnect import db_session
     try:
-        # Видалення всіх упаковочних матеріалів разом з пов'язаними даними
+        has_history = any((
+            db_session.query(PackagingPurchaseHistory.id).first(),
+            db_session.query(PackagingStockHistory.id).first(),
+            db_session.query(PackagingSaleHistory.id).first(),
+        ))
+        if has_history:
+            return jsonify({'error': 'Packaging materials cannot be bulk-deleted while purchase, stock or sale history exists.'}), 409
+
         db_session.query(PackagingMaterial).delete(synchronize_session=False)
-        db_session.query(PackagingStockHistory).delete(synchronize_session=False)
-        db_session.query(PackagingPurchaseHistory).delete(synchronize_session=False)
 
         # Підтвердження змін
         db_session.commit()
