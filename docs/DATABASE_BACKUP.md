@@ -27,3 +27,21 @@ The restore stops on the first PostgreSQL error. Never test restoration against 
 ## Operational requirement
 
 This utility does not schedule backups. Configure a daily scheduled task (cron, systemd timer, or Windows Task Scheduler) on the server that hosts the database, and copy completed archives to a separate storage location. Periodically restore a backup into a disposable database to verify recoverability. Do not commit backup files or database credentials to Git.
+
+## Apply database migrations
+
+After creating and verifying a fresh backup, set `DATABASE_URL` to the exact PostgreSQL database that should be changed. Alembic now requires this variable and does not use a hard-coded fallback URL.
+
+Linux/macOS:
+```bash
+export DATABASE_URL="postgresql://USER:PASSWORD@HOST:5432/DATABASE"
+alembic upgrade head
+```
+
+Windows PowerShell:
+```powershell
+$env:DATABASE_URL = "postgresql://USER:PASSWORD@HOST:5432/DATABASE"
+alembic upgrade head
+```
+
+Verify the database name and host before running the migration. Do not use a production URL for local development tests.
