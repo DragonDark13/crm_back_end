@@ -759,6 +759,15 @@ def purchase_product(product_id):
             quantity_purchase=quantity
         )
         db_session.add(purchase_history)
+        db_session.add(StockHistory(
+            product_id=product.id,
+            change_amount=quantity,
+            change_type='purchase',
+            timestamp=datetime.now(),
+            quantity_before=previous_available_quantity,
+            quantity_after=product.available_quantity,
+            reason='Purchase recorded',
+        ))
 
         # Stock, financial totals and purchase history share one transaction.
         db_session.commit()
@@ -868,6 +877,15 @@ def record_sale(product_id):
             total_packaging_cost=total_packaging_cost
         )
         db_session.add(sale_history)
+        db_session.add(StockHistory(
+            product_id=product.id,
+            change_amount=-quantity_sold,
+            change_type='sale',
+            timestamp=sale_date,
+            quantity_before=previous_available_quantity,
+            quantity_after=product.available_quantity,
+            reason='Sale recorded',
+        ))
         db_session.flush()
 
         if packaging_material is not None:
