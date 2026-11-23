@@ -121,7 +121,9 @@ def purchase_current_packaging_material():
 
     try:
         # Find material by ID
-        material = db_session.query(PackagingMaterial).get(material_id)
+        material = db_session.query(PackagingMaterial).filter(
+            PackagingMaterial.id == material_id
+        ).with_for_update().one_or_none()
         if not material:
             return jsonify({'error': 'Packaging material not found'}), 404
 
@@ -144,6 +146,12 @@ def purchase_current_packaging_material():
             purchase_total_price=purchase_total_price
         )
         db_session.add(purchase_history)
+        db_session.add(PackagingStockHistory(
+            material_id=material.id,
+            change_amount=quantity,
+            change_type='purchase',
+            timestamp=datetime.now(),
+        ))
         db_session.commit()
 
         return jsonify({'message': 'Purchase successful', 'material': material.to_dict()}), 200
@@ -166,7 +174,9 @@ def update_packaging_status():
 
     try:
         # Знайти матеріал
-        material = db_session.query(PackagingMaterial).get(material_id)
+        material = db_session.query(PackagingMaterial).filter(
+            PackagingMaterial.id == material_id
+        ).with_for_update().one_or_none()
         if not material:
             return jsonify({'error': 'Packaging material not found'}), 404
 
@@ -183,6 +193,12 @@ def update_packaging_status():
         if material.available_quantity == quantity_used:
             material.status = 'used'
 
+        db_session.add(PackagingStockHistory(
+            material_id=material.id,
+            change_amount=-float(quantity_used),
+            change_type='used',
+            timestamp=datetime.now(),
+        ))
         db_session.commit()
 
         return jsonify({'message': 'Packaging material marked as used', 'material': material.to_dict()}), 200
