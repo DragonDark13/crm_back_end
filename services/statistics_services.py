@@ -1,11 +1,8 @@
-from flask import Blueprint
-from sqlalchemy import func, extract
-
 from datetime import date, datetime
 from decimal import Decimal, ROUND_HALF_UP
 
 from flask import Blueprint, jsonify, request
-from sqlalchemy import func, extract
+from sqlalchemy import extract, func
 
 from models import (
     SaleHistory,
