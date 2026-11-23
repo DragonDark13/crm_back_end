@@ -90,8 +90,7 @@ def _record_status(session, order, new_status, username, note=None):
         order.completed_at = datetime.utcnow()
     elif new_status == "cancelled":
         order.cancelled_at = datetime.utcnow()
-    session.add(OrderStatusHistory(
-        order_id=order.id,
+    order.status_history.append(OrderStatusHistory(
         from_status=old_status,
         to_status=new_status,
         changed_by_username=username,
