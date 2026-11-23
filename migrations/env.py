@@ -1,3 +1,4 @@
+import os
 import sys
 from logging.config import fileConfig
 from pathlib import Path
@@ -16,6 +17,11 @@ sys.path.append(str(BASE_DIR))
 from models.base import Base  # ⬅️ ЗМІНИ ПІД СЕБЕ
 
 config = context.config
+
+database_url = os.getenv("DATABASE_URL")
+if not database_url:
+    raise RuntimeError("DATABASE_URL environment variable is required for Alembic migrations")
+config.set_main_option("sqlalchemy.url", database_url.replace("%", "%%"))
 
 if config.config_file_name is not None:
     fileConfig(config.config_file_name)
