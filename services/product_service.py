@@ -914,21 +914,12 @@ def record_sale(product_id):
 def delete_product_history(product_id, history_type, history_id):
     from postgreSQLConnect import db_session
 
-    try:
-        if history_type == 'stock':
-            result = delete_stock_history(product_id, history_id)
-        elif history_type == 'purchase':
-            result = delete_purchase_history(product_id, history_id)
-        elif history_type == 'sale':
-            result = delete_sale_history(product_id, history_id)
-        else:
-            return jsonify({'error': 'Invalid history type'}), 400
+    if history_type not in {'stock', 'purchase', 'sale'}:
+        return jsonify({'error': 'Invalid history type'}), 400
 
-        if result.get('error'):
-            return jsonify({'error': result['error']}), 400
-
-        db_session.commit()
-        return jsonify({'message': 'History record deleted and changes reverted'}), 200
+    # Ledger entries are immutable: deleting an old event can invalidate later
+    # stock movements, returns, payments and financial totals.
+    return jsonify({'error': 'Historical records cannot be deleted. Record a correcting inventory adjustment or customer return instead.'}), 409
     except SQLAlchemyError as e:
         db_session.rollback()
         return jsonify({'error': 'Database error: ' + str(e)}), 500
