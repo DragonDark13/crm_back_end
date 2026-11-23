@@ -36,3 +36,8 @@ shop_crm_back_27_12.db
 /models/
 /alembic/
 /backup_before_alembic_baseline.dump
+
+# Local database backup archives
+/backups/
+*.dump
+*.dump.tmp
