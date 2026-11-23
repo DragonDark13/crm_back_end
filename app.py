@@ -109,7 +109,12 @@ jwt = JWTManager(app)
 @jwt.token_in_blocklist_loader
 def is_token_revoked(jwt_header, jwt_payload):
     token_jti = jwt_payload.get("jti")
-    if not token_jti:
+    token_user = User.query.get(jwt_payload.get("sub"))
+    if (
+        not token_jti
+        or not token_user
+        or token_user.fs_uniquifier != jwt_payload.get("fs_uniquifier")
+    ):
         return True
     return db.session.query(RevokedToken.id).filter_by(jti=token_jti).scalar() is not None
 
@@ -487,7 +492,8 @@ def login():
             identity=str(user.id),
             additional_claims={
                 "username": user.username,
-                "roles": sorted(role.name for role in user.roles)
+                "roles": sorted(role.name for role in user.roles),
+                "fs_uniquifier": user.fs_uniquifier
             }
         )
         return jsonify(message="Login successful", token=access_token), 200
