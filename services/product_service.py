@@ -336,26 +336,18 @@ def update_product(product_id):
                     insert(product_categories_table).values(product_id=product.id, category_id=category.id)
                 )
 
-            # Commit the transaction
-            db_session.commit()
-        stock_history_record = db_session.query(StockHistory).filter(
-            StockHistory.product_id == product.id,
-            StockHistory.change_type == 'create'
-        ).first()
-
-        if stock_history_record:
-            stock_history_record.timestamp = created_date if created_date else datetime.now()
-            stock_history_record.change_amount = available_quantity
-            db_session.commit()
-
-        else:
-            stock_history = StockHistory(
+        previous_quantity = previous_values["available_quantity"] or 0
+        quantity_difference = available_quantity - previous_quantity
+        if quantity_difference:
+            db_session.add(StockHistory(
                 product_id=product.id,
-                change_amount=available_quantity,
-                change_type='create',
-                timestamp=created_date if created_date else datetime.now()
-            )
-            db_session.add(stock_history)
+                change_amount=quantity_difference,
+                change_type='manual_adjustment',
+                timestamp=datetime.now(),
+                quantity_before=previous_quantity,
+                quantity_after=available_quantity,
+                reason='Manual product edit',
+            ))
 
         db_session.commit()
 
