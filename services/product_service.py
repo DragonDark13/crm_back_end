@@ -920,11 +920,6 @@ def delete_product_history(product_id, history_type, history_id):
     # Ledger entries are immutable: deleting an old event can invalidate later
     # stock movements, returns, payments and financial totals.
     return jsonify({'error': 'Historical records cannot be deleted. Record a correcting inventory adjustment or customer return instead.'}), 409
-    except SQLAlchemyError as e:
-        db_session.rollback()
-        return jsonify({'error': 'Database error: ' + str(e)}), 500
-    except Exception as e:
-        return jsonify({'error': 'Unexpected error: ' + str(e)}), 500
 
 
 def delete_stock_history(product_id, history_id):
