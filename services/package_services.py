@@ -326,6 +326,10 @@ def delete_packaging_supplier(supplier_id):
         return jsonify({'error': 'Packaging supplier not found'}), 404
 
     try:
+        has_purchase_history = db_session.query(PackagingPurchaseHistory.id).filter_by(supplier_id=supplier.id).first()
+        if has_purchase_history:
+            return jsonify({'error': 'Packaging supplier has purchase history and cannot be deleted. Deactivate the supplier instead.'}), 409
+
         db_session.delete(supplier)
         db_session.commit()
         return jsonify({'message': 'Packaging supplier deleted successfully'}), 200
