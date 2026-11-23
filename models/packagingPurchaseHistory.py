@@ -10,7 +10,7 @@ class PackagingPurchaseHistory(Base):
     __tablename__ = 'packaging_purchase_history'
 
     id = Column(Integer, primary_key=True)
-    material_id = Column(Integer, ForeignKey('packaging_materials.id', ondelete='CASCADE'))
+    material_id = Column(Integer, ForeignKey('packaging_materials.id', ondelete='RESTRICT'))
     supplier_id = Column(Integer, ForeignKey('packaging_material_suppliers.id',
                                              ondelete='SET NULL'))  # Updated to reference packaging_material_suppliers
     quantity_purchased = Column(Float, nullable=False)
