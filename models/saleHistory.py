@@ -17,7 +17,7 @@ class SaleHistory(Base):
     sale_date = Column(DateTime, default=datetime.now)
     product = relationship("Product", back_populates="sales")
     customer = relationship("Customer", back_populates="sales")
-    payment = relationship("Payment", uselist=False, back_populates="sale", cascade="all, delete-orphan")
+    payment = relationship("Payment", uselist=False, back_populates="sale", passive_deletes="all")
     profit = Column(DECIMAL(10, 2), default=0.00)
 
     # Packaging material fields
@@ -27,7 +27,7 @@ class SaleHistory(Base):
     packaging_material = relationship("PackagingMaterial")  # Link to packaging material if exists
 
     returns = relationship("ReturnHistory", back_populates="sale", passive_deletes="all")
-    packaging_sale_history = relationship("PackagingSaleHistory", back_populates="sale", cascade="all, delete-orphan")
+    packaging_sale_history = relationship("PackagingSaleHistory", back_populates="sale", passive_deletes="all")
 
     def to_dict(self, include_customer=False):
         result = {
