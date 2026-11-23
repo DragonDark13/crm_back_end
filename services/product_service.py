@@ -472,6 +472,19 @@ def inventory_product(product_id):
         return jsonify({'error': 'reason must be a string'}), 400
     reason = reason.strip() or None if reason is not None else None
 
+    raw_inventory_date = data.get('inventory_date')
+    if raw_inventory_date is None:
+        inventory_date = datetime.now().date()
+    elif not isinstance(raw_inventory_date, str):
+        return jsonify({'error': 'inventory_date must use YYYY-MM-DD format'}), 400
+    else:
+        try:
+            inventory_date = datetime.strptime(raw_inventory_date, '%Y-%m-%d').date()
+            if inventory_date.isoformat() != raw_inventory_date:
+                raise ValueError
+        except ValueError:
+            return jsonify({'error': 'inventory_date must use YYYY-MM-DD format'}), 400
+
     try:
         # Блокуємо інвентаризований товар до читання наборів, щоб нове резервування
         # не могло пройти паралельно з інвентаризацією.
@@ -599,6 +612,7 @@ def inventory_product(product_id):
             change_amount=change_amount,
             change_type='inventory',
             timestamp=datetime.now(),
+            inventory_date=inventory_date,
             quantity_before=quantity_before,
             quantity_after=actual_quantity,
             reason=reason
