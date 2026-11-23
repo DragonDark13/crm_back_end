@@ -91,6 +91,7 @@ def _parse_purchase_row(row, row_number, legacy_created_date=None):
     ).strip()
     if supplier_name.upper() in ("N/A", "—", "-"):
         supplier_name = ""
+    supplier_name = supplier_name or None
 
     categories_value = (row.get("Категорія") or row.get("Категорії") or "").strip()
     categories = list(dict.fromkeys(
