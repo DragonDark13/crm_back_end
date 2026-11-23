@@ -36,6 +36,7 @@ from services.product_import_routes import product_import_bp
 from services.purchase_history_bp import purchase_history_bp
 from services.sales_history_services import sales_history_services_bp
 from services.statistics_services import statistics_services_bp
+from services.order_services import orders_bp
 from services.supplier_routes import supplier_bp
 
 from flask_restx import Api, Resource
@@ -165,7 +166,7 @@ def enforce_api_authorization():
         '/api/login',
         '/api/me',
         '/api/logout',
-    }:
+    } or (request.path == '/api/store/orders' and request.method == 'POST'):
         return None
 
     verify_jwt_in_request()
@@ -312,6 +313,7 @@ app.register_blueprint(return_history_bp, url_prefix='/api')
 app.register_blueprint(sales_history_services_bp, url_prefix='/api')
 app.register_blueprint(gift_box_services_bp, url_prefix='/api')
 app.register_blueprint(statistics_services_bp,url_prefix='/api/statistics')
+app.register_blueprint(orders_bp, url_prefix='/api')
 
 @app.route('/update_server', methods=['POST'])
 def webhook():
