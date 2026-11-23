@@ -2,7 +2,7 @@ from flask import Blueprint, jsonify, request
 from flask_restx import Resource
 
 from api.supplier_routes import supplier_ns
-from models import Supplier, PurchaseHistory, Product, PackagingMaterialSupplier
+from models import Supplier, PurchaseHistory, Product, PackagingMaterialSupplier, PackagingPurchaseHistory
 from sqlalchemy.exc import IntegrityError
 
 # Create Blueprint for suppliers
