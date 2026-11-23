@@ -14,9 +14,9 @@ class PackagingMaterialSupplier(Base):
     phone_number = Column(String, nullable=True)
     address = Column(String, nullable=True)
     packaging_materials = relationship("PackagingMaterial", back_populates="packaging_material_supplier",
-                                       cascade="all, delete-orphan")
+                                       passive_deletes="all")
     purchase_history = relationship("PackagingPurchaseHistory",
-                                    back_populates="packaging_material_supplier")  # New relationship added
+                                    back_populates="packaging_material_supplier", passive_deletes="all")  # New relationship added
     is_active = Column(Boolean, nullable=False, default=True)
 
     def to_dict(self):
