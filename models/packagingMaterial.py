@@ -25,8 +25,8 @@ class PackagingMaterial(Base):
 
     packaging_material_supplier = relationship("PackagingMaterialSupplier",
                                                back_populates="packaging_materials")  # New relationship
-    stock_history = relationship("PackagingStockHistory", back_populates="material", cascade="all, delete-orphan")
-    purchase_history = relationship("PackagingPurchaseHistory", back_populates="material", cascade="all, delete-orphan")
+    stock_history = relationship("PackagingStockHistory", back_populates="material", passive_deletes="all")
+    purchase_history = relationship("PackagingPurchaseHistory", back_populates="material", passive_deletes="all")
     reserved_quantity = Column(Integer, nullable=False, default=0)  # Додайте default=0
 
     # Зарезервована кількість
