@@ -308,7 +308,8 @@ def get_analytics_overview():
             item["profit"] += profit
 
         for gift_sale in gift_set_sales:
-            revenue = _as_decimal(gift_sale.sold_price) * int(gift_sale.quantity or 0)
+            # sold_price is already the total transaction amount in the current sale flow.
+            revenue = _as_decimal(gift_sale.sold_price)
             gift_set_sales_total += revenue
             month_bucket(months, gift_sale.sold_at)["gift_set_sales"] += revenue
 
