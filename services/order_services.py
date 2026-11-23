@@ -143,7 +143,7 @@ def create_store_order():
         total = Decimal("0.00")
         for product in products:
             quantity = quantities[product.id]
-            available = int(product.available_quantity or 0) - int(product.reserved_quantity or 0)
+            available = int(product.available_quantity or 0)
             if quantity > available:
                 db_session.rollback()
                 return jsonify(error=f"Недостатньо товару «{product.name}» у наявності"), 409
@@ -218,7 +218,7 @@ def update_order_status(order_id):
             products_by_id = {product.id: product for product in products}
             for item in order.items:
                 product = products_by_id[item.product_id]
-                available = int(product.available_quantity or 0) - int(product.reserved_quantity or 0)
+                available = int(product.available_quantity or 0)
                 if available < item.quantity:
                     db_session.rollback()
                     return jsonify(error=f"Недостатньо товару «{item.product_name}» для резервування"), 409
