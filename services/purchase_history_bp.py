@@ -35,7 +35,7 @@ def get_purchase_history_data():
             PurchaseHistory.purchase_date.label('date')
         )
         .join(Product, PurchaseHistory.product_id == Product.id)
-        .join(Supplier, PurchaseHistory.supplier_id == Supplier.id)
+        .outerjoin(Supplier, PurchaseHistory.supplier_id == Supplier.id)
         .outerjoin(product_categories_table, product_categories_table.c.product_id == Product.id)
         .outerjoin(Category, product_categories_table.c.category_id == Category.id)
         .group_by(
@@ -59,7 +59,7 @@ def get_purchase_history_data():
             PackagingPurchaseHistory.purchase_date.label('purchase_date')
         )
         .join(PackagingMaterial, PackagingPurchaseHistory.material_id == PackagingMaterial.id)
-        .join(PackagingMaterialSupplier, PackagingPurchaseHistory.supplier_id == PackagingMaterialSupplier.id)
+        .outerjoin(PackagingMaterialSupplier, PackagingPurchaseHistory.supplier_id == PackagingMaterialSupplier.id)
         .group_by(
             PackagingPurchaseHistory.id,
             PackagingMaterial.id,
@@ -159,19 +159,9 @@ def get_purchase_history_data():
 def delete_all_purchase_history():
     from postgreSQLConnect import db_session
 
-    try:
-        deleted_count = db_session.query(PurchaseHistory).delete(synchronize_session=False)
-        db_session.commit()
-
-        return {
-            "success": True,
-            "message": f"Видалено записів про закупівлі: {deleted_count}",
-            "deleted_count": deleted_count
-        }
-
-    except Exception as e:
-        db_session.rollback()
-        return {
-            "success": False,
-            "message": str(e)
-        }
+    # Purchase history is an accounting ledger and must not be bulk-deleted.
+    return {
+        "success": False,
+        "message": "Історію закупівель не можна видаляти. Для виправлення потрібна окрема коригувальна операція.",
+        "deleted_count": 0
+    }
