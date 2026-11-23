@@ -105,11 +105,18 @@ class AuthenticationApiTests(unittest.TestCase):
         with patch.object(crm_app_module, "reset_database") as reset_mock, patch.object(
             crm_app_module, "create_roles_and_users"
         ) as bootstrap_mock:
+            missing_confirmation = self.client.post(
+                "/api/reset-database",
+                headers=manager_headers,
+                json={},
+            )
             manager_response = self.client.post(
                 "/api/reset-database",
                 headers=manager_headers,
+                json={"confirmation": "ОЧИСТИТИ БАЗУ"},
             )
 
+        self.assertEqual(missing_confirmation.status_code, 400)
         self.assertEqual(manager_response.status_code, 200)
         reset_mock.assert_called_once_with()
         bootstrap_mock.assert_called_once_with()
@@ -117,6 +124,7 @@ class AuthenticationApiTests(unittest.TestCase):
         guest_response = self.client.post(
             "/api/reset-database",
             headers=guest_headers,
+            json={"confirmation": "ОЧИСТИТИ БАЗУ"},
         )
         unauthenticated_response = self.client.post("/api/reset-database")
 
