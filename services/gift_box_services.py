@@ -1,6 +1,8 @@
+from datetime import datetime
+
 from flask import request, jsonify, Blueprint
 from models import GiftSet, GiftSetProduct, GiftSetPackaging, Product, PackagingMaterial, GiftSetSalesHistory, \
-    GiftSetSalesHistoryProduct, GiftSetSalesHistoryPackaging, Customer
+    GiftSetSalesHistoryProduct, GiftSetSalesHistoryPackaging, Customer, StockHistory, PackagingStockHistory
 
 gift_box_services_bp = Blueprint('gift_box_services', __name__)
 
@@ -34,7 +36,7 @@ def create_gift_set():
         gift_selling_price=gift_selling_price
     )
     db_session.add(gift_set)
-    db_session.commit()  # Отримуємо gift_set.id
+    db_session.flush()  # Отримуємо gift_set.id без часткового commit
 
     total_price = 0
 
@@ -48,11 +50,15 @@ def create_gift_set():
                 Product.id == item_id
             ).with_for_update().populate_existing().one_or_none()
             if not product:
+                db_session.rollback()
                 return jsonify({"error": f"Product {item_id} not found"}), 400
             if product.available_quantity < quantity:
+                db_session.rollback()
                 return jsonify({"error": f"Product {item_id} not available in required quantity"}), 400
+            quantity_before = product.available_quantity
             product.available_quantity -= quantity
             product.reserved_quantity += quantity  # Резервуємо товар
+            db_session.add(StockHistory(product_id=product.id, change_amount=-quantity, change_type='gift_set_reserve', timestamp=datetime.now(), quantity_before=quantity_before, quantity_after=product.available_quantity, reason='Gift set reservation'))
             total_price += product.purchase_price_per_item * quantity
             gift_set_product = GiftSetProduct(
                 gift_set_id=gift_set.id,
@@ -62,12 +68,16 @@ def create_gift_set():
             db_session.add(gift_set_product)
 
         elif item_type == "packaging":
-            packaging = db_session.query(PackagingMaterial).filter(PackagingMaterial.id == item_id).one_or_none()
+            packaging = db_session.query(PackagingMaterial).filter(PackagingMaterial.id == item_id).with_for_update().one_or_none()
             if not packaging:
+                db_session.rollback()
                 return jsonify({"error": f"Packaging {item_id} not found"}), 400
             if packaging.available_quantity < quantity:
+                db_session.rollback()
                 return jsonify({"error": f"Packaging {item_id} not available in required quantity"}), 400
-            packaging.available_quantity -= quantity  # Оновлюємо кількість доступного пакування та відзначаємо як використане
+            packaging_quantity_before = packaging.available_quantity
+            packaging.available_quantity -= quantity
+            db_session.add(PackagingStockHistory(material_id=packaging.id, change_amount=-quantity, change_type='gift_set_reserve', timestamp=datetime.now()))  # Оновлюємо кількість доступного пакування та відзначаємо як використане
             packaging.reserved_quantity += quantity  # Резервуємо пакування
             total_price += packaging.purchase_price_per_unit * quantity
             gift_set_packaging = GiftSetPackaging(
@@ -130,6 +140,8 @@ def update_gift_set(gift_set_id):
         ).with_for_update().populate_existing().one_or_none()
         if not gift_set:
             return jsonify({"error": "Gift set not found"}), 404
+        if gift_set.is_sold or db_session.query(GiftSetSalesHistory.id).filter_by(gift_set_id=gift_set.id).first():
+            return jsonify({"error": "Sold gift sets cannot be edited because they have sales history."}), 409
 
         # Оновлення назви, опису та ціни
         name = data.get('name')
@@ -158,8 +170,10 @@ def update_gift_set(gift_set_id):
         for item in gift_set.gift_set_products:
             existing_product = db_session.query(Product).filter(Product.id == item.product_id).one_or_none()
             if existing_product:
+                quantity_before = existing_product.available_quantity
                 existing_product.available_quantity += item.quantity
                 existing_product.reserved_quantity -= item.quantity
+                db_session.add(StockHistory(product_id=existing_product.id, change_amount=item.quantity, change_type='gift_set_unreserve', timestamp=datetime.now(), quantity_before=quantity_before, quantity_after=existing_product.available_quantity, reason='Gift set composition updated'))
             db_session.delete(item)
 
         for item in gift_set.gift_set_packagings:
@@ -168,9 +182,9 @@ def update_gift_set(gift_set_id):
             if existing_packaging:
                 existing_packaging.available_quantity += item.quantity
                 existing_packaging.reserved_quantity -= item.quantity
+                db_session.add(PackagingStockHistory(material_id=existing_packaging.id, change_amount=item.quantity, change_type='gift_set_unreserve', timestamp=datetime.now()))
             db_session.delete(item)
 
-        db_session.commit()  # Фіксуємо видалення старих записів перед додаванням нових
 
         # Додаємо нові елементи до набору
         for item in new_items:
@@ -183,11 +197,15 @@ def update_gift_set(gift_set_id):
             if item_type == "product" and item_id:
                 product = db_session.query(Product).filter(Product.id == item_id).one_or_none()
                 if not product:
+                    db_session.rollback()
                     return jsonify({"error": f"Product {item_id} not found"}), 400
                 if product.available_quantity < quantity:
+                    db_session.rollback()
                     return jsonify({"error": f"Product {item_id} not available in required quantity"}), 400
+                quantity_before = product.available_quantity
                 product.available_quantity -= quantity
                 product.reserved_quantity += quantity
+                db_session.add(StockHistory(product_id=product.id, change_amount=-quantity, change_type='gift_set_reserve', timestamp=datetime.now(), quantity_before=quantity_before, quantity_after=product.available_quantity, reason='Gift set reservation updated'))
                 total_price += price * quantity
 
                 gift_set_product = GiftSetProduct(
@@ -199,12 +217,15 @@ def update_gift_set(gift_set_id):
 
             # Додаємо пакування
             elif item_type == "packaging" and item_id:
-                packaging = db_session.query(PackagingMaterial).filter(PackagingMaterial.id == item_id).one_or_none()
+                packaging = db_session.query(PackagingMaterial).filter(PackagingMaterial.id == item_id).with_for_update().one_or_none()
                 if not packaging:
+                    db_session.rollback()
                     return jsonify({"error": f"Packaging {item_id} not found"}), 400
                 if packaging.available_quantity < quantity:
+                    db_session.rollback()
                     return jsonify({"error": f"Packaging {item_id} not available in required quantity"}), 400
                 packaging.available_quantity -= quantity
+                db_session.add(PackagingStockHistory(material_id=packaging.id, change_amount=-quantity, change_type='gift_set_reserve', timestamp=datetime.now()))
                 packaging.reserved_quantity += quantity
                 total_price += float(packaging.purchase_price_per_unit) * quantity
 
@@ -237,34 +258,28 @@ def dismantle_gift_set(gift_set_id):
         ).with_for_update().populate_existing().one_or_none()
         if not gift_set:
             return jsonify({"error": "Gift set not found"}), 404
+        if db_session.query(GiftSetSalesHistory.id).filter_by(gift_set_id=gift_set.id).first():
+            return jsonify({"error": "Gift set has sales history and cannot be dismantled."}), 409
 
         # Повертаємо кількість товарів та пакувань на склад.
         gift_set_products = db_session.query(GiftSetProduct).filter_by(gift_set_id=gift_set.id).all()
         for item in gift_set_products:
-            product = db_session.query(Product).get(item.product_id)
+            product = db_session.query(Product).filter(Product.id == item.product_id).with_for_update().one_or_none()
             if product:
+                quantity_before = product.available_quantity
                 product.available_quantity += item.quantity
                 product.reserved_quantity -= item.quantity
+                db_session.add(StockHistory(product_id=product.id, change_amount=item.quantity, change_type='gift_set_unreserve', timestamp=datetime.now(), quantity_before=quantity_before, quantity_after=product.available_quantity, reason='Gift set dismantled'))
             db_session.delete(item)
 
         gift_set_packagings = db_session.query(GiftSetPackaging).filter_by(gift_set_id=gift_set.id).all()
         for item in gift_set_packagings:
-            packaging = db_session.query(PackagingMaterial).get(item.packaging_id)
+            packaging = db_session.query(PackagingMaterial).filter(PackagingMaterial.id == item.packaging_id).with_for_update().one_or_none()
             if packaging:
                 packaging.available_quantity += item.quantity
                 packaging.reserved_quantity -= item.quantity
+                db_session.add(PackagingStockHistory(material_id=packaging.id, change_amount=item.quantity, change_type='gift_set_unreserve', timestamp=datetime.now()))
             db_session.delete(item)
-
-        # Видаляємо історію продажів для цього подарункового набору.
-        gift_set_sales_history = db_session.query(GiftSetSalesHistory).filter_by(gift_set_id=gift_set.id).all()
-        for record in gift_set_sales_history:
-            db_session.query(GiftSetSalesHistoryProduct).filter_by(
-                sales_history_id=record.id
-            ).delete(synchronize_session=False)
-            db_session.query(GiftSetSalesHistoryPackaging).filter_by(
-                sales_history_id=record.id
-            ).delete(synchronize_session=False)
-            db_session.delete(record)
 
         # Видаляємо сам набір.
         db_session.delete(gift_set)
@@ -320,7 +335,6 @@ def sell_gift_set(gift_set_id):
             if packaging.sold_quantity is None:
                 packaging.sold_quantity = 0
             packaging.sold_quantity += gift_set_packaging.quantity
-            packaging.available_quantity -= gift_set_packaging.quantity
 
             sales_packaging = GiftSetSalesHistoryPackaging(
                 gift_set_packaging=gift_set_packaging,
