@@ -152,7 +152,7 @@ class AnalyticsOverviewTests(unittest.TestCase):
             {item["type"] for item in payload["restock"]},
             {"product", "packaging"},
         )
-        self.assertIn("прибуток гіфтбоксів не розраховується", payload["profit_scope_note"])
+        self.assertIn("їхній прибуток не розраховується", payload["profit_scope_note"])
 
     def test_overview_rejects_invalid_or_reversed_dates(self):
         invalid = self.client.get(
