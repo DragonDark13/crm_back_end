@@ -117,8 +117,16 @@ def purchase_current_packaging_material():
     total_purchase_cost = data.get('total_purchase_cost')
     from postgreSQLConnect import db_session
 
-    if not material_id or not quantity or not purchase_price_per_unit:
+    if not material_id or quantity is None or purchase_price_per_unit is None or total_purchase_cost is None:
         return jsonify({'error': 'Required fields are missing'}), 400
+    try:
+        quantity = float(quantity)
+        purchase_price_per_unit = Decimal(str(purchase_price_per_unit))
+        total_purchase_cost = Decimal(str(total_purchase_cost))
+    except (TypeError, ValueError, ArithmeticError):
+        return jsonify({'error': 'Purchase quantity and prices must be valid numbers'}), 400
+    if quantity <= 0 or purchase_price_per_unit <= 0 or total_purchase_cost <= 0:
+        return jsonify({'error': 'Purchase quantity and prices must be greater than zero'}), 400
 
     try:
         # Find material by ID
