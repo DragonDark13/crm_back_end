@@ -212,6 +212,9 @@ def delete_all_packaging_suppliers():
     from postgreSQLConnect import db_session
 
     try:
+        if db_session.query(PackagingPurchaseHistory.id).first():
+            return {"success": False, "message": "Packaging suppliers cannot be bulk-deleted while purchase history exists. Deactivate suppliers instead.", "deleted_count": 0}
+
         deleted_count = db_session.query(PackagingMaterialSupplier).delete(
             synchronize_session=False
         )
