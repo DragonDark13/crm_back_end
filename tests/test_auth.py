@@ -188,6 +188,20 @@ class AuthenticationApiTests(unittest.TestCase):
         self.assertEqual(payload["username"], "test_manager")
         self.assertEqual(payload["roles"], ["manager"])
 
+
+    def test_access_token_is_invalidated_when_user_identity_is_recreated(self):
+        token = self._login("test_manager")
+        with crm_app_module.app.app_context():
+            user = User.query.filter_by(username="test_manager").first()
+            user.fs_uniquifier = str(uuid4())
+            db.session.commit()
+
+        response = self.client.get(
+            "/api/protected",
+            headers=self._headers(token),
+        )
+        self.assertEqual(response.status_code, 401)
+
     def test_guest_cannot_mutate_catalog(self):
         token = self._login("test_guest")
         response = self.client.post(
