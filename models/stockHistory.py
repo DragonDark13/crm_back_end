@@ -1,6 +1,6 @@
 from datetime import datetime
 
-from sqlalchemy import Column, String, Boolean, Integer, ForeignKey, DECIMAL, DateTime, Text
+from sqlalchemy import Column, String, Boolean, Integer, ForeignKey, DECIMAL, Date, DateTime, Text
 from sqlalchemy.orm import relationship
 
 from models.base import Base
@@ -14,6 +14,7 @@ class StockHistory(Base):
     change_amount = Column(Integer, nullable=False)
     change_type = Column(String, nullable=False)
     timestamp = Column(DateTime, default=datetime.now)
+    inventory_date = Column(Date, nullable=True)
     quantity_before = Column(Integer, nullable=True)
     quantity_after = Column(Integer, nullable=True)
     reason = Column(Text, nullable=True)
@@ -24,6 +25,7 @@ class StockHistory(Base):
             'id': self.id,
             'product_id': self.product_id,
             'timestamp': self.timestamp,
+            'inventory_date': self.inventory_date.isoformat() if self.inventory_date else None,
             'change_type': self.change_type,
             'change_amount': self.change_amount,
             'quantity_before': self.quantity_before,
