@@ -1,11 +1,11 @@
-from sqlalchemy import insert, delete, or_
+from sqlalchemy import insert, delete, or_, func
 
 from models import Product, product_categories_table, Supplier, PurchaseHistory, StockHistory, Category, SaleHistory, \
     Customer, ReturnHistory, PackagingMaterial, PackagingSaleHistory, GiftSet, GiftSetProduct, GiftSetPackaging, \
     GiftSetSalesHistory, ProductAuditHistory, User
 from flask import Blueprint, request
 from sqlalchemy.orm import joinedload
-from sqlalchemy.exc import NoResultFound, SQLAlchemyError
+from sqlalchemy.exc import NoResultFound, SQLAlchemyError, IntegrityError
 from flask import jsonify
 from flask_jwt_extended import jwt_required, get_jwt_identity
 from decimal import Decimal, InvalidOperation
@@ -117,6 +117,16 @@ class ProductService:
         if missing_product_fields:
             return {'error': f"Missing required fields for product: {', '.join(missing_product_fields)}"}, 400
 
+        name = data.get('name')
+        if not isinstance(name, str) or not name.strip():
+            return {'error': 'Product name must not be empty'}, 400
+        name = name.strip()
+        if len(name) > 255:
+            return {'error': 'Product name must not exceed 255 characters'}, 400
+
+        if db_session.query(Product.id).filter(func.lower(func.trim(Product.name)) == name.lower()).first():
+            return {'error': 'A product with this name already exists'}, 409
+
         required_purchase_fields = ['available_quantity', 'purchase_price_per_item', 'purchase_total_price',
                                     'supplier_id']
         missing_purchase_fields = [field for field in required_purchase_fields if field not in data]
@@ -150,7 +160,7 @@ class ProductService:
                 return {'error': 'Supplier not found'}, 404
 
             product = Product(
-                name=data['name'],
+                name=name,
                 total_quantity=0,
                 available_quantity=0,
                 created_date=created_date,
@@ -207,6 +217,9 @@ class ProductService:
         except NoResultFound:
             db_session.rollback()
             return {'error': 'Supplier not found'}, 404
+        except IntegrityError:
+            db_session.rollback()
+            return {'error': 'A product with this name already exists'}, 409
         except Exception as e:
             db_session.rollback()
             return {'error': str(e)}, 500
@@ -250,10 +263,17 @@ def update_product(product_id):
     data = request.get_json()
 
     # Перевірка обов'язкових полів
-    required_fields = ['available_quantity', 'purchase_price_per_item', 'purchase_total_price', 'created_date']
+    required_fields = ['name', 'available_quantity', 'purchase_price_per_item', 'purchase_total_price', 'created_date']
     missing_fields = [field for field in required_fields if field not in data]
     if missing_fields:
         return jsonify({'error': f"Missing required fields: {', '.join(missing_fields)}"}), 400
+
+    name = data.get('name')
+    if not isinstance(name, str) or not name.strip():
+        return jsonify({'error': 'Product name must not be empty'}), 400
+    name = name.strip()
+    if len(name) > 255:
+        return jsonify({'error': 'Product name must not exceed 255 characters'}), 400
 
     errors = {}
 
@@ -283,6 +303,13 @@ def update_product(product_id):
             Product.id == product_id
         ).with_for_update().populate_existing().one()
 
+        if db_session.query(Product.id).filter(
+            func.lower(func.trim(Product.name)) == name.lower(),
+            Product.id != product.id,
+        ).first():
+            db_session.rollback()
+            return jsonify({'error': 'A product with this name already exists'}), 409
+
         supplier_id = data.get('supplier_id')
         if supplier_id:
             try:
@@ -299,11 +326,13 @@ def update_product(product_id):
             product.created_date = datetime.now()
 
         previous_values = {
+            "name": product.name,
             "available_quantity": product.available_quantity,
             "purchase_price_per_item": product.purchase_price_per_item,
             "selling_price_per_item": product.selling_price_per_item,
         }
 
+        product.name = name
         product.available_quantity = available_quantity
         product.purchase_total_price = purchase_total_price
         product.purchase_price_per_item = purchase_price_per_item
@@ -314,6 +343,7 @@ def update_product(product_id):
             product,
             "manual_edit",
             {
+                "name": (previous_values["name"], product.name),
                 "available_quantity": (previous_values["available_quantity"], product.available_quantity),
                 "purchase_price_per_item": (previous_values["purchase_price_per_item"], product.purchase_price_per_item),
                 "selling_price_per_item": (previous_values["selling_price_per_item"], product.selling_price_per_item),
@@ -355,7 +385,11 @@ def update_product(product_id):
         return jsonify(updated_product), 200
 
     except NoResultFound:
-        return jsonify({'error': 'Product not found'}),
+        db_session.rollback()
+        return jsonify({'error': 'Product not found'}), 404
+    except IntegrityError:
+        db_session.rollback()
+        return jsonify({'error': 'A product with this name already exists'}), 409
 
 
 @product_bp.route('/delete_all_products', methods=['DELETE'])
