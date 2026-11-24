@@ -217,9 +217,12 @@ class ProductService:
         except NoResultFound:
             db_session.rollback()
             return {'error': 'Supplier not found'}, 404
-        except IntegrityError:
+        except IntegrityError as error:
             db_session.rollback()
-            return {'error': 'A product with this name already exists'}, 409
+            constraint_name = getattr(getattr(error.orig, "diag", None), "constraint_name", None)
+            if constraint_name == "uq_products_name_normalized":
+                return {'error': 'A product with this name already exists'}, 409
+            return {'error': 'Database integrity error'}, 500
         except Exception as e:
             db_session.rollback()
             return {'error': str(e)}, 500
@@ -387,9 +390,12 @@ def update_product(product_id):
     except NoResultFound:
         db_session.rollback()
         return jsonify({'error': 'Product not found'}), 404
-    except IntegrityError:
+    except IntegrityError as error:
         db_session.rollback()
-        return jsonify({'error': 'A product with this name already exists'}), 409
+        constraint_name = getattr(getattr(error.orig, "diag", None), "constraint_name", None)
+        if constraint_name == "uq_products_name_normalized":
+            return jsonify({'error': 'A product with this name already exists'}), 409
+        return jsonify({'error': 'Database integrity error'}), 500
 
 
 @product_bp.route('/delete_all_products', methods=['DELETE'])
