@@ -2,11 +2,13 @@ from sqlalchemy import insert, delete, or_, func
 
 from models import Product, product_categories_table, Supplier, PurchaseHistory, StockHistory, Category, SaleHistory, \
     Customer, ReturnHistory, PackagingMaterial, PackagingSaleHistory, GiftSet, GiftSetProduct, GiftSetPackaging, \
-    GiftSetSalesHistory, GiftSetSalesHistoryProduct, ProductAuditHistory, Payment, PackagingStockHistory, User
+    GiftSetSalesHistory, GiftSetSalesHistoryProduct, ProductAuditHistory, Payment, PackagingStockHistory, User, ProductImage
 from flask import Blueprint, request
-from sqlalchemy.orm import joinedload
+from sqlalchemy.orm import joinedload, selectinload
 from sqlalchemy.exc import NoResultFound, SQLAlchemyError, IntegrityError
-from flask import jsonify
+from flask import jsonify, send_file
+from io import BytesIO
+from werkzeug.utils import secure_filename
 from flask_jwt_extended import jwt_required, get_jwt_identity
 from decimal import Decimal, InvalidOperation
 from datetime import datetime
@@ -69,9 +71,9 @@ class ProductService:
 
         """Отримати продукт за ID"""
         try:
-            product = db_session.query(Product).filter(
-            Product.id == product_id
-        ).populate_existing().one()
+            product = db_session.query(Product).options(
+                selectinload(Product.images)
+            ).filter(Product.id == product_id).populate_existing().one()
             product_dict = product.to_dict()  # Assuming you have a method for dict conversion
             product_dict['category_ids'] = [category.id for category in product.categories]
             product_dict['supplier'] = product.supplier.to_dict() if product.supplier else None
@@ -84,7 +86,11 @@ class ProductService:
         from postgreSQLConnect import db_session
 
         """Отримати всі товари з категоріями"""
-        products = db_session.query(Product).options(joinedload(Product.categories), joinedload(Product.supplier)).all()
+        products = db_session.query(Product).options(
+            joinedload(Product.categories),
+            joinedload(Product.supplier),
+            selectinload(Product.images),
+        ).all()
         product_list = []
         for product in products:
             product_dict = product.to_dict()  # Assuming you have a method for dict conversion
@@ -396,6 +402,128 @@ def update_product(product_id):
         if constraint_name == "uq_products_name_normalized":
             return jsonify({'error': 'A product with this name already exists'}), 409
         return jsonify({'error': 'Database integrity error'}), 500
+
+
+
+
+PRODUCT_IMAGE_MAX_SIZE = 5 * 1024 * 1024
+PRODUCT_IMAGE_MAX_COUNT = 10
+PRODUCT_IMAGE_UPLOAD_COUNT = 5
+
+def _get_product_image_payload(upload):
+    filename = secure_filename(upload.filename or "")
+    image_data = upload.stream.read(PRODUCT_IMAGE_MAX_SIZE + 1)
+    if not image_data:
+        raise ValueError("Файл зображення порожній")
+    if len(image_data) > PRODUCT_IMAGE_MAX_SIZE:
+        raise ValueError("Розмір одного зображення не може перевищувати 5 МБ")
+
+    if image_data.startswith(b"\\xff\\xd8\\xff"):
+        mime_type, extension = "image/jpeg", ".jpg"
+    elif image_data.startswith(b"\\x89PNG\\r\\n\\x1a\\n"):
+        mime_type, extension = "image/png", ".png"
+    elif image_data.startswith((b"GIF87a", b"GIF89a")):
+        mime_type, extension = "image/gif", ".gif"
+    elif image_data.startswith(b"RIFF") and image_data[8:12] == b"WEBP":
+        mime_type, extension = "image/webp", ".webp"
+    else:
+        raise ValueError("Підтримуються лише JPEG, PNG, GIF та WEBP")
+
+    if not filename:
+        filename = f"product-image{extension}"
+
+    return {
+        "file_name": filename[:255],
+        "mime_type": mime_type,
+        "image_data": image_data,
+        "file_size": len(image_data),
+    }
+
+
+@product_bp.route('/product/<int:product_id>/images', methods=['POST'])
+def upload_product_images(product_id):
+    from postgreSQLConnect import db_session
+
+    uploads = request.files.getlist("images")
+    if not uploads or all(not upload.filename for upload in uploads):
+        return jsonify({"error": "Оберіть хоча б одне зображення"}), 400
+    uploads = [upload for upload in uploads if upload.filename]
+    if len(uploads) > PRODUCT_IMAGE_UPLOAD_COUNT:
+        return jsonify({"error": "За один раз можна завантажити не більше 5 зображень"}), 400
+
+    try:
+        product = db_session.query(Product).filter(
+            Product.id == product_id
+        ).with_for_update().one_or_none()
+        if product is None:
+            return jsonify({"error": "Product not found"}), 404
+
+        existing_count = db_session.query(ProductImage.id).filter_by(
+            product_id=product_id
+        ).count()
+        if existing_count + len(uploads) > PRODUCT_IMAGE_MAX_COUNT:
+            return jsonify({"error": "Для одного товару можна зберегти не більше 10 зображень"}), 400
+
+        payloads = [_get_product_image_payload(upload) for upload in uploads]
+        images = [
+            ProductImage(product_id=product_id, **payload)
+            for payload in payloads
+        ]
+        db_session.add_all(images)
+        db_session.commit()
+
+        return jsonify({
+            "message": "Зображення товару збережено",
+            "images": [image.to_dict() for image in images],
+        }), 201
+    except ValueError as error:
+        db_session.rollback()
+        return jsonify({"error": str(error)}), 400
+    except Exception:
+        db_session.rollback()
+        return jsonify({"error": "Не вдалося зберегти зображення товару"}), 500
+
+
+@product_bp.route('/product/<int:product_id>/images/<int:image_id>', methods=['GET'])
+def get_product_image(product_id, image_id):
+    from postgreSQLConnect import db_session
+
+    image = db_session.query(ProductImage).filter_by(
+        id=image_id,
+        product_id=product_id,
+    ).one_or_none()
+    if image is None:
+        return jsonify({"error": "Product image not found"}), 404
+
+    response = send_file(
+        BytesIO(image.image_data),
+        mimetype=image.mime_type,
+        download_name=image.file_name,
+        conditional=True,
+    )
+    response.headers["Cache-Control"] = "private, max-age=3600"
+    response.headers["X-Content-Type-Options"] = "nosniff"
+    return response
+
+
+@product_bp.route('/product/<int:product_id>/images/<int:image_id>', methods=['DELETE'])
+def delete_product_image(product_id, image_id):
+    from postgreSQLConnect import db_session
+
+    try:
+        image = db_session.query(ProductImage).filter_by(
+            id=image_id,
+            product_id=product_id,
+        ).with_for_update().one_or_none()
+        if image is None:
+            return jsonify({"error": "Product image not found"}), 404
+
+        db_session.delete(image)
+        db_session.commit()
+        return jsonify({"message": "Зображення товару видалено"}), 200
+    except Exception:
+        db_session.rollback()
+        return jsonify({"error": "Не вдалося видалити зображення товару"}), 500
 
 
 @product_bp.route('/delete_all_products', methods=['DELETE'])
