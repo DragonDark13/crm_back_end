@@ -477,6 +477,11 @@ def delete_product(product_id):
             gift_set_product_ids = db_session.query(GiftSetProduct.id).filter(
                 GiftSetProduct.product_id == product.id
             ).subquery()
+            affected_gift_set_ids = [
+                row[0] for row in db_session.query(GiftSetProduct.gift_set_id).filter(
+                    GiftSetProduct.product_id == product.id
+                ).all()
+            ]
 
             has_sold_gift_set_reference = db_session.query(GiftSetSalesHistoryProduct.id).join(
                 GiftSetProduct,
@@ -525,6 +530,36 @@ def delete_product(product_id):
             db_session.query(GiftSetProduct).filter(
                 GiftSetProduct.product_id == product.id
             ).delete(synchronize_session=False)
+
+            # Recalculate affected unsold gift sets after removing this product from their composition.
+            for gift_set_id in affected_gift_set_ids:
+                gift_set = db_session.query(GiftSet).filter(
+                    GiftSet.id == gift_set_id
+                ).with_for_update().one_or_none()
+                if gift_set is None:
+                    continue
+
+                remaining_products = db_session.query(GiftSetProduct).filter_by(
+                    gift_set_id=gift_set_id
+                ).all()
+                remaining_packagings = db_session.query(GiftSetPackaging).filter_by(
+                    gift_set_id=gift_set_id
+                ).all()
+
+                if not remaining_products and not remaining_packagings:
+                    db_session.delete(gift_set)
+                    continue
+
+                product_cost = sum(
+                    (item.product.purchase_price_per_item or 0) * item.quantity
+                    for item in remaining_products
+                )
+                packaging_cost = sum(
+                    (item.packaging.purchase_price_per_unit or 0) * item.quantity
+                    for item in remaining_packagings
+                )
+                gift_set.total_price = product_cost + packaging_cost
+
             db_session.query(SaleHistory).filter(
                 SaleHistory.product_id == product.id
             ).delete(synchronize_session=False)
