@@ -129,6 +129,78 @@ def _generate_article():
     return f"PRD-{new_number:04d}"
 
 
+def preview_products_from_csv(file_path):
+    """Перевіряє CSV без запису змін у базу даних."""
+    with open(file_path, mode="rb") as source_file:
+        file_content = source_file.read()
+
+    file_hash = hashlib.sha256(file_content).hexdigest()
+    existing_batch = db_session.query(ProductImportBatch).filter_by(
+        file_hash=file_hash
+    ).one_or_none()
+    if existing_batch:
+        return {
+            "status": "already_imported",
+            "file_name": existing_batch.file_name,
+            "rows_imported": existing_batch.rows_imported,
+        }
+
+    text_content = file_content.decode("utf-8-sig")
+    csv_reader = csv.DictReader(io.StringIO(text_content))
+    if not csv_reader.fieldnames:
+        raise ValueError("CSV-файл порожній або не містить заголовків.")
+
+    required_headers = {
+        "Найменування", "Постачальник", "Кількість",
+        "Вартість за кількість", "Вартість за 1 шт",
+        "Дата закупівлі", "Категорія", "Одиниця виміру", "Опис товару",
+    }
+    legacy_headers = {
+        "Наименование", "Поставщик", "Количество",
+        "Стоимость за количество", "Стоимость за 1 шт",
+    }
+    headers = set(csv_reader.fieldnames)
+    if not required_headers.issubset(headers) and not legacy_headers.issubset(headers):
+        missing = sorted(required_headers - headers)
+        raise ValueError(
+            "CSV має невідповідні заголовки. Відсутні колонки: "
+            + ", ".join(missing)
+        )
+
+    rows_total = 0
+    existing_product_rows = 0
+    new_product_rows = 0
+    new_product_names = set()
+    existing_product_names = set()
+
+    for row_number, row in enumerate(csv_reader, start=2):
+        if not any((value or "").strip() for value in row.values()):
+            continue
+        purchase = _parse_purchase_row(row, row_number)
+        rows_total += 1
+        product = db_session.query(Product).filter_by(name=purchase["name"]).one_or_none()
+        if product is None:
+            new_product_rows += 1
+            new_product_names.add(purchase["name"])
+        else:
+            existing_product_rows += 1
+            existing_product_names.add(purchase["name"])
+
+    if rows_total == 0:
+        raise ValueError("У CSV-файлі немає рядків закупівель для імпорту.")
+
+    return {
+        "status": "preview",
+        "file_name": os.path.basename(file_path),
+        "rows_total": rows_total,
+        "existing_product_rows": existing_product_rows,
+        "new_product_rows": new_product_rows,
+        "existing_products_count": len(existing_product_names),
+        "new_products_count": len(new_product_names),
+        "new_product_names": sorted(new_product_names),
+    }
+
+
 def load_products_from_csv(file_path, created_date=None):
     """
     Імпортує всі закупівлі з одного CSV-файлу однією транзакцією.
