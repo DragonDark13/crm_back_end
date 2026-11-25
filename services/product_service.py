@@ -2,7 +2,7 @@ from sqlalchemy import insert, delete, or_, func
 
 from models import Product, product_categories_table, Supplier, PurchaseHistory, StockHistory, Category, SaleHistory, \
     Customer, ReturnHistory, PackagingMaterial, PackagingSaleHistory, GiftSet, GiftSetProduct, GiftSetPackaging, \
-    GiftSetSalesHistory, GiftSetSalesHistoryProduct, ProductAuditHistory, Payment, User
+    GiftSetSalesHistory, GiftSetSalesHistoryProduct, ProductAuditHistory, Payment, PackagingStockHistory, User
 from flask import Blueprint, request
 from sqlalchemy.orm import joinedload
 from sqlalchemy.exc import NoResultFound, SQLAlchemyError, IntegrityError
@@ -477,6 +477,39 @@ def delete_product(product_id):
             gift_set_product_ids = db_session.query(GiftSetProduct.id).filter(
                 GiftSetProduct.product_id == product.id
             ).subquery()
+
+            has_sold_gift_set_reference = db_session.query(GiftSetSalesHistoryProduct.id).join(
+                GiftSetProduct,
+                GiftSetSalesHistoryProduct.gift_set_product_id == GiftSetProduct.id,
+            ).filter(GiftSetProduct.product_id == product.id).first()
+            if has_sold_gift_set_reference:
+                db_session.rollback()
+                return jsonify({
+                    'error': 'Product is part of a sold gift set. Delete is blocked to preserve gift-set sales history.'
+                }), 409
+
+            # Restore packaging stock consumed by this product's sales before removing their records.
+            packaging_sale_records = db_session.query(PackagingSaleHistory).filter(
+                PackagingSaleHistory.sale_id.in_(sale_ids)
+            ).all()
+            for packaging_sale in packaging_sale_records:
+                if packaging_sale.packaging_material_id is None:
+                    continue
+                packaging_material = db_session.query(PackagingMaterial).filter(
+                    PackagingMaterial.id == packaging_sale.packaging_material_id
+                ).with_for_update().one_or_none()
+                if packaging_material is None:
+                    continue
+                packaging_material.available_quantity += packaging_sale.packaging_quantity
+                packaging_material.available_stock_cost += packaging_sale.total_packaging_cost
+                if packaging_material.available_quantity > 0 and packaging_material.status == 'used':
+                    packaging_material.status = 'available'
+                db_session.add(PackagingStockHistory(
+                    material_id=packaging_material.id,
+                    change_amount=packaging_sale.packaging_quantity,
+                    change_type='product_delete_restore',
+                    timestamp=datetime.now(),
+                ))
 
             # Remove child records first; shared customers, suppliers and packaging materials remain untouched.
             db_session.query(Payment).filter(Payment.sale_id.in_(sale_ids)).delete(synchronize_session=False)
