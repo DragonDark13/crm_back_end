@@ -94,7 +94,7 @@ class ProductImageTests(unittest.TestCase):
         upload = self.client.post(
             f"/api/product/{self.product_id}/images",
             headers=self.headers,
-            data={"images": (io.BytesIO(b"\xff\\xd8\\xffimage-data"), "product.jpg")},
+            data={"images": (io.BytesIO(b"\xff\xd8\xffimage-data"), "product.jpg")},
             content_type="multipart/form-data",
         )
         self.assertEqual(upload.status_code, 201)
