@@ -65,12 +65,11 @@ def _parse_purchase_row(row, row_number, legacy_created_date=None):
     )
 
     if total_price is None and price_per_item is None:
-        raise ValueError(
-            f"Рядок {row_number}: потрібно вказати загальну вартість або вартість одиниці."
-        )
-    if total_price is None:
+        total_price = Decimal("0")
+        price_per_item = Decimal("0")
+    elif total_price is None:
         total_price = price_per_item * quantity
-    if price_per_item is None:
+    elif price_per_item is None:
         price_per_item = total_price / quantity
     if total_price < 0 or price_per_item < 0:
         raise ValueError(f"Рядок {row_number}: вартість не може бути від'ємною.")
@@ -262,7 +261,7 @@ def preview_products_from_csv(file_path):
     new_product_names = set()
     existing_product_names = set()
 
-    for _, purchase in rows_to_import:
+    for _, purchase, _, _ in rows_to_import:
         product = db_session.query(Product).filter_by(name=purchase["name"]).one_or_none()
         if product is None:
             new_product_rows += 1
@@ -280,6 +279,7 @@ def preview_products_from_csv(file_path):
         "existing_product_rows": existing_product_rows,
         "new_product_rows": new_product_rows,
         "existing_products_count": len(existing_product_names),
+        "existing_product_names": sorted(existing_product_names),
         "new_products_count": len(new_product_names),
         "new_product_names": sorted(new_product_names),
     }
