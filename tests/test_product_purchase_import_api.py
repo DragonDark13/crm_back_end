@@ -65,5 +65,47 @@ class ProductPurchaseImportApiTests(unittest.TestCase):
         self.assertIn("уже імпортовано", response.get_json()["error"])
 
 
+    @patch("services.product_import_routes.preview_products_from_csv")
+    def test_previews_uploaded_csv(self, preview_mock):
+        preview_mock.return_value = {
+            "status": "preview",
+            "file_name": "new-stock.csv",
+            "rows_total": 5,
+            "existing_product_rows": 3,
+            "new_product_rows": 2,
+            "existing_products_count": 2,
+            "new_products_count": 1,
+            "new_product_names": ["Новий товар"],
+        }
+
+        response = self.client.post(
+            "/api/imports/products/purchases/preview",
+            data={"file": (io.BytesIO(b"csv content"), "new-stock.csv")},
+            content_type="multipart/form-data",
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.get_json()["new_products_count"], 1)
+        self.assertEqual(response.get_json()["existing_product_rows"], 3)
+        preview_mock.assert_called_once()
+
+    @patch("services.product_import_routes.preview_products_from_csv")
+    def test_preview_returns_conflict_for_previously_imported_file(self, preview_mock):
+        preview_mock.return_value = {
+            "status": "already_imported",
+            "file_name": "old-name.csv",
+            "rows_imported": 5,
+        }
+
+        response = self.client.post(
+            "/api/imports/products/purchases/preview",
+            data={"file": (io.BytesIO(b"same csv"), "renamed.csv")},
+            content_type="multipart/form-data",
+        )
+
+        self.assertEqual(response.status_code, 409)
+        self.assertIn("уже імпортовано", response.get_json()["error"])
+
+
 if __name__ == "__main__":
     unittest.main()
