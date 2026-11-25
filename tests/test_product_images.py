@@ -74,7 +74,7 @@ class ProductImageTests(unittest.TestCase):
         self.assertEqual(product_response.status_code, 200)
         self.assertEqual(product_response.get_json()["images"][0]["id"], image["id"])
 
-        image_response = self.client.get(image["url"], headers=self.headers)
+        image_response = self.client.get(f"/api{image['url']}", headers=self.headers)
         self.assertEqual(image_response.status_code, 200)
         self.assertEqual(image_response.mimetype, "image/png")
         self.assertTrue(image_response.data.startswith(b"\x89PNG"))
