@@ -2,7 +2,7 @@ from sqlalchemy import insert, delete, or_, func
 
 from models import Product, product_categories_table, Supplier, PurchaseHistory, StockHistory, Category, SaleHistory, \
     Customer, ReturnHistory, PackagingMaterial, PackagingSaleHistory, GiftSet, GiftSetProduct, GiftSetPackaging, \
-    GiftSetSalesHistory, GiftSetSalesHistoryProduct, ProductAuditHistory, Payment, PackagingSaleHistory, User
+    GiftSetSalesHistory, GiftSetSalesHistoryProduct, ProductAuditHistory, Payment, User
 from flask import Blueprint, request
 from sqlalchemy.orm import joinedload
 from sqlalchemy.exc import NoResultFound, SQLAlchemyError, IntegrityError
