@@ -53,15 +53,17 @@ class PurchaseCsvRowParsingTests(unittest.TestCase):
 
         self.assertEqual(purchase["purchase_date"].isoformat(), "2023-09-15")
 
-    def test_rejects_row_without_any_price(self):
-        with self.assertRaisesRegex(ValueError, "потрібно вказати загальну вартість"):
-            _parse_purchase_row({
-                "Найменування": "Без ціни",
-                "Кількість": "1",
-                "Вартість за кількість": "",
-                "Вартість за 1 шт": "",
-                "Дата закупівлі": "15.01.2025",
-            }, 2)
+    def test_uses_zero_when_both_prices_are_unknown(self):
+        purchase = _parse_purchase_row({
+            "Найменування": "Без відомої ціни",
+            "Кількість": "1",
+            "Вартість за кількість": "",
+            "Вартість за 1 шт": "",
+            "Дата закупівлі": "15.01.2025",
+        }, 2)
+
+        self.assertEqual(purchase["total_price"], Decimal("0"))
+        self.assertEqual(purchase["price_per_item"], Decimal("0"))
 
 
 if __name__ == "__main__":
