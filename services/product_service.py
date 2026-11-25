@@ -444,6 +444,9 @@ def _get_product_image_payload(upload):
 def upload_product_images(product_id):
     from postgreSQLConnect import db_session
 
+    if request.content_length and request.content_length > 26 * 1024 * 1024:
+        return jsonify({"error": "Загальний розмір запиту не може перевищувати 26 МБ"}), 413
+
     uploads = request.files.getlist("images")
     if not uploads or all(not upload.filename for upload in uploads):
         return jsonify({"error": "Оберіть хоча б одне зображення"}), 400
