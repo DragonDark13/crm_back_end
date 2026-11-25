@@ -337,6 +337,7 @@ def update_product(product_id):
         previous_values = {
             "name": product.name,
             "available_quantity": product.available_quantity,
+            "purchase_total_price": product.purchase_total_price,
             "purchase_price_per_item": product.purchase_price_per_item,
             "selling_price_per_item": product.selling_price_per_item,
         }
@@ -354,14 +355,14 @@ def update_product(product_id):
             {
                 "name": (previous_values["name"], product.name),
                 "available_quantity": (previous_values["available_quantity"], product.available_quantity),
+                "purchase_total_price": (previous_values["purchase_total_price"], product.purchase_total_price),
                 "purchase_price_per_item": (previous_values["purchase_price_per_item"], product.purchase_price_per_item),
                 "selling_price_per_item": (previous_values["selling_price_per_item"], product.selling_price_per_item),
             },
         )
 
         category_ids = data.get('category_ids', [])
-        category_ids = data.get('category_ids', [])
-        if category_ids:
+        if 'category_ids' in data:
             # Clear old categories first by deleting the association from the junction table
             db_session.query(product_categories_table).filter(
                 product_categories_table.c.product_id == product.id).delete()
