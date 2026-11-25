@@ -159,6 +159,26 @@ def _existing_purchase_occurrences(fingerprints):
     return occurrences
 
 
+
+def _filter_duplicate_purchase_rows(purchases, existing_occurrences):
+    """Keeps only occurrences beyond the number already recorded in history."""
+    seen_occurrences = {}
+    rows_to_import = []
+    duplicate_rows = 0
+
+    for row_number, purchase in purchases:
+        fingerprint = _purchase_fingerprint(purchase)
+        seen_occurrences[fingerprint] = seen_occurrences.get(fingerprint, 0) + 1
+        occurrence_index = seen_occurrences[fingerprint]
+        if occurrence_index <= existing_occurrences.get(fingerprint, 0):
+            duplicate_rows += 1
+            continue
+        rows_to_import.append(
+            (row_number, purchase, fingerprint, occurrence_index)
+        )
+
+    return rows_to_import, duplicate_rows
+
 def _read_purchase_rows(csv_reader, created_date=None):
     purchases = []
     for row_number, row in enumerate(csv_reader, start=2):
@@ -222,14 +242,9 @@ def preview_products_from_csv(file_path):
     purchases = _read_purchase_rows(csv_reader)
     fingerprints = [_purchase_fingerprint(purchase) for _, purchase in purchases]
     existing_occurrences = _existing_purchase_occurrences(fingerprints)
-    seen_occurrences = {}
-    rows_to_import = []
-
-    for (row_number, purchase), fingerprint in zip(purchases, fingerprints):
-        seen_occurrences[fingerprint] = seen_occurrences.get(fingerprint, 0) + 1
-        if seen_occurrences[fingerprint] <= existing_occurrences.get(fingerprint, 0):
-            continue
-        rows_to_import.append((row_number, purchase))
+    rows_to_import, duplicate_rows = _filter_duplicate_purchase_rows(
+        purchases, existing_occurrences
+    )
 
     existing_product_rows = 0
     new_product_rows = 0
@@ -250,7 +265,7 @@ def preview_products_from_csv(file_path):
         "file_name": os.path.basename(file_path),
         "rows_total": len(purchases),
         "rows_to_import": len(rows_to_import),
-        "duplicate_rows": len(purchases) - len(rows_to_import),
+        "duplicate_rows": duplicate_rows,
         "existing_product_rows": existing_product_rows,
         "new_product_rows": new_product_rows,
         "existing_products_count": len(existing_product_names),
@@ -306,17 +321,12 @@ def load_products_from_csv(file_path, created_date=None):
         purchases = _read_purchase_rows(csv_reader, created_date)
         fingerprints = [_purchase_fingerprint(purchase) for _, purchase in purchases]
         existing_occurrences = _existing_purchase_occurrences(fingerprints)
-        seen_occurrences = {}
+        rows_to_import, duplicate_rows_skipped = _filter_duplicate_purchase_rows(
+            purchases, existing_occurrences
+        )
         imported_rows = 0
-        duplicate_rows_skipped = 0
 
-        for (row_number, purchase), fingerprint in zip(purchases, fingerprints):
-            seen_occurrences[fingerprint] = seen_occurrences.get(fingerprint, 0) + 1
-            occurrence_index = seen_occurrences[fingerprint]
-            if occurrence_index <= existing_occurrences.get(fingerprint, 0):
-                duplicate_rows_skipped += 1
-                continue
-
+        for row_number, purchase, fingerprint, occurrence_index in rows_to_import:
             supplier = None
             if purchase["supplier_name"]:
                 supplier = db_session.query(Supplier).filter_by(
