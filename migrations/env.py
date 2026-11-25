@@ -7,12 +7,12 @@ from sqlalchemy import engine_from_config
 from sqlalchemy import pool
 
 from alembic import context
-
+from dotenv import load_dotenv
 
 # 🔧 Додаємо корінь проєкту в PYTHONPATH
 BASE_DIR = Path(__file__).resolve().parents[1]
 sys.path.append(str(BASE_DIR))
-
+load_dotenv(BASE_DIR / ".env")
 # ⬇️ ІМПОРТУЄМО Base
 from models.base import Base  # ⬅️ ЗМІНИ ПІД СЕБЕ
 
