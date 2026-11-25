@@ -2,7 +2,7 @@ from sqlalchemy import insert, delete, or_, func
 
 from models import Product, product_categories_table, Supplier, PurchaseHistory, StockHistory, Category, SaleHistory, \
     Customer, ReturnHistory, PackagingMaterial, PackagingSaleHistory, GiftSet, GiftSetProduct, GiftSetPackaging, \
-    GiftSetSalesHistory, ProductAuditHistory, User
+    GiftSetSalesHistory, GiftSetSalesHistoryProduct, ProductAuditHistory, Payment, PackagingSaleHistory, User
 from flask import Blueprint, request
 from sqlalchemy.orm import joinedload
 from sqlalchemy.exc import NoResultFound, SQLAlchemyError, IntegrityError
@@ -442,37 +442,81 @@ product_history_bp = Blueprint('product_history', __name__)
 
 @product_history_bp.route('/product/<int:product_id>', methods=['DELETE'])
 def delete_product(product_id):
-    """Delete product and all related records."""
-    try:
-        from postgreSQLConnect import db_session
+    """Delete a product, optionally removing only records directly related to it."""
+    from postgreSQLConnect import db_session
 
-        # Fetch the product
+    delete_mode = request.args.get('mode', 'product_only')
+    if delete_mode not in {'product_only', 'all_related'}:
+        return jsonify({'error': 'Invalid product deletion mode'}), 400
+
+    try:
         product = db_session.query(Product).filter(
             Product.id == product_id
         ).with_for_update().populate_existing().one()
 
-        # Перевіряємо всі записи, які можуть містити історію або посилатися на товар.
-        has_history = any((
-            db_session.query(SaleHistory.id).filter(SaleHistory.product_id == product.id).first(),
-            db_session.query(PurchaseHistory.id).filter(PurchaseHistory.product_id == product.id).first(),
-            db_session.query(StockHistory.id).filter(StockHistory.product_id == product.id).first(),
-            db_session.query(ReturnHistory.id).filter(ReturnHistory.product_id == product.id).first(),
-            db_session.query(GiftSetProduct.id).filter(GiftSetProduct.product_id == product.id).first(),
-        ))
-        if has_history:
+        related_queries = (
+            db_session.query(SaleHistory.id).filter(SaleHistory.product_id == product.id),
+            db_session.query(PurchaseHistory.id).filter(PurchaseHistory.product_id == product.id),
+            db_session.query(StockHistory.id).filter(StockHistory.product_id == product.id),
+            db_session.query(ReturnHistory.id).filter(ReturnHistory.product_id == product.id),
+            db_session.query(GiftSetProduct.id).filter(GiftSetProduct.product_id == product.id),
+            db_session.query(ProductAuditHistory.id).filter(ProductAuditHistory.product_id == product.id),
+        )
+        has_related_data = any(query.first() for query in related_queries)
+
+        if has_related_data and delete_mode == 'product_only':
             db_session.rollback()
             return jsonify({
-                'error': 'Product has historical records or is used in a gift set and cannot be deleted. Archive functionality is required instead.'
+                'error': 'Product has related records. Choose deletion with all related data or keep the product.'
             }), 409
 
-        # Видаляємо лише зв'язки з категоріями та сам товар. Історію не видаляємо.
+        if delete_mode == 'all_related':
+            sale_ids = db_session.query(SaleHistory.id).filter(
+                SaleHistory.product_id == product.id
+            ).subquery()
+            gift_set_product_ids = db_session.query(GiftSetProduct.id).filter(
+                GiftSetProduct.product_id == product.id
+            ).subquery()
+
+            # Remove child records first; shared customers, suppliers and packaging materials remain untouched.
+            db_session.query(Payment).filter(Payment.sale_id.in_(sale_ids)).delete(synchronize_session=False)
+            db_session.query(PackagingSaleHistory).filter(
+                PackagingSaleHistory.sale_id.in_(sale_ids)
+            ).delete(synchronize_session=False)
+            db_session.query(ReturnHistory).filter(
+                ReturnHistory.product_id == product.id
+            ).delete(synchronize_session=False)
+            db_session.query(GiftSetSalesHistoryProduct).filter(
+                GiftSetSalesHistoryProduct.gift_set_product_id.in_(gift_set_product_ids)
+            ).delete(synchronize_session=False)
+            db_session.query(GiftSetProduct).filter(
+                GiftSetProduct.product_id == product.id
+            ).delete(synchronize_session=False)
+            db_session.query(SaleHistory).filter(
+                SaleHistory.product_id == product.id
+            ).delete(synchronize_session=False)
+            db_session.query(PurchaseHistory).filter(
+                PurchaseHistory.product_id == product.id
+            ).delete(synchronize_session=False)
+            db_session.query(StockHistory).filter(
+                StockHistory.product_id == product.id
+            ).delete(synchronize_session=False)
+            db_session.query(ProductAuditHistory).filter(
+                ProductAuditHistory.product_id == product.id
+            ).delete(synchronize_session=False)
+
         db_session.query(product_categories_table).filter(
             product_categories_table.c.product_id == product.id
-        ).delete()
+        ).delete(synchronize_session=False)
         db_session.delete(product)
         db_session.commit()
 
-        return jsonify({'message': 'Product deleted successfully'}), 200
+        message = (
+            'Product and all related records deleted successfully'
+            if delete_mode == 'all_related'
+            else 'Product deleted successfully'
+        )
+        return jsonify({'message': message}), 200
     except NoResultFound:
         db_session.rollback()
         return jsonify({'error': 'Product not found'}), 404
