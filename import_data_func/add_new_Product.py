@@ -150,12 +150,19 @@ def _existing_purchase_occurrences(fingerprints):
     if not fingerprints:
         return {}
 
-    rows = db_session.query(ProductImportRow.fingerprint).filter(
+    rows = db_session.query(
+        ProductImportRow.fingerprint,
+        ProductImportRow.occurrence_index,
+    ).filter(
         ProductImportRow.fingerprint.in_(set(fingerprints))
     ).all()
     occurrences = {}
-    for (fingerprint,) in rows:
-        occurrences[fingerprint] = occurrences.get(fingerprint, 0) + 1
+    for fingerprint, occurrence_index in rows:
+        current = occurrences.setdefault(
+            fingerprint, {"count": 0, "max_index": 0}
+        )
+        current["count"] += 1
+        current["max_index"] = max(current["max_index"], occurrence_index)
     return occurrences
 
 
@@ -170,11 +177,15 @@ def _filter_duplicate_purchase_rows(purchases, existing_occurrences):
         fingerprint = _purchase_fingerprint(purchase)
         seen_occurrences[fingerprint] = seen_occurrences.get(fingerprint, 0) + 1
         occurrence_index = seen_occurrences[fingerprint]
-        if occurrence_index <= existing_occurrences.get(fingerprint, 0):
+        existing = existing_occurrences.get(fingerprint, 0)
+        existing_count = existing["count"] if isinstance(existing, dict) else existing
+        max_index = existing.get("max_index", existing_count) if isinstance(existing, dict) else existing_count
+        if occurrence_index <= existing_count:
             duplicate_rows += 1
             continue
+        persisted_occurrence_index = max_index + occurrence_index - existing_count
         rows_to_import.append(
-            (row_number, purchase, fingerprint, occurrence_index)
+            (row_number, purchase, fingerprint, persisted_occurrence_index)
         )
 
     return rows_to_import, duplicate_rows
