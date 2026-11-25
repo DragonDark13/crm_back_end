@@ -4,6 +4,7 @@ from .roleUser import User, Role
 from .revokedToken import RevokedToken
 from .product import Product
 from .productImportBatch import ProductImportBatch
+from .productImportRow import ProductImportRow
 from .supplier import Supplier
 from .category import Category
 from .purchaseHistory import PurchaseHistory
