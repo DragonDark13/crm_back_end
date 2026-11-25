@@ -186,6 +186,7 @@ def enforce_api_authorization():
         and (
             request.path.rstrip('/') == '/api/get_all_products'
             or (request.path.startswith('/api/product/') and len(request.path.strip('/').split('/')) == 3)
+            or (request.path.startswith('/api/product/') and '/images/' in request.path and len(request.path.strip('/').split('/')) == 5)
             or request.path == '/api/categories/get_all_categories'
             or request.path == '/api/suppliers/get_suppliers_list'
         )

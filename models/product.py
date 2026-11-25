@@ -36,6 +36,7 @@ class Product(Base):
         default=""
     )
     unit_of_measure = Column(String(50), nullable=True)
+    images = relationship("ProductImage", back_populates="product", passive_deletes="all")
 
     def to_dict(self):
         """Convert product instance to dictionary."""
@@ -54,5 +55,6 @@ class Product(Base):
             'created_date': self.created_date.isoformat() if self.created_date else None,
             'article': self.article,
             'product_description': self.product_description,
-            'unit_of_measure': self.unit_of_measure
+            'unit_of_measure': self.unit_of_measure,
+            'images': [image.to_dict() for image in sorted(self.__dict__.get('images', []), key=lambda item: item.id)]
         }
