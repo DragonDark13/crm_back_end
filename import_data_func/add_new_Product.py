@@ -303,12 +303,20 @@ def load_products_from_csv(file_path, created_date=None):
                 + ", ".join(missing)
             )
 
+        purchases = _read_purchase_rows(csv_reader, created_date)
+        fingerprints = [_purchase_fingerprint(purchase) for _, purchase in purchases]
+        existing_occurrences = _existing_purchase_occurrences(fingerprints)
+        seen_occurrences = {}
         imported_rows = 0
-        for row_number, row in enumerate(csv_reader, start=2):
-            if not any((value or "").strip() for value in row.values()):
+        duplicate_rows_skipped = 0
+
+        for (row_number, purchase), fingerprint in zip(purchases, fingerprints):
+            seen_occurrences[fingerprint] = seen_occurrences.get(fingerprint, 0) + 1
+            occurrence_index = seen_occurrences[fingerprint]
+            if occurrence_index <= existing_occurrences.get(fingerprint, 0):
+                duplicate_rows_skipped += 1
                 continue
 
-            purchase = _parse_purchase_row(row, row_number, created_date)
             supplier = None
             if purchase["supplier_name"]:
                 supplier = db_session.query(Supplier).filter_by(
@@ -416,13 +424,21 @@ def load_products_from_csv(file_path, created_date=None):
                     "; ".join(sorted(existing_category_names)),
                 )
 
-            db_session.add(PurchaseHistory(
+            purchase_history = PurchaseHistory(
                 product_id=product.id,
                 purchase_price_per_item=purchase["price_per_item"],
                 purchase_total_price=purchase["total_price"],
                 supplier_id=supplier.id if supplier else None,
                 quantity_purchase=purchase["quantity"],
                 purchase_date=purchase["purchase_date"],
+            )
+            db_session.add(purchase_history)
+            db_session.flush()
+
+            db_session.add(ProductImportRow(
+                purchase_history_id=purchase_history.id,
+                fingerprint=fingerprint,
+                occurrence_index=occurrence_index,
             ))
 
             db_session.add(StockHistory(
@@ -455,9 +471,6 @@ def load_products_from_csv(file_path, created_date=None):
 
             imported_rows += 1
 
-        if imported_rows == 0:
-            raise ValueError("У CSV-файлі немає рядків закупівель для імпорту.")
-
         db_session.add(ProductImportBatch(
             file_hash=file_hash,
             file_name=os.path.basename(file_path),
@@ -469,6 +482,7 @@ def load_products_from_csv(file_path, created_date=None):
             "status": "imported",
             "file_name": os.path.basename(file_path),
             "rows_imported": imported_rows,
+            "duplicate_rows_skipped": duplicate_rows_skipped,
         }
     except Exception:
         db_session.rollback()
