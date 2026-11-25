@@ -112,18 +112,22 @@ class ProductNameValidationTests(unittest.TestCase):
         self.assertEqual(audit.new_value, "75.00")
 
     def test_update_clears_categories_when_empty_list_is_submitted(self):
-        category = Category(name="Category to clear")
-        db.session.add(category)
-        db.session.commit()
+        with self.app_module.app.app_context():
+            category = Category(name="Category to clear")
+            db.session.add(category)
+            db.session.commit()
+            category_id = category.id
+
         product_id = self._create_product("Product with category")
 
-        db_session.execute(
-            product_categories_table.insert().values(
-                product_id=product_id,
-                category_id=category.id,
+        with self.app_module.app.app_context():
+            db_session.execute(
+                product_categories_table.insert().values(
+                    product_id=product_id,
+                    category_id=category_id,
+                )
             )
-        )
-        db_session.commit()
+            db_session.commit()
 
         response = self.client.put(
             f"/api/product/{product_id}",
@@ -132,11 +136,12 @@ class ProductNameValidationTests(unittest.TestCase):
         )
 
         self.assertEqual(response.status_code, 200, response.get_json())
-        remaining_links = db_session.execute(
-            product_categories_table.select().where(
-                product_categories_table.c.product_id == product_id
-            )
-        ).fetchall()
+        with self.app_module.app.app_context():
+            remaining_links = db_session.execute(
+                product_categories_table.select().where(
+                    product_categories_table.c.product_id == product_id
+                )
+            ).fetchall()
         self.assertEqual(remaining_links, [])
 
     def test_create_rejects_name_duplicate_ignoring_case_and_outer_spaces(self):
