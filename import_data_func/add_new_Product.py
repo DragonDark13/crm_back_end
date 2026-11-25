@@ -279,7 +279,7 @@ def load_products_from_csv(file_path, created_date=None):
     Імпортує всі закупівлі з одного CSV-файлу однією транзакцією.
 
     Підтримує нові українські заголовки та старий формат для прикладів.
-    Повторний імпорт незміненого файлу блокується за SHA-256.
+    Повторний файл блокується за SHA-256, а повторні рядки — за fingerprint закупівлі.
     """
     with open(file_path, mode="rb") as source_file:
         file_content = source_file.read()
