@@ -51,6 +51,21 @@ class PurchaseImportDeduplicationTests(unittest.TestCase):
             [1, 2],
         )
 
+
+    def test_uses_next_available_persisted_index_when_history_has_a_gap(self):
+        first = purchase()
+        second = purchase()
+        fingerprint = _purchase_fingerprint(first)
+
+        rows_to_import, duplicates = _filter_duplicate_purchase_rows(
+            [(2, first), (3, second)],
+            {fingerprint: {"count": 1, "max_index": 2}},
+        )
+
+        self.assertEqual(duplicates, 1)
+        self.assertEqual(len(rows_to_import), 1)
+        self.assertEqual(rows_to_import[0][3], 3)
+
     def test_fingerprint_normalizes_name_and_database_decimal_precision(self):
         first = purchase()
         second = purchase()
