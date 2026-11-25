@@ -418,9 +418,9 @@ def _get_product_image_payload(upload):
     if len(image_data) > PRODUCT_IMAGE_MAX_SIZE:
         raise ValueError("Розмір одного зображення не може перевищувати 5 МБ")
 
-    if image_data.startswith(b"\\xff\\xd8\\xff"):
+    if image_data.startswith(b"\xff\\xd8\\xff"):
         mime_type, extension = "image/jpeg", ".jpg"
-    elif image_data.startswith(b"\\x89PNG\\r\\n\\x1a\\n"):
+    elif image_data.startswith(b"\x89PNG\r\n\x1a\n"):
         mime_type, extension = "image/png", ".png"
     elif image_data.startswith((b"GIF87a", b"GIF89a")):
         mime_type, extension = "image/gif", ".gif"
