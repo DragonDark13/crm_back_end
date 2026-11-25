@@ -5,7 +5,7 @@ import unittest
 
 auth_module = importlib.import_module("test_auth")
 
-from models import Product, ProductAuditHistory, Supplier, db  # noqa: E402
+from models import Category, Product, ProductAuditHistory, Supplier, db, product_categories_table  # noqa: E402
 from postgreSQLConnect import db_session  # noqa: E402
 
 
@@ -90,6 +90,54 @@ class ProductNameValidationTests(unittest.TestCase):
         self.assertEqual(product.name, "New product name")
         self.assertEqual(audit.old_value, "Old product name")
         self.assertEqual(audit.new_value, "New product name")
+
+    def test_update_audits_purchase_total_price_changes(self):
+        product_id = self._create_product("Purchase total audit")
+
+        payload = self._update_payload("Purchase total audit")
+        payload["purchase_total_price"] = "75.00"
+        response = self.client.put(
+            f"/api/product/{product_id}",
+            headers=self.headers,
+            json=payload,
+        )
+
+        self.assertEqual(response.status_code, 200, response.get_json())
+        db_session.expire_all()
+        audit = db_session.query(ProductAuditHistory).filter_by(
+            product_id=product_id,
+            field_name="purchase_total_price",
+        ).one()
+        self.assertEqual(audit.old_value, "62.50")
+        self.assertEqual(audit.new_value, "75.00")
+
+    def test_update_clears_categories_when_empty_list_is_submitted(self):
+        category = Category(name="Category to clear")
+        db.session.add(category)
+        db.session.commit()
+        product_id = self._create_product("Product with category")
+
+        db_session.execute(
+            product_categories_table.insert().values(
+                product_id=product_id,
+                category_id=category.id,
+            )
+        )
+        db_session.commit()
+
+        response = self.client.put(
+            f"/api/product/{product_id}",
+            headers=self.headers,
+            json=self._update_payload("Product with category"),
+        )
+
+        self.assertEqual(response.status_code, 200, response.get_json())
+        remaining_links = db_session.execute(
+            product_categories_table.select().where(
+                product_categories_table.c.product_id == product_id
+            )
+        ).fetchall()
+        self.assertEqual(remaining_links, [])
 
     def test_create_rejects_name_duplicate_ignoring_case_and_outer_spaces(self):
         self._create_product("Whole milk")
