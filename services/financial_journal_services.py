@@ -1,12 +1,14 @@
 from datetime import date, datetime
 
 from flask import Blueprint, jsonify
+from sqlalchemy.orm import selectinload
 
 from models import (
     GiftSetSalesHistory,
     OtherInvestment,
     PackagingPurchaseHistory,
     PurchaseHistory,
+    PackagingPurchaseHistory,
     SaleHistory,
     ReturnHistory,
 )
@@ -28,7 +30,10 @@ def get_financial_journal():
     try:
         operations = []
 
-        for item in db_session.query(PurchaseHistory).all():
+        for item in db_session.query(PurchaseHistory).options(
+            selectinload(PurchaseHistory.product),
+            selectinload(PurchaseHistory.supplier),
+        ).all():
             operations.append({
                 "id": f"product-purchase-{item.id}",
                 "source_id": item.id,
@@ -40,7 +45,10 @@ def get_financial_journal():
                 "amount": float(item.purchase_total_price or 0),
             })
 
-        for item in db_session.query(PackagingPurchaseHistory).all():
+        for item in db_session.query(PackagingPurchaseHistory).options(
+            selectinload(PackagingPurchaseHistory.material),
+            selectinload(PackagingPurchaseHistory.packaging_material_supplier),
+        ).all():
             operations.append({
                 "id": f"packaging-purchase-{item.id}",
                 "source_id": item.id,
@@ -67,7 +75,10 @@ def get_financial_journal():
                 "amount": float(item.cost or 0),
             })
 
-        for item in db_session.query(SaleHistory).all():
+        for item in db_session.query(SaleHistory).options(
+            selectinload(SaleHistory.product),
+            selectinload(SaleHistory.customer),
+        ).all():
             operations.append({
                 "id": f"product-sale-{item.id}",
                 "source_id": item.id,
@@ -79,7 +90,11 @@ def get_financial_journal():
                 "amount": float(item.selling_total_price or 0),
             })
 
-        for item in db_session.query(ReturnHistory).all():
+        for item in db_session.query(ReturnHistory).options(
+            selectinload(ReturnHistory.product),
+            selectinload(ReturnHistory.customer),
+            selectinload(ReturnHistory.sale),
+        ).all():
             sale = item.sale
             refund_amount = item.return_amount
             if refund_amount is None:
@@ -95,7 +110,10 @@ def get_financial_journal():
                 "amount": float(refund_amount or 0),
             })
 
-        for item in db_session.query(GiftSetSalesHistory).all():
+        for item in db_session.query(GiftSetSalesHistory).options(
+            selectinload(GiftSetSalesHistory.gift_set),
+            selectinload(GiftSetSalesHistory.customer),
+        ).all():
             operations.append({
                 "id": f"gift-set-sale-{item.id}",
                 "source_id": item.id,
