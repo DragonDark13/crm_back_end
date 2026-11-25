@@ -56,5 +56,5 @@ class Product(Base):
             'article': self.article,
             'product_description': self.product_description,
             'unit_of_measure': self.unit_of_measure,
-            'images': [image.to_dict() for image in sorted(self.images, key=lambda item: item.id)]
+            'images': [image.to_dict() for image in sorted(self.__dict__.get('images', []), key=lambda item: item.id)]
         }
