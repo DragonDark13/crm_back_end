@@ -74,6 +74,7 @@ class ProductPurchaseImportApiTests(unittest.TestCase):
             "existing_product_rows": 3,
             "new_product_rows": 2,
             "existing_products_count": 2,
+            "existing_product_names": ["Товар А", "Товар Б"],
             "new_products_count": 1,
             "new_product_names": ["Новий товар"],
             "rows_to_import": 4,
@@ -89,6 +90,10 @@ class ProductPurchaseImportApiTests(unittest.TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.get_json()["new_products_count"], 1)
         self.assertEqual(response.get_json()["existing_product_rows"], 3)
+        self.assertEqual(
+            response.get_json()["existing_product_names"],
+            ["Товар А", "Товар Б"],
+        )
         self.assertEqual(response.get_json()["duplicate_rows"], 1)
         self.assertEqual(response.get_json()["rows_to_import"], 4)
         preview_mock.assert_called_once()
