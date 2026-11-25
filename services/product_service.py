@@ -552,6 +552,7 @@ def delete_all_products():
                 'error': 'Products cannot be bulk-deleted while historical records or gift set references exist. Archive functionality is required instead.'
             }), 409
 
+        db_session.query(ProductImage).delete(synchronize_session=False)
         db_session.execute(delete(Product))
 
         # Коміт транзакції
@@ -707,6 +708,9 @@ def delete_product(product_id):
         db_session.query(product_categories_table).filter(
             product_categories_table.c.product_id == product.id
         ).delete(synchronize_session=False)
+        db_session.query(ProductImage).filter_by(product_id=product.id).delete(
+            synchronize_session=False
+        )
         db_session.delete(product)
         db_session.commit()
 
