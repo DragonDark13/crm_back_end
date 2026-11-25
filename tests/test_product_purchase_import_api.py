@@ -76,6 +76,8 @@ class ProductPurchaseImportApiTests(unittest.TestCase):
             "existing_products_count": 2,
             "new_products_count": 1,
             "new_product_names": ["Новий товар"],
+            "rows_to_import": 4,
+            "duplicate_rows": 1,
         }
 
         response = self.client.post(
@@ -87,6 +89,8 @@ class ProductPurchaseImportApiTests(unittest.TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.get_json()["new_products_count"], 1)
         self.assertEqual(response.get_json()["existing_product_rows"], 3)
+        self.assertEqual(response.get_json()["duplicate_rows"], 1)
+        self.assertEqual(response.get_json()["rows_to_import"], 4)
         preview_mock.assert_called_once()
 
     @patch("services.product_import_routes.preview_products_from_csv")
