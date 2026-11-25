@@ -58,7 +58,7 @@ class ProductImageTests(unittest.TestCase):
         response = self.client.post(
             f"/api/product/{self.product_id}/images",
             headers=self.headers,
-            data={"images": (io.BytesIO(b"\\x89PNG\\r\\n\\x1a\\nimage-data"), "product.png")},
+            data={"images": (io.BytesIO(b"\x89PNG\r\n\x1a\nimage-data"), "product.png")},
             content_type="multipart/form-data",
         )
 
@@ -77,7 +77,7 @@ class ProductImageTests(unittest.TestCase):
         image_response = self.client.get(image["url"], headers=self.headers)
         self.assertEqual(image_response.status_code, 200)
         self.assertEqual(image_response.mimetype, "image/png")
-        self.assertTrue(image_response.data.startswith(b"\\x89PNG"))
+        self.assertTrue(image_response.data.startswith(b"\x89PNG"))
 
     def test_unsupported_file_is_rejected(self):
         response = self.client.post(
@@ -94,7 +94,7 @@ class ProductImageTests(unittest.TestCase):
         upload = self.client.post(
             f"/api/product/{self.product_id}/images",
             headers=self.headers,
-            data={"images": (io.BytesIO(b"\\xff\\xd8\\xffimage-data"), "product.jpg")},
+            data={"images": (io.BytesIO(b"\xff\\xd8\\xffimage-data"), "product.jpg")},
             content_type="multipart/form-data",
         )
         self.assertEqual(upload.status_code, 201)
