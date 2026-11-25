@@ -1,9 +1,10 @@
 import csv
 import hashlib
 import io
+import json
 import os
 from datetime import datetime
-from decimal import Decimal, InvalidOperation
+from decimal import Decimal, InvalidOperation, ROUND_HALF_UP
 
 
 from models import (
@@ -11,6 +12,7 @@ from models import (
     Product,
     ProductAuditHistory,
     ProductImportBatch,
+    ProductImportRow,
     PurchaseHistory,
     StockHistory,
     Supplier,
@@ -119,6 +121,56 @@ def _parse_purchase_row(row, row_number, legacy_created_date=None):
     }
 
 
+
+def _fingerprint_decimal(value, scale):
+    quantum = Decimal("1").scaleb(-scale)
+    return format(
+        Decimal(str(value or 0)).quantize(quantum, rounding=ROUND_HALF_UP),
+        "f",
+    )
+
+
+def _purchase_fingerprint(purchase):
+    """Stable identity for a purchase row, aligned with persisted DB precision."""
+    payload = [
+        (purchase["name"] or "").strip().casefold(),
+        (purchase["supplier_name"] or "").strip().casefold(),
+        purchase["purchase_date"].isoformat(),
+        _fingerprint_decimal(purchase["quantity"], 0),
+        _fingerprint_decimal(purchase["total_price"], 2),
+        _fingerprint_decimal(purchase["price_per_item"], 3),
+    ]
+    encoded = json.dumps(
+        payload, ensure_ascii=False, separators=(",", ":")
+    ).encode("utf-8")
+    return hashlib.sha256(encoded).hexdigest()
+
+
+def _existing_purchase_occurrences(fingerprints):
+    if not fingerprints:
+        return {}
+
+    rows = db_session.query(ProductImportRow.fingerprint).filter(
+        ProductImportRow.fingerprint.in_(set(fingerprints))
+    ).all()
+    occurrences = {}
+    for (fingerprint,) in rows:
+        occurrences[fingerprint] = occurrences.get(fingerprint, 0) + 1
+    return occurrences
+
+
+def _read_purchase_rows(csv_reader, created_date=None):
+    purchases = []
+    for row_number, row in enumerate(csv_reader, start=2):
+        if not any((value or "").strip() for value in row.values()):
+            continue
+        purchases.append(
+            (row_number, _parse_purchase_row(row, row_number, created_date))
+        )
+    if not purchases:
+        raise ValueError("У CSV-файлі немає рядків закупівель для імпорту.")
+    return purchases
+
 def _generate_article():
     last_product = db_session.query(Product).order_by(Product.id.desc()).first()
     if last_product and last_product.article.startswith("PRD-"):
@@ -130,7 +182,7 @@ def _generate_article():
 
 
 def preview_products_from_csv(file_path):
-    """Перевіряє CSV без запису змін у базу даних."""
+    """Перевіряє CSV та показує рядки, які будуть пропущені як дублікати."""
     with open(file_path, mode="rb") as source_file:
         file_content = source_file.read()
 
@@ -167,17 +219,24 @@ def preview_products_from_csv(file_path):
             + ", ".join(missing)
         )
 
-    rows_total = 0
+    purchases = _read_purchase_rows(csv_reader)
+    fingerprints = [_purchase_fingerprint(purchase) for _, purchase in purchases]
+    existing_occurrences = _existing_purchase_occurrences(fingerprints)
+    seen_occurrences = {}
+    rows_to_import = []
+
+    for (row_number, purchase), fingerprint in zip(purchases, fingerprints):
+        seen_occurrences[fingerprint] = seen_occurrences.get(fingerprint, 0) + 1
+        if seen_occurrences[fingerprint] <= existing_occurrences.get(fingerprint, 0):
+            continue
+        rows_to_import.append((row_number, purchase))
+
     existing_product_rows = 0
     new_product_rows = 0
     new_product_names = set()
     existing_product_names = set()
 
-    for row_number, row in enumerate(csv_reader, start=2):
-        if not any((value or "").strip() for value in row.values()):
-            continue
-        purchase = _parse_purchase_row(row, row_number)
-        rows_total += 1
+    for _, purchase in rows_to_import:
         product = db_session.query(Product).filter_by(name=purchase["name"]).one_or_none()
         if product is None:
             new_product_rows += 1
@@ -186,13 +245,12 @@ def preview_products_from_csv(file_path):
             existing_product_rows += 1
             existing_product_names.add(purchase["name"])
 
-    if rows_total == 0:
-        raise ValueError("У CSV-файлі немає рядків закупівель для імпорту.")
-
     return {
         "status": "preview",
         "file_name": os.path.basename(file_path),
-        "rows_total": rows_total,
+        "rows_total": len(purchases),
+        "rows_to_import": len(rows_to_import),
+        "duplicate_rows": len(purchases) - len(rows_to_import),
         "existing_product_rows": existing_product_rows,
         "new_product_rows": new_product_rows,
         "existing_products_count": len(existing_product_names),
