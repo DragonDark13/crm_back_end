@@ -90,6 +90,24 @@ class ProductImageTests(unittest.TestCase):
         self.assertEqual(response.status_code, 400)
         self.assertEqual(db_session.query(ProductImage).count(), 0)
 
+    def test_product_deletion_cascades_only_its_images(self):
+        upload = self.client.post(
+            f"/api/product/{self.product_id}/images",
+            headers=self.headers,
+            data={"images": (io.BytesIO(b"\\xff\\xd8\\xffimage-data"), "product.jpg")},
+            content_type="multipart/form-data",
+        )
+        self.assertEqual(upload.status_code, 201)
+        image_id = upload.get_json()["images"][0]["id"]
+
+        response = self.client.delete(
+            f"/api/product/{self.product_id}?mode=all_related",
+            headers=self.headers,
+        )
+
+        self.assertEqual(response.status_code, 200, response.get_json())
+        self.assertIsNone(db_session.query(ProductImage).filter_by(id=image_id).one_or_none())
+
     def test_image_can_be_deleted_without_touching_product_history(self):
         upload = self.client.post(
             f"/api/product/{self.product_id}/images",
