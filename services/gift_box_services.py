@@ -346,6 +346,15 @@ def sell_gift_set(gift_set_id):
             total_cost += unit_cost * gift_set_product.quantity
             product.reserved_quantity = reserved_quantity - gift_set_product.quantity
             product.sold_quantity = int(product.sold_quantity or 0) + gift_set_product.quantity
+            db_session.add(StockHistory(
+                product_id=product.id,
+                change_amount=0,
+                change_type="gift_set_sale",
+                timestamp=datetime.now(),
+                quantity_before=product.available_quantity,
+                quantity_after=product.available_quantity,
+                reason=f"Gift set sale #{gift_set.id}",
+            ))
 
             sales_record.sales_history_products.append(GiftSetSalesHistoryProduct(
                 gift_set_product=gift_set_product,
@@ -367,6 +376,12 @@ def sell_gift_set(gift_set_id):
             total_cost += unit_cost * gift_set_packaging.quantity
             packaging.reserved_quantity = reserved_quantity - gift_set_packaging.quantity
             packaging.sold_quantity = int(packaging.sold_quantity or 0) + gift_set_packaging.quantity
+            db_session.add(PackagingStockHistory(
+                material_id=packaging.id,
+                change_amount=0,
+                change_type="gift_set_sale",
+                timestamp=datetime.now(),
+            ))
 
             sales_record.sales_history_packagings.append(GiftSetSalesHistoryPackaging(
                 gift_set_packaging=gift_set_packaging,
