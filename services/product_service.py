@@ -1080,6 +1080,10 @@ def record_sale(product_id):
             Product.id == product_id
         ).with_for_update().populate_existing().one()
 
+        if product.is_archived:
+            db_session.rollback()
+            return jsonify({'error': 'Archived products cannot be sold'}), 409
+
         quantity_sold = data['quantity']
         selling_price_per_item = Decimal(data['selling_price_per_item'])
         selling_total_price = Decimal(data['selling_total_price'])
