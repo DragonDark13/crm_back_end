@@ -1154,8 +1154,10 @@ def record_sale(product_id):
             sale_date=sale_date,
             packaging_material_id=packaging_material_id,
             profit=(
-                (selling_price_per_item - product.purchase_price_per_item) * quantity_sold
-            ) - total_packaging_cost,
+                selling_total_price
+                - (Decimal(str(product.purchase_price_per_item or 0)) * quantity_sold)
+                - total_packaging_cost
+            ),
             packaging_quantity=packaging_quantity,
             total_packaging_cost=total_packaging_cost
         )
