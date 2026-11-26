@@ -609,6 +609,9 @@ def delete_product(product_id):
                 }), 200
 
             product.is_archived = True
+            db_session.query(ProductImage).filter_by(product_id=product.id).delete(
+                synchronize_session=False
+            )
             record_product_audit(
                 db_session,
                 product,
