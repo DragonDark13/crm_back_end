@@ -53,6 +53,7 @@ def serialize_order(order):
             "quantity": item.quantity,
             "unit_price": float(item.unit_price),
             "line_total": float(item.line_total),
+            "unit_cost": float(item.unit_cost) if item.unit_cost is not None else None,
         } for item in order.items],
         "status_history": [{
             "id": entry.id,
@@ -157,6 +158,7 @@ def create_store_order():
                 quantity=quantity,
                 unit_price=price,
                 line_total=line_total,
+                unit_cost=Decimal(str(product.purchase_price_per_item or 0)),
             ))
 
         order = Order(
@@ -260,6 +262,10 @@ def update_order_status(order_id):
                 ))
 
         elif new_status == "completed":
+            if any(item.unit_cost is None for item in order.items):
+                db_session.rollback()
+                return jsonify(error="У замовленні відсутній історичний snapshot собівартості. Завершення заблоковано, щоб не спотворити прибуток."), 409
+
             customer = db_session.query(Customer).filter_by(id=order.customer_id).one_or_none()
             if customer is None:
                 customer = Customer(
@@ -285,7 +291,7 @@ def update_order_status(order_id):
                 product.sold_quantity = int(product.sold_quantity or 0) + item.quantity
                 product.selling_quantity = int(product.selling_quantity or 0) + item.quantity
                 product.selling_total_price = Decimal(str(product.selling_total_price or 0)) + item.line_total
-                profit = (item.unit_price - Decimal(str(product.purchase_price_per_item or 0))) * item.quantity
+                profit = (item.unit_price - item.unit_cost) * item.quantity
                 db_session.add(SaleHistory(
                     product_id=product.id,
                     customer_id=customer.id,
