@@ -680,6 +680,9 @@ def inventory_product(product_id):
             db_session.rollback()
             return jsonify({'error': 'Product not found'}), 404
 
+        available_quantity_before = product.available_quantity or 0
+        reserved_quantity_before = product.reserved_quantity or 0
+
         # Беремо лише непродані набори, у складі яких є інвентаризований товар.
         gift_sets = db_session.query(GiftSet).join(
             GiftSetProduct, GiftSetProduct.gift_set_id == GiftSet.id
@@ -779,10 +782,6 @@ def inventory_product(product_id):
                 GiftSet.id.in_(gift_set_ids),
                 or_(GiftSet.is_sold.is_(False), GiftSet.is_sold.is_(None))
             ).delete(synchronize_session=False)
-
-        # Зберігаємо попередні значення до зміни залишків для коректного аудиту.
-        available_quantity_before = product.available_quantity or 0
-        reserved_quantity_before = product.reserved_quantity or 0
 
         # Усі резерви інвентаризованого товару скасовані разом із його непроданими наборами.
         product.reserved_quantity = 0
