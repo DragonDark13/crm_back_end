@@ -7,6 +7,8 @@ from datetime import datetime
 
 auth_module = importlib.import_module("test_auth")
 
+from postgreSQLConnect import db_session  # noqa: E402
+
 from models import (  # noqa: E402
     Customer,
     GiftSet,
@@ -21,6 +23,7 @@ from models import (  # noqa: E402
 class HistoricalFinancialSnapshotTests(unittest.TestCase):
     def setUp(self):
         self.app_module = auth_module.crm_app_module
+        db_session.remove()
         with self.app_module.app.app_context():
             db.drop_all()
             db.create_all()
@@ -64,6 +67,8 @@ class HistoricalFinancialSnapshotTests(unittest.TestCase):
         self.headers = {"Authorization": f"Bearer {login.get_json()['token']}"}
 
     def tearDown(self):
+        db_session.rollback()
+        db_session.remove()
         with self.app_module.app.app_context():
             db.session.remove()
 
