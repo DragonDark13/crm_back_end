@@ -140,6 +140,8 @@ class AnalyticsOverviewTests(unittest.TestCase):
         # Stored sale profit includes packaging. On return, only product margin
         # for the returned unit is reversed; packaging remains a consumed cost.
         self.assertEqual(summary["product_gross_profit"], 10.0)
+        self.assertEqual(summary["gift_set_gross_profit"], 0.0)
+        self.assertEqual(summary["gross_profit"], 10.0)
         self.assertEqual(summary["purchase_expenses"], 120.0)
         self.assertEqual(summary["other_expenses"], 10.0)
         self.assertEqual(summary["total_expenses"], 130.0)
@@ -152,7 +154,7 @@ class AnalyticsOverviewTests(unittest.TestCase):
             {item["type"] for item in payload["restock"]},
             {"product", "packaging"},
         )
-        self.assertIn("їхній прибуток не розраховується", payload["profit_scope_note"])
+        self.assertIn("Для старих продажів без збереженої собівартості", payload["profit_scope_note"])
 
     def test_overview_rejects_invalid_or_reversed_dates(self):
         invalid = self.client.get(

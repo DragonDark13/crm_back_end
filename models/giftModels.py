@@ -97,6 +97,8 @@ class GiftSetSalesHistory(db.Model):
     gift_set_id = db.Column(db.Integer, db.ForeignKey('gift_set.id'), nullable=False)
     sold_at = db.Column(db.DateTime, default=datetime.utcnow)
     sold_price = db.Column(db.Float, nullable=False)
+    cost_price = db.Column(db.Numeric(12, 3), nullable=True)
+    profit = db.Column(db.Numeric(12, 2), nullable=True)
     quantity = db.Column(db.Integer, nullable=False)
     customer_id = Column(Integer, ForeignKey('customers.id'))
     customer = relationship('Customer', back_populates='gift_set_sales')
@@ -119,7 +121,8 @@ class GiftSetSalesHistory(db.Model):
                 "product_id": item.gift_set_product.product_id,  # доступ через GiftSetProduct
                 "name": item.gift_set_product.product.name,  # доступ через GiftSetProduct
                 "quantity": item.quantity,
-                "price": item.gift_set_product.product.selling_price_per_item  # доступ через GiftSetProduct
+                "price": item.gift_set_product.product.selling_price_per_item,
+                "unit_cost": float(item.unit_cost) if item.unit_cost is not None else None
             }
             for item in self.sales_history_products  # Використовуємо зв'язок sales_history_products
         ]
@@ -129,7 +132,8 @@ class GiftSetSalesHistory(db.Model):
             {
                 "packaging_id": item.gift_set_packaging.packaging_id,  # доступ через GiftSetPackaging
                 "quantity": item.quantity,
-                "price": item.gift_set_packaging.packaging.purchase_price_per_unit  # доступ через GiftSetPackaging
+                "price": item.gift_set_packaging.packaging.purchase_price_per_unit,
+                "unit_cost": float(item.unit_cost) if item.unit_cost is not None else None
             }
             for item in self.sales_history_packagings  # Використовуємо зв'язок sales_history_packagings
         ]
@@ -139,6 +143,8 @@ class GiftSetSalesHistory(db.Model):
             "gift_set_id": self.gift_set_id,
             "sold_at": self.sold_at.isoformat(),
             "sold_price": self.sold_price,
+            "cost_price": float(self.cost_price) if self.cost_price is not None else None,
+            "profit": float(self.profit) if self.profit is not None else None,
             "quantity": self.quantity,
             "customer_name": self.customer_id,
             "products": products,
@@ -151,6 +157,7 @@ class GiftSetSalesHistoryProduct(db.Model):
     sales_history_id = db.Column(db.Integer, db.ForeignKey('gift_set_sales_history.id'), nullable=False)
     gift_set_product_id = db.Column(db.Integer, db.ForeignKey('gift_set_product.id'), nullable=False)
     quantity = db.Column(db.Integer, nullable=False)
+    unit_cost = db.Column(db.Numeric(12, 3), nullable=True)
 
     sales_history = db.relationship('GiftSetSalesHistory', back_populates='sales_history_products')
     gift_set_product = db.relationship('GiftSetProduct')
@@ -161,6 +168,7 @@ class GiftSetSalesHistoryPackaging(db.Model):
     sales_history_id = db.Column(db.Integer, db.ForeignKey('gift_set_sales_history.id'), nullable=False)
     gift_set_packaging_id = db.Column(db.Integer, db.ForeignKey('gift_set_packaging.id'), nullable=False)
     quantity = db.Column(db.Integer, nullable=False)
+    unit_cost = db.Column(db.Numeric(12, 3), nullable=True)
 
     sales_history = db.relationship('GiftSetSalesHistory', back_populates='sales_history_packagings')
     gift_set_packaging = db.relationship('GiftSetPackaging')

@@ -1,4 +1,5 @@
 from datetime import datetime
+from decimal import Decimal
 
 from flask import request, jsonify, Blueprint
 from models import GiftSet, GiftSetProduct, GiftSetPackaging, Product, PackagingMaterial, GiftSetSalesHistory, \
@@ -52,6 +53,9 @@ def create_gift_set():
             if not product:
                 db_session.rollback()
                 return jsonify({"error": f"Product {item_id} not found"}), 400
+            if product.is_archived:
+                db_session.rollback()
+                return jsonify({"error": f"Product {item_id} is archived"}), 409
             if product.available_quantity < quantity:
                 db_session.rollback()
                 return jsonify({"error": f"Product {item_id} not available in required quantity"}), 400
@@ -199,6 +203,9 @@ def update_gift_set(gift_set_id):
                 if not product:
                     db_session.rollback()
                     return jsonify({"error": f"Product {item_id} not found"}), 400
+                if product.is_archived:
+                    db_session.rollback()
+                    return jsonify({"error": f"Product {item_id} is archived"}), 409
                 if product.available_quantity < quantity:
                     db_session.rollback()
                     return jsonify({"error": f"Product {item_id} not available in required quantity"}), 400
@@ -304,53 +311,104 @@ def sell_gift_set(gift_set_id):
         if not gift_set:
             return jsonify({"error": "Gift set not found"}), 404
 
-        data = request.json
-        customer = db_session.query(Customer).filter(Customer.id == data['customer_id']).one()
+        if gift_set.is_sold or db_session.query(GiftSetSalesHistory.id).filter_by(
+            gift_set_id=gift_set.id
+        ).first():
+            db_session.rollback()
+            return jsonify({"error": "Gift set has already been sold"}), 409
 
-        # Створення запису в історії продажів.
+        data = request.json or {}
+        customer = db_session.query(Customer).filter(
+            Customer.id == data['customer_id']
+        ).one_or_none()
+        if customer is None:
+            db_session.rollback()
+            return jsonify({"error": "Customer not found"}), 404
+
+        sold_price = Decimal(str(data['selling_price']))
+        total_cost = Decimal("0.000")
+
+        # Створюємо фінансовий знімок набору саме на момент продажу.
         sales_record = GiftSetSalesHistory(
             gift_set_id=gift_set.id,
-            sold_price=data['selling_price'],
-            quantity=1,  # Ми продаємо один набір (можна додати можливість продавати більше)
+            sold_price=float(sold_price),
+            quantity=1,
             customer_id=customer.id,
         )
         db_session.add(sales_record)
+        db_session.flush()
 
-        # Зміна кількості зарезервованих і проданих товарів та пакувань.
         for gift_set_product in gift_set.gift_set_products:
-            product = gift_set_product.product
-            product.reserved_quantity -= gift_set_product.quantity
-            product.sold_quantity += gift_set_product.quantity
+            product = db_session.query(Product).filter(
+                Product.id == gift_set_product.product_id
+            ).with_for_update().populate_existing().one()
 
-            sales_product = GiftSetSalesHistoryProduct(
+            reserved_quantity = int(product.reserved_quantity or 0)
+            if reserved_quantity < gift_set_product.quantity:
+                db_session.rollback()
+                return jsonify({"error": "Product reservation is inconsistent"}), 409
+
+            unit_cost = Decimal(str(product.purchase_price_per_item or 0))
+            total_cost += unit_cost * gift_set_product.quantity
+            product.reserved_quantity = reserved_quantity - gift_set_product.quantity
+            product.sold_quantity = int(product.sold_quantity or 0) + gift_set_product.quantity
+            db_session.add(StockHistory(
+                product_id=product.id,
+                change_amount=0,
+                change_type="gift_set_sale",
+                timestamp=datetime.now(),
+                quantity_before=product.available_quantity,
+                quantity_after=product.available_quantity,
+                reason=f"Gift set sale #{gift_set.id}",
+            ))
+
+            sales_record.sales_history_products.append(GiftSetSalesHistoryProduct(
                 gift_set_product=gift_set_product,
-                quantity=gift_set_product.quantity
-            )
-            sales_record.sales_history_products.append(sales_product)
+                quantity=gift_set_product.quantity,
+                unit_cost=unit_cost,
+            ))
 
-        # Записуємо історію продажів пакувань.
         for gift_set_packaging in gift_set.gift_set_packagings:
-            packaging = gift_set_packaging.packaging
-            packaging.reserved_quantity -= gift_set_packaging.quantity
-            if packaging.sold_quantity is None:
-                packaging.sold_quantity = 0
-            packaging.sold_quantity += gift_set_packaging.quantity
+            packaging = db_session.query(PackagingMaterial).filter(
+                PackagingMaterial.id == gift_set_packaging.packaging_id
+            ).with_for_update().populate_existing().one()
 
-            sales_packaging = GiftSetSalesHistoryPackaging(
+            reserved_quantity = int(packaging.reserved_quantity or 0)
+            if reserved_quantity < gift_set_packaging.quantity:
+                db_session.rollback()
+                return jsonify({"error": "Packaging reservation is inconsistent"}), 409
+
+            unit_cost = Decimal(str(packaging.purchase_price_per_unit or 0))
+            total_cost += unit_cost * gift_set_packaging.quantity
+            packaging.reserved_quantity = reserved_quantity - gift_set_packaging.quantity
+            packaging.sold_quantity = int(packaging.sold_quantity or 0) + gift_set_packaging.quantity
+            db_session.add(PackagingStockHistory(
+                material_id=packaging.id,
+                change_amount=0,
+                change_type="gift_set_sale",
+                timestamp=datetime.now(),
+            ))
+
+            sales_record.sales_history_packagings.append(GiftSetSalesHistoryPackaging(
                 gift_set_packaging=gift_set_packaging,
-                quantity=gift_set_packaging.quantity
-            )
-            sales_record.sales_history_packagings.append(sales_packaging)
+                quantity=gift_set_packaging.quantity,
+                unit_cost=unit_cost,
+            ))
 
+        sales_record.cost_price = total_cost
+        sales_record.profit = sold_price - total_cost
         gift_set.is_sold = True
 
-        # Історія продажу, залишки товарів і пакувань фіксуються атомарно.
+        # Фінансовий знімок, історія продажу та залишки фіксуються атомарно.
         db_session.commit()
 
         return jsonify({
             "message": "Gift set sold successfully",
             "sales_record": sales_record.to_dict()
         }), 200
+    except (KeyError, ValueError, ArithmeticError):
+        db_session.rollback()
+        return jsonify({"error": "Invalid gift set sale data"}), 400
     except Exception:
         db_session.rollback()
         return jsonify({"error": "Failed to sell gift set"}), 500
@@ -397,7 +455,8 @@ def get_gift_set_sales_history():
                 "product_id": item.gift_set_product.product_id,
                 "name": item.gift_set_product.product.name,
                 "quantity": item.quantity,
-                "price": item.gift_set_product.product.selling_price_per_item
+                "price": item.gift_set_product.product.selling_price_per_item,
+                "unit_cost": float(item.unit_cost) if item.unit_cost is not None else None
             }
             for item in sale.sales_history_products
         ]
@@ -406,7 +465,8 @@ def get_gift_set_sales_history():
             {
                 "packaging_id": item.gift_set_packaging.packaging_id,
                 "quantity": item.quantity,
-                "price": item.gift_set_packaging.packaging.purchase_price_per_unit
+                "price": item.gift_set_packaging.packaging.purchase_price_per_unit,
+                "unit_cost": float(item.unit_cost) if item.unit_cost is not None else None
             }
             for item in sale.sales_history_packagings
         ]
@@ -416,6 +476,8 @@ def get_gift_set_sales_history():
             "gift_set_id": sale.gift_set_id,
             "sold_at": sale.sold_at.isoformat(),
             "sold_price": sale.sold_price,
+            "cost_price": float(sale.cost_price) if sale.cost_price is not None else None,
+            "profit": float(sale.profit) if sale.profit is not None else None,
             "quantity": sale.quantity,
             "customer_name": sale.customer_name,
             "products": products_data,

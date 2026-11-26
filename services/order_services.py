@@ -132,7 +132,8 @@ def create_store_order():
             db_session.flush()
 
         products = db_session.query(Product).filter(
-            Product.id.in_(sorted(quantities))
+            Product.id.in_(sorted(quantities)),
+            Product.is_archived.is_(False),
         ).order_by(Product.id).with_for_update().all()
         if len(products) != len(quantities):
             db_session.rollback()
@@ -212,8 +213,12 @@ def update_order_status(order_id):
         username = str(get_jwt_identity() or "manager")
         if new_status == "confirmed":
             products = db_session.query(Product).filter(
-                Product.id.in_(sorted({item.product_id for item in order.items}))
+                Product.id.in_(sorted({item.product_id for item in order.items})),
+                Product.is_archived.is_(False),
             ).order_by(Product.id).with_for_update().all()
+            if len(products) != len({item.product_id for item in order.items}):
+                db_session.rollback()
+                return jsonify(error="Замовлення містить архівний або недоступний товар"), 409
             products_by_id = {product.id: product for product in products}
             for item in order.items:
                 product = products_by_id[item.product_id]
