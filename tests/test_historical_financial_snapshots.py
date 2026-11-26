@@ -134,6 +134,16 @@ class HistoricalFinancialSnapshotTests(unittest.TestCase):
         self.assertEqual(gift_sale["profit"], "9.00")
         self.assertEqual(gift_sale["products"][0]["unit_price"], "8.000")
 
+        analytics_response = self.client.get(
+            "/api/statistics/overview?start_date=2026-11-01&end_date=2026-11-30",
+            headers=self.headers,
+        )
+        self.assertEqual(analytics_response.status_code, 200, analytics_response.get_json())
+        summary = analytics_response.get_json()["summary"]
+        self.assertEqual(summary["product_gross_profit"], 12.0)
+        self.assertEqual(summary["gift_set_gross_profit"], 9.0)
+        self.assertEqual(summary["gross_profit"], 21.0)
+
 
 if __name__ == "__main__":
     unittest.main()
