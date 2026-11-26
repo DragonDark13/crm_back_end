@@ -434,7 +434,8 @@ def get_gift_set_sales_history():
                 "product_id": item.gift_set_product.product_id,
                 "name": item.gift_set_product.product.name,
                 "quantity": item.quantity,
-                "price": item.gift_set_product.product.selling_price_per_item
+                "price": item.gift_set_product.product.selling_price_per_item,
+                "unit_cost": float(item.unit_cost) if item.unit_cost is not None else None
             }
             for item in sale.sales_history_products
         ]
@@ -443,7 +444,8 @@ def get_gift_set_sales_history():
             {
                 "packaging_id": item.gift_set_packaging.packaging_id,
                 "quantity": item.quantity,
-                "price": item.gift_set_packaging.packaging.purchase_price_per_unit
+                "price": item.gift_set_packaging.packaging.purchase_price_per_unit,
+                "unit_cost": float(item.unit_cost) if item.unit_cost is not None else None
             }
             for item in sale.sales_history_packagings
         ]
@@ -453,6 +455,8 @@ def get_gift_set_sales_history():
             "gift_set_id": sale.gift_set_id,
             "sold_at": sale.sold_at.isoformat(),
             "sold_price": sale.sold_price,
+            "cost_price": float(sale.cost_price) if sale.cost_price is not None else None,
+            "profit": float(sale.profit) if sale.profit is not None else None,
             "quantity": sale.quantity,
             "customer_name": sale.customer_name,
             "products": products_data,
