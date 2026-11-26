@@ -53,6 +53,9 @@ def create_gift_set():
             if not product:
                 db_session.rollback()
                 return jsonify({"error": f"Product {item_id} not found"}), 400
+            if product.is_archived:
+                db_session.rollback()
+                return jsonify({"error": f"Product {item_id} is archived"}), 409
             if product.available_quantity < quantity:
                 db_session.rollback()
                 return jsonify({"error": f"Product {item_id} not available in required quantity"}), 400
@@ -200,6 +203,9 @@ def update_gift_set(gift_set_id):
                 if not product:
                     db_session.rollback()
                     return jsonify({"error": f"Product {item_id} not found"}), 400
+                if product.is_archived:
+                    db_session.rollback()
+                    return jsonify({"error": f"Product {item_id} is archived"}), 409
                 if product.available_quantity < quantity:
                     db_session.rollback()
                     return jsonify({"error": f"Product {item_id} not available in required quantity"}), 400
