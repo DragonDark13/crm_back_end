@@ -90,7 +90,7 @@ class ProductService:
             joinedload(Product.categories),
             joinedload(Product.supplier),
             selectinload(Product.images),
-        ).all()
+        ).filter(Product.is_archived.is_(False)).all()
         product_list = []
         for product in products:
             product_dict = product.to_dict()  # Assuming you have a method for dict conversion
@@ -577,17 +577,12 @@ product_history_bp = Blueprint('product_history', __name__)
 
 @product_history_bp.route('/product/<int:product_id>', methods=['DELETE'])
 def delete_product(product_id):
-    """Delete a product only when it has no historical or gift-set references."""
+    """Archive products with history; physically delete only products without history."""
     from postgreSQLConnect import db_session
 
     delete_mode = request.args.get('mode', 'product_only')
     if delete_mode not in {'product_only', 'all_related'}:
         return jsonify({'error': 'Invalid product deletion mode'}), 400
-
-    if delete_mode == 'all_related':
-        return jsonify({
-            'error': 'Deleting historical records is disabled. Products with history must be retained; archive functionality will replace destructive deletion.'
-        }), 409
 
     try:
         product = db_session.query(Product).filter(
@@ -602,11 +597,31 @@ def delete_product(product_id):
             db_session.query(GiftSetProduct.id).filter(GiftSetProduct.product_id == product.id),
             db_session.query(ProductAuditHistory.id).filter(ProductAuditHistory.product_id == product.id),
         )
-        if any(query.first() for query in related_queries):
-            db_session.rollback()
+        has_related_data = any(query.first() for query in related_queries)
+
+        if has_related_data:
+            if product.is_archived:
+                db_session.rollback()
+                return jsonify({
+                    'message': 'Product is already archived',
+                    'archived': True,
+                    'product_id': product.id,
+                }), 200
+
+            product.is_archived = True
+            record_product_audit(
+                db_session,
+                product,
+                "archive",
+                {"is_archived": (False, True)},
+                reason="Product removed from active catalog",
+            )
+            db_session.commit()
             return jsonify({
-                'error': 'Product has historical or gift-set records and cannot be deleted. Keep the product or archive it.'
-            }), 409
+                'message': 'Product archived. Historical records were preserved.',
+                'archived': True,
+                'product_id': product.id,
+            }), 200
 
         db_session.query(product_categories_table).filter(
             product_categories_table.c.product_id == product.id
@@ -617,13 +632,55 @@ def delete_product(product_id):
         db_session.delete(product)
         db_session.commit()
 
-        return jsonify({'message': 'Product deleted successfully'}), 200
+        return jsonify({
+            'message': 'Product deleted successfully',
+            'archived': False,
+            'product_id': product_id,
+        }), 200
     except NoResultFound:
         db_session.rollback()
         return jsonify({'error': 'Product not found'}), 404
     except SQLAlchemyError:
         db_session.rollback()
         return jsonify({'error': 'Database error while deleting product'}), 500
+
+
+@product_history_bp.route('/product/<int:product_id>/restore', methods=['POST'])
+def restore_product(product_id):
+    """Restore an archived product without changing its historical records."""
+    from postgreSQLConnect import db_session
+
+    try:
+        product = db_session.query(Product).filter(
+            Product.id == product_id
+        ).with_for_update().populate_existing().one_or_none()
+        if product is None:
+            return jsonify({'error': 'Product not found'}), 404
+        if not product.is_archived:
+            db_session.rollback()
+            return jsonify({
+                'message': 'Product is already active',
+                'archived': False,
+                'product_id': product.id,
+            }), 200
+
+        product.is_archived = False
+        record_product_audit(
+            db_session,
+            product,
+            "restore",
+            {"is_archived": (True, False)},
+            reason="Product restored to active catalog",
+        )
+        db_session.commit()
+        return jsonify({
+            'message': 'Product restored successfully',
+            'archived': False,
+            'product_id': product.id,
+        }), 200
+    except SQLAlchemyError:
+        db_session.rollback()
+        return jsonify({'error': 'Database error while restoring product'}), 500
 
 
 class InventoryConflict(Exception):
