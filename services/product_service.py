@@ -9,7 +9,7 @@ from sqlalchemy.exc import NoResultFound, SQLAlchemyError, IntegrityError
 from flask import jsonify, send_file
 from io import BytesIO
 from werkzeug.utils import secure_filename
-from flask_jwt_extended import jwt_required, get_jwt_identity
+from flask_jwt_extended import jwt_required, get_jwt, get_jwt_identity
 from decimal import Decimal, InvalidOperation
 from datetime import datetime
 
@@ -71,9 +71,12 @@ class ProductService:
 
         """Отримати продукт за ID"""
         try:
-            product = db_session.query(Product).options(
+            query = db_session.query(Product).options(
                 selectinload(Product.images)
-            ).filter(Product.id == product_id).populate_existing().one()
+            ).filter(Product.id == product_id)
+            if "manager" not in get_jwt().get("roles", []):
+                query = query.filter(Product.is_archived.is_(False))
+            product = query.populate_existing().one()
             product_dict = product.to_dict()  # Assuming you have a method for dict conversion
             product_dict['category_ids'] = [category.id for category in product.categories]
             product_dict['supplier'] = product.supplier.to_dict() if product.supplier else None
