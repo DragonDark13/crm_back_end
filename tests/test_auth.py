@@ -300,9 +300,11 @@ class AuthenticationApiTests(unittest.TestCase):
         headers = self._headers(self._login("test_manager"))
         response = self.client.delete(f"/api/product/{product_id}", headers=headers)
 
-        self.assertEqual(response.status_code, 409)
+        self.assertEqual(response.status_code, 200, response.get_json())
         with crm_app_module.app.app_context():
-            self.assertIsNotNone(db.session.get(Product, product_id))
+            product = db.session.get(Product, product_id)
+            self.assertIsNotNone(product)
+            self.assertTrue(product.is_archived)
             self.assertIsNotNone(db.session.get(SaleHistory, sale_id))
 
     def test_customer_with_sales_history_cannot_be_deleted(self):
