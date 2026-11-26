@@ -71,8 +71,10 @@ class ProductDeletionOptionsTests(unittest.TestCase):
             headers=self.headers,
         )
 
-        self.assertEqual(response.status_code, 409, response.get_json())
-        self.assertIsNotNone(db_session.query(Product).filter_by(id=product_id).one_or_none())
+        self.assertEqual(response.status_code, 200, response.get_json())
+        product = db_session.query(Product).filter_by(id=product_id).one_or_none()
+        self.assertIsNotNone(product)
+        self.assertTrue(product.is_archived)
         self.assertEqual(db_session.query(PurchaseHistory).filter_by(product_id=product_id).count(), 1)
         self.assertEqual(db_session.query(StockHistory).filter_by(product_id=product_id).count(), 1)
         self.assertGreater(db_session.query(ProductAuditHistory).filter_by(product_id=product_id).count(), 0)
@@ -85,13 +87,34 @@ class ProductDeletionOptionsTests(unittest.TestCase):
             headers=self.headers,
         )
 
-        self.assertEqual(response.status_code, 409, response.get_json())
-        self.assertIsNotNone(db_session.query(Product).filter_by(id=product_id).one_or_none())
+        self.assertEqual(response.status_code, 200, response.get_json())
+        product = db_session.query(Product).filter_by(id=product_id).one_or_none()
+        self.assertIsNotNone(product)
+        self.assertTrue(product.is_archived)
         self.assertEqual(db_session.query(PurchaseHistory).filter_by(product_id=product_id).count(), 1)
         self.assertEqual(db_session.query(StockHistory).filter_by(product_id=product_id).count(), 1)
         self.assertEqual(db_session.query(SaleHistory).filter_by(product_id=product_id).count(), 0)
         self.assertGreater(db_session.query(ProductAuditHistory).filter_by(product_id=product_id).count(), 0)
         self.assertIsNotNone(db_session.query(Supplier).filter_by(id=self.supplier_id).one_or_none())
+
+    def test_archived_product_can_be_restored_without_losing_history(self):
+        product_id = self._create_product()
+        archive_response = self.client.delete(
+            f"/api/product/{product_id}",
+            headers=self.headers,
+        )
+        self.assertEqual(archive_response.status_code, 200, archive_response.get_json())
+
+        restore_response = self.client.post(
+            f"/api/product/{product_id}/restore",
+            headers=self.headers,
+        )
+        self.assertEqual(restore_response.status_code, 200, restore_response.get_json())
+
+        product = db_session.query(Product).filter_by(id=product_id).one()
+        self.assertFalse(product.is_archived)
+        self.assertEqual(db_session.query(PurchaseHistory).filter_by(product_id=product_id).count(), 1)
+        self.assertEqual(db_session.query(StockHistory).filter_by(product_id=product_id).count(), 1)
 
     def test_inventory_audit_records_previous_and_actual_quantity(self):
         product_id = self._create_product()
