@@ -239,6 +239,7 @@ def get_analytics_overview():
             "returns": Decimal("0"),
             "net_sales": Decimal("0"),
             "product_profit": Decimal("0"),
+            "gift_set_profit": Decimal("0"),
             "purchase_expenses": Decimal("0"),
             "other_expenses": Decimal("0"),
         })
@@ -274,6 +275,7 @@ def get_analytics_overview():
         gift_set_sales_total = Decimal("0")
         returns_total = Decimal("0")
         product_profit_total = Decimal("0")
+        gift_set_profit_total = Decimal("0")
         sold_quantity_total = 0
         returned_quantity_total = 0
         top_products = {}
@@ -307,8 +309,13 @@ def get_analytics_overview():
         for gift_sale in gift_set_sales:
             # sold_price is already the total transaction amount in the current sale flow.
             revenue = _as_decimal(gift_sale.sold_price)
+            bucket = month_bucket(months, gift_sale.sold_at)
             gift_set_sales_total += revenue
-            month_bucket(months, gift_sale.sold_at)["gift_set_sales"] += revenue
+            bucket["gift_set_sales"] += revenue
+            if gift_sale.profit is not None:
+                gift_profit = _as_decimal(gift_sale.profit)
+                gift_set_profit_total += gift_profit
+                bucket["gift_set_profit"] += gift_profit
 
         for return_record in returns:
             refund = _as_decimal(return_record.return_amount)
@@ -422,6 +429,8 @@ def get_analytics_overview():
                 "returns": _money(bucket["returns"]),
                 "net_sales": _money(bucket["net_sales"]),
                 "product_gross_profit": _money(bucket["product_profit"]),
+                "gift_set_gross_profit": _money(bucket["gift_set_profit"]),
+                "gross_profit": _money(bucket["product_profit"] + bucket["gift_set_profit"]),
                 "purchase_expenses": _money(bucket["purchase_expenses"]),
                 "other_expenses": _money(bucket["other_expenses"]),
                 "total_expenses": _money(bucket["total_expenses"]),
@@ -436,6 +445,8 @@ def get_analytics_overview():
                 "returns": _money(returns_total),
                 "net_sales": _money(product_sales_total + gift_set_sales_total - returns_total),
                 "product_gross_profit": _money(product_profit_total),
+                "gift_set_gross_profit": _money(gift_set_profit_total),
+                "gross_profit": _money(product_profit_total + gift_set_profit_total),
                 "sold_quantity": sold_quantity_total,
                 "returned_quantity": returned_quantity_total,
                 "purchase_expenses": _money(purchase_expenses_total),
@@ -447,9 +458,9 @@ def get_analytics_overview():
             "top_products": top_products_result[:10],
             "restock": restock_items,
             "profit_scope_note": (
-                "Валовий прибуток охоплює звичайні товарні продажі. "
-                "Виручка гіфтбоксів включена в продажі, але їхній прибуток не розраховується, "
-                "оскільки історія не зберігає собівартість компонентів на момент продажу."
+                "Прибуток гіфтбоксів враховується для продажів, створених після впровадження "
+                "знімків собівартості. Для старих продажів без збереженої собівартості значення "
+                "залишається невідомим; історичні ціни не відновлюються за поточними даними."
             ),
         }), 200
     finally:

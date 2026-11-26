@@ -9,7 +9,7 @@ from sqlalchemy.exc import NoResultFound, SQLAlchemyError, IntegrityError
 from flask import jsonify, send_file
 from io import BytesIO
 from werkzeug.utils import secure_filename
-from flask_jwt_extended import jwt_required, get_jwt_identity
+from flask_jwt_extended import jwt_required, get_jwt, get_jwt_identity
 from decimal import Decimal, InvalidOperation
 from datetime import datetime
 
@@ -71,9 +71,12 @@ class ProductService:
 
         """Отримати продукт за ID"""
         try:
-            product = db_session.query(Product).options(
+            query = db_session.query(Product).options(
                 selectinload(Product.images)
-            ).filter(Product.id == product_id).populate_existing().one()
+            ).filter(Product.id == product_id)
+            if "manager" not in get_jwt().get("roles", []):
+                query = query.filter(Product.is_archived.is_(False))
+            product = query.populate_existing().one()
             product_dict = product.to_dict()  # Assuming you have a method for dict conversion
             product_dict['category_ids'] = [category.id for category in product.categories]
             product_dict['supplier'] = product.supplier.to_dict() if product.supplier else None
@@ -90,7 +93,7 @@ class ProductService:
             joinedload(Product.categories),
             joinedload(Product.supplier),
             selectinload(Product.images),
-        ).all()
+        ).filter(Product.is_archived.is_(False)).all()
         product_list = []
         for product in products:
             product_dict = product.to_dict()  # Assuming you have a method for dict conversion
@@ -546,7 +549,9 @@ def delete_all_products():
             db_session.query(StockHistory.id).first(),
             db_session.query(PurchaseHistory.id).first(),
             db_session.query(GiftSetSalesHistory.id).first(),
+            db_session.query(GiftSetSalesHistoryProduct.id).first(),
             db_session.query(GiftSetProduct.id).first(),
+            db_session.query(ProductAuditHistory.id).first(),
         ))
         if has_history:
             return jsonify({
@@ -575,7 +580,7 @@ product_history_bp = Blueprint('product_history', __name__)
 
 @product_history_bp.route('/product/<int:product_id>', methods=['DELETE'])
 def delete_product(product_id):
-    """Delete a product, optionally removing only records directly related to it."""
+    """Archive products with history; physically delete only products without history."""
     from postgreSQLConnect import db_session
 
     delete_mode = request.args.get('mode', 'product_only')
@@ -597,114 +602,32 @@ def delete_product(product_id):
         )
         has_related_data = any(query.first() for query in related_queries)
 
-        if has_related_data and delete_mode == 'product_only':
-            db_session.rollback()
-            return jsonify({
-                'error': 'Product has related records. Choose deletion with all related data or keep the product.'
-            }), 409
-
-        if delete_mode == 'all_related':
-            sale_ids = db_session.query(SaleHistory.id).filter(
-                SaleHistory.product_id == product.id
-            ).subquery()
-            gift_set_product_ids = db_session.query(GiftSetProduct.id).filter(
-                GiftSetProduct.product_id == product.id
-            ).subquery()
-            affected_gift_set_ids = [
-                row[0] for row in db_session.query(GiftSetProduct.gift_set_id).filter(
-                    GiftSetProduct.product_id == product.id
-                ).all()
-            ]
-
-            has_sold_gift_set_reference = db_session.query(GiftSetSalesHistoryProduct.id).join(
-                GiftSetProduct,
-                GiftSetSalesHistoryProduct.gift_set_product_id == GiftSetProduct.id,
-            ).filter(GiftSetProduct.product_id == product.id).first()
-            if has_sold_gift_set_reference:
+        if has_related_data:
+            if product.is_archived:
                 db_session.rollback()
                 return jsonify({
-                    'error': 'Product is part of a sold gift set. Delete is blocked to preserve gift-set sales history.'
-                }), 409
+                    'message': 'Product is already archived',
+                    'archived': True,
+                    'product_id': product.id,
+                }), 200
 
-            # Restore packaging stock consumed by this product's sales before removing their records.
-            packaging_sale_records = db_session.query(PackagingSaleHistory).filter(
-                PackagingSaleHistory.sale_id.in_(sale_ids)
-            ).all()
-            for packaging_sale in packaging_sale_records:
-                if packaging_sale.packaging_material_id is None:
-                    continue
-                packaging_material = db_session.query(PackagingMaterial).filter(
-                    PackagingMaterial.id == packaging_sale.packaging_material_id
-                ).with_for_update().one_or_none()
-                if packaging_material is None:
-                    continue
-                packaging_material.available_quantity += packaging_sale.packaging_quantity
-                packaging_material.available_stock_cost += packaging_sale.total_packaging_cost
-                if packaging_material.available_quantity > 0 and packaging_material.status == 'used':
-                    packaging_material.status = 'available'
-                db_session.add(PackagingStockHistory(
-                    material_id=packaging_material.id,
-                    change_amount=packaging_sale.packaging_quantity,
-                    change_type='product_delete_restore',
-                    timestamp=datetime.now(),
-                ))
-
-            # Remove child records first; shared customers, suppliers and packaging materials remain untouched.
-            db_session.query(Payment).filter(Payment.sale_id.in_(sale_ids)).delete(synchronize_session=False)
-            db_session.query(PackagingSaleHistory).filter(
-                PackagingSaleHistory.sale_id.in_(sale_ids)
-            ).delete(synchronize_session=False)
-            db_session.query(ReturnHistory).filter(
-                ReturnHistory.product_id == product.id
-            ).delete(synchronize_session=False)
-            db_session.query(GiftSetSalesHistoryProduct).filter(
-                GiftSetSalesHistoryProduct.gift_set_product_id.in_(gift_set_product_ids)
-            ).delete(synchronize_session=False)
-            db_session.query(GiftSetProduct).filter(
-                GiftSetProduct.product_id == product.id
-            ).delete(synchronize_session=False)
-
-            # Recalculate affected unsold gift sets after removing this product from their composition.
-            for gift_set_id in affected_gift_set_ids:
-                gift_set = db_session.query(GiftSet).filter(
-                    GiftSet.id == gift_set_id
-                ).with_for_update().one_or_none()
-                if gift_set is None:
-                    continue
-
-                remaining_products = db_session.query(GiftSetProduct).filter_by(
-                    gift_set_id=gift_set_id
-                ).all()
-                remaining_packagings = db_session.query(GiftSetPackaging).filter_by(
-                    gift_set_id=gift_set_id
-                ).all()
-
-                if not remaining_products and not remaining_packagings:
-                    db_session.delete(gift_set)
-                    continue
-
-                product_cost = sum(
-                    (item.product.purchase_price_per_item or 0) * item.quantity
-                    for item in remaining_products
-                )
-                packaging_cost = sum(
-                    (item.packaging.purchase_price_per_unit or 0) * item.quantity
-                    for item in remaining_packagings
-                )
-                gift_set.total_price = product_cost + packaging_cost
-
-            db_session.query(SaleHistory).filter(
-                SaleHistory.product_id == product.id
-            ).delete(synchronize_session=False)
-            db_session.query(PurchaseHistory).filter(
-                PurchaseHistory.product_id == product.id
-            ).delete(synchronize_session=False)
-            db_session.query(StockHistory).filter(
-                StockHistory.product_id == product.id
-            ).delete(synchronize_session=False)
-            db_session.query(ProductAuditHistory).filter(
-                ProductAuditHistory.product_id == product.id
-            ).delete(synchronize_session=False)
+            product.is_archived = True
+            db_session.query(ProductImage).filter_by(product_id=product.id).delete(
+                synchronize_session=False
+            )
+            record_product_audit(
+                db_session,
+                product,
+                "archive",
+                {"is_archived": (False, True)},
+                reason="Product removed from active catalog",
+            )
+            db_session.commit()
+            return jsonify({
+                'message': 'Product archived. Historical records were preserved.',
+                'archived': True,
+                'product_id': product.id,
+            }), 200
 
         db_session.query(product_categories_table).filter(
             product_categories_table.c.product_id == product.id
@@ -715,18 +638,55 @@ def delete_product(product_id):
         db_session.delete(product)
         db_session.commit()
 
-        message = (
-            'Product and all related records deleted successfully'
-            if delete_mode == 'all_related'
-            else 'Product deleted successfully'
-        )
-        return jsonify({'message': message}), 200
+        return jsonify({
+            'message': 'Product deleted successfully',
+            'archived': False,
+            'product_id': product_id,
+        }), 200
     except NoResultFound:
         db_session.rollback()
         return jsonify({'error': 'Product not found'}), 404
     except SQLAlchemyError:
         db_session.rollback()
         return jsonify({'error': 'Database error while deleting product'}), 500
+
+
+@product_history_bp.route('/product/<int:product_id>/restore', methods=['POST'])
+def restore_product(product_id):
+    """Restore an archived product without changing its historical records."""
+    from postgreSQLConnect import db_session
+
+    try:
+        product = db_session.query(Product).filter(
+            Product.id == product_id
+        ).with_for_update().populate_existing().one_or_none()
+        if product is None:
+            return jsonify({'error': 'Product not found'}), 404
+        if not product.is_archived:
+            db_session.rollback()
+            return jsonify({
+                'message': 'Product is already active',
+                'archived': False,
+                'product_id': product.id,
+            }), 200
+
+        product.is_archived = False
+        record_product_audit(
+            db_session,
+            product,
+            "restore",
+            {"is_archived": (True, False)},
+            reason="Product restored to active catalog",
+        )
+        db_session.commit()
+        return jsonify({
+            'message': 'Product restored successfully',
+            'archived': False,
+            'product_id': product.id,
+        }), 200
+    except SQLAlchemyError:
+        db_session.rollback()
+        return jsonify({'error': 'Database error while restoring product'}), 500
 
 
 class InventoryConflict(Exception):
@@ -782,6 +742,9 @@ def inventory_product(product_id):
         if not product:
             db_session.rollback()
             return jsonify({'error': 'Product not found'}), 404
+
+        available_quantity_before = product.available_quantity or 0
+        reserved_quantity_before = product.reserved_quantity or 0
 
         # Беремо лише непродані набори, у складі яких є інвентаризований товар.
         gift_sets = db_session.query(GiftSet).join(
@@ -851,8 +814,19 @@ def inventory_product(product_id):
                     f'Reserved quantity is inconsistent for product {related_product.id}'
                 )
 
-            related_product.available_quantity = (related_product.available_quantity or 0) + item.quantity
+            related_available_before = related_product.available_quantity or 0
+            related_product.available_quantity = related_available_before + item.quantity
             related_product.reserved_quantity = reserved_quantity - item.quantity
+            if related_product.id != product_id:
+                db_session.add(StockHistory(
+                    product_id=related_product.id,
+                    change_amount=item.quantity,
+                    change_type='gift_set_inventory_release',
+                    timestamp=datetime.now(),
+                    quantity_before=related_available_before,
+                    quantity_after=related_product.available_quantity,
+                    reason=f'Inventory adjustment for product {product_id} released gift set #{item.gift_set_id}',
+                ))
 
         for item in gift_set_packagings:
             packaging = packagings_by_id.get(item.packaging_id)
@@ -867,6 +841,12 @@ def inventory_product(product_id):
 
             packaging.available_quantity = (packaging.available_quantity or 0) + item.quantity
             packaging.reserved_quantity = reserved_quantity - item.quantity
+            db_session.add(PackagingStockHistory(
+                material_id=packaging.id,
+                change_amount=item.quantity,
+                change_type='gift_set_inventory_release',
+                timestamp=datetime.now(),
+            ))
 
         # Видаляємо склад наборів та самі непродані набори.
         for item in gift_set_products:
@@ -892,7 +872,10 @@ def inventory_product(product_id):
             db_session,
             product,
             "inventory",
-            {"available_quantity": (product.available_quantity, actual_quantity)},
+            {
+                "available_quantity": (available_quantity_before, product.available_quantity),
+                "reserved_quantity": (reserved_quantity_before, product.reserved_quantity),
+            },
             reason=reason,
         )
         stock_history = StockHistory(
@@ -1103,6 +1086,10 @@ def record_sale(product_id):
             Product.id == product_id
         ).with_for_update().populate_existing().one()
 
+        if product.is_archived:
+            db_session.rollback()
+            return jsonify({'error': 'Archived products cannot be sold'}), 409
+
         quantity_sold = data['quantity']
         selling_price_per_item = Decimal(data['selling_price_per_item'])
         selling_total_price = Decimal(data['selling_total_price'])
@@ -1173,8 +1160,10 @@ def record_sale(product_id):
             sale_date=sale_date,
             packaging_material_id=packaging_material_id,
             profit=(
-                (selling_price_per_item - product.purchase_price_per_item) * quantity_sold
-            ) - total_packaging_cost,
+                selling_total_price
+                - (Decimal(str(product.purchase_price_per_item or 0)) * quantity_sold)
+                - total_packaging_cost
+            ),
             packaging_quantity=packaging_quantity,
             total_packaging_cost=total_packaging_cost
         )

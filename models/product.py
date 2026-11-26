@@ -29,6 +29,7 @@ class Product(Base):
     categories = relationship("Category", secondary=product_categories_table, back_populates="products")
     reorder_level = Column(Integer, default=0)
     reserved_quantity = Column(Integer, nullable=False, default=0)  # Додайте default=0
+    is_archived = Column(Boolean, nullable=False, default=False, server_default="false")
     article = Column(String(20), unique=True, nullable=False)
     product_description = Column(
         String(500),
@@ -47,6 +48,7 @@ class Product(Base):
             'total_quantity': self.total_quantity,
             'available_quantity': self.available_quantity,
             'reserved_quantity': self.reserved_quantity,
+            'is_archived': self.is_archived,
             'sold_quantity': self.sold_quantity,
             'purchase_total_price': float(self.purchase_total_price or 0),
             'purchase_price_per_item': float(self.purchase_price_per_item or 0),
