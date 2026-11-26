@@ -16,6 +16,7 @@ from models import (  # noqa: E402
     GiftSetSalesHistory,
     Product,
     SaleHistory,
+    StockHistory,
     db,
 )
 
@@ -122,6 +123,13 @@ class HistoricalFinancialSnapshotTests(unittest.TestCase):
 
             self.assertEqual(sale.cost_price, Decimal("16.000"))
             self.assertEqual(sale.profit, Decimal("9.00"))
+            self.assertEqual(
+                db.session.query(StockHistory).filter_by(
+                    product_id=self.product_id,
+                    change_type="gift_set_sale",
+                ).count(),
+                1,
+            )
 
         history_response = self.client.get(
             "/api/get_all_sales_history",
