@@ -808,8 +808,19 @@ def inventory_product(product_id):
                     f'Reserved quantity is inconsistent for product {related_product.id}'
                 )
 
-            related_product.available_quantity = (related_product.available_quantity or 0) + item.quantity
+            related_available_before = related_product.available_quantity or 0
+            related_product.available_quantity = related_available_before + item.quantity
             related_product.reserved_quantity = reserved_quantity - item.quantity
+            if related_product.id != product_id:
+                db_session.add(StockHistory(
+                    product_id=related_product.id,
+                    change_amount=item.quantity,
+                    change_type='gift_set_inventory_release',
+                    timestamp=datetime.now(),
+                    quantity_before=related_available_before,
+                    quantity_after=related_product.available_quantity,
+                    reason=f'Inventory adjustment for product {product_id} released gift set #{item.gift_set_id}',
+                ))
 
         for item in gift_set_packagings:
             packaging = packagings_by_id.get(item.packaging_id)
@@ -824,6 +835,12 @@ def inventory_product(product_id):
 
             packaging.available_quantity = (packaging.available_quantity or 0) + item.quantity
             packaging.reserved_quantity = reserved_quantity - item.quantity
+            db_session.add(PackagingStockHistory(
+                material_id=packaging.id,
+                change_amount=item.quantity,
+                change_type='gift_set_inventory_release',
+                timestamp=datetime.now(),
+            ))
 
         # Видаляємо склад наборів та самі непродані набори.
         for item in gift_set_products:
