@@ -52,13 +52,16 @@ def get_sales_history():
         .joinedload(PackagingMaterial.packaging_material_supplier)
     ).all()
 
-    # Функція для обчислення собівартості товару
+    # Собівартість складових набору береться зі знімка на момент продажу.
     def calculate_product_cost(item):
-        return Decimal(item.gift_set_product.product.purchase_price_per_item) * Decimal(item.quantity)
+        if item.unit_cost is None:
+            return None
+        return Decimal(item.unit_cost) * Decimal(item.quantity)
 
-    # Функція для обчислення собівартості пакування
     def calculate_packaging_cost(item):
-        return Decimal(item.gift_set_packaging.packaging.purchase_price_per_unit) * Decimal(item.quantity)
+        if item.unit_cost is None:
+            return None
+        return Decimal(item.unit_cost) * Decimal(item.quantity)
 
     # Функція для створення даних про товар
     def create_product_data(item):
@@ -66,8 +69,8 @@ def get_sales_history():
             "product_id": item.gift_set_product.product_id,
             "name": item.gift_set_product.product.name,
             "quantity": item.quantity,
-            "unit_price": str(item.gift_set_product.product.purchase_price_per_item),
-            "total_price": str(calculate_product_cost(item)),
+            "unit_price": str(item.unit_cost) if item.unit_cost is not None else None,
+            "total_price": str(calculate_product_cost(item)) if calculate_product_cost(item) is not None else None,
             "supplier": {
                 "id": item.gift_set_product.product.supplier.id if item.gift_set_product.product.supplier else None,
                 "name": item.gift_set_product.product.supplier.name if item.gift_set_product.product.supplier else ''
@@ -80,8 +83,8 @@ def get_sales_history():
             "packaging_id": item.gift_set_packaging.packaging_id,
             "packaging_name": item.gift_set_packaging.packaging.name,
             "quantity": item.quantity,
-            "unit_price": str(item.gift_set_packaging.packaging.purchase_price_per_unit),
-            "total_price": str(calculate_packaging_cost(item)),
+            "unit_price": str(item.unit_cost) if item.unit_cost is not None else None,
+            "total_price": str(calculate_packaging_cost(item)) if calculate_packaging_cost(item) is not None else None,
             "supplier": {
                 "id": item.gift_set_packaging.packaging.packaging_material_supplier.id if item.gift_set_packaging.packaging.packaging_material_supplier else None,
                 "name": item.gift_set_packaging.packaging.packaging_material_supplier.name if item.gift_set_packaging.packaging.packaging_material_supplier else ''
@@ -100,20 +103,10 @@ def get_sales_history():
             None
         )
 
-        # Собівартість товару (ціна закупівлі)
-        product_cost = sale.product.purchase_price_per_item * sale.quantity_sold
-
-        # Собівартість пакування (якщо є)
-        packaging_cost = 0
-        if packaging_sale:
-            packaging_cost = packaging_sale.packaging_material.purchase_price_per_unit * Decimal(
-                packaging_sale.packaging_quantity)
-
-        # Загальна собівартість (товар + пакування)
-        total_cost = product_cost + packaging_cost
-
-        # Вигода (прибуток)
-        profit = sale.selling_total_price - total_cost
+        # Прибуток зберігається в SaleHistory під час продажу.
+        # Не перераховуємо його за поточною закупівельною ціною товару.
+        profit = Decimal(str(sale.profit or 0))
+        total_cost = Decimal(str(sale.selling_total_price or 0)) - profit
 
         # Підготовка інформації про пакування (якщо воно є)
         packaging_details = {}
@@ -122,7 +115,13 @@ def get_sales_history():
                 'package_id': packaging_sale.packaging_material_id,
                 'packaging_name': packaging_sale.packaging_material.name,
                 'quantity_sold': packaging_sale.packaging_quantity,
-                'unit_price': str(packaging_sale.packaging_material.purchase_price_per_unit),
+                'unit_price': (
+                    str(
+                        Decimal(str(packaging_sale.total_packaging_cost or 0))
+                        / Decimal(str(packaging_sale.packaging_quantity))
+                    )
+                    if packaging_sale.packaging_quantity else None
+                ),
                 'total_price': str(packaging_sale.total_packaging_cost),
                 'supplier': {
                     'id': packaging_sale.packaging_material.packaging_material_supplier.id if packaging_sale.packaging_material.packaging_material_supplier else None,
@@ -159,15 +158,13 @@ def get_sales_history():
     for sale in gift_set_sales_history:
         gift_set_name = sale.gift_set.name if sale.gift_set else 'Unknown'
 
-        # Обчислення собівартості подарункового набору
-        cost_price = sum(calculate_product_cost(item) for item in sale.sales_history_products) + \
-                     sum(calculate_packaging_cost(item) for item in sale.sales_history_packagings)
+        # Для нових продажів набір зберігає собівартість і прибуток у момент продажу.
+        # Для старих записів без знімка не підставляємо поточні ціни як історичні.
+        cost_price = Decimal(sale.cost_price) if sale.cost_price is not None else None
+        profit = Decimal(sale.profit) if sale.profit is not None else None
 
         products_data = [create_product_data(item) for item in sale.sales_history_products]
         packagings_data = [create_packaging_data(item) for item in sale.sales_history_packagings]
-
-        # Розрахунок вигоди
-        profit = Decimal(sale.sold_price) - cost_price
 
         # Підготовка даних про продаж подарункового набору
         gift_set_sale_data = {
@@ -176,8 +173,8 @@ def get_sales_history():
             "product_name": gift_set_name,
             "sale_date": sale.sold_at.strftime('%Y-%m-%d'),
             "total_price": str(sale.sold_price),
-            "cost_price": str(cost_price),
-            "profit": str(profit),
+            "cost_price": str(cost_price) if cost_price is not None else None,
+            "profit": str(profit) if profit is not None else None,
             "quantity": sale.quantity,
             "customer": {
                 'id': sale.customer.id,
