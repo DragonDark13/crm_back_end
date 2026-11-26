@@ -105,7 +105,7 @@ class ProductDeletionOptionsTests(unittest.TestCase):
         )
         self.assertEqual(archive_response.status_code, 200, archive_response.get_json())
 
-        catalog_response = self.client.get("/api/get_all_products", headers=self.headers)
+        catalog_response = self.client.get("/api/get_all_products/", headers=self.headers)
         self.assertEqual(catalog_response.status_code, 200, catalog_response.get_json())
         self.assertNotIn(product_id, [item["id"] for item in catalog_response.get_json()])
 
