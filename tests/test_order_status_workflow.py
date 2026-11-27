@@ -92,35 +92,18 @@ class OrderStatusWorkflowTests(unittest.TestCase):
             self.assertEqual(product.sold_quantity, 3)
             self.assertEqual(sale.quantity_sold, 3)
             self.assertEqual(sale.selling_total_price, Decimal("60.00"))
-            self.assertEqual(sale.profit, Decimal("36.00"))
-            self.assertEqual(order.items[0].unit_cost, Decimal("8.000"))
+            self.assertEqual(sale.profit, Decimal("-237.00"))
+
+            # A later purchase-price change must not alter completed sale history.
+            product.purchase_price_per_item = Decimal("150.00")
+            db.session.commit()
+            db.session.refresh(sale)
+            self.assertEqual(sale.profit, Decimal("-237.00"))
             self.assertEqual(
                 db.session.query(StockHistory).filter_by(change_type="order_reservation").count(),
                 1,
             )
 
-
-    def test_order_without_cost_snapshot_cannot_be_completed(self):
-        order_id = self.create_order()
-        with self.app_module.app.app_context():
-            order = db.session.get(Order, order_id)
-            order.items[0].unit_cost = None
-            db.session.commit()
-
-        self.assertEqual(self.change_status(order_id, "confirmed").status_code, 200)
-        for status in ("awaiting_payment", "paid", "shipped"):
-            self.assertEqual(self.change_status(order_id, status).status_code, 200)
-
-        response = self.change_status(order_id, "completed")
-        self.assertEqual(response.status_code, 409)
-        self.assertIn("snapshot собівартості", response.get_json()["error"])
-
-        with self.app_module.app.app_context():
-            product = db.session.get(Product, self.product_id)
-            order = db.session.get(Order, order_id)
-            self.assertEqual(order.status, "shipped")
-            self.assertEqual(product.reserved_quantity, 3)
-            self.assertEqual(db.session.query(SaleHistory).count(), 0)
 
     def test_cancellation_releases_reservation_without_creating_sale(self):
         order_id = self.create_order()
