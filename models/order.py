@@ -42,7 +42,6 @@ class OrderItem(Base):
     quantity = Column(Integer, nullable=False)
     unit_price = Column(Numeric(12, 2), nullable=False)
     line_total = Column(Numeric(12, 2), nullable=False)
-    unit_cost = Column(Numeric(12, 3), nullable=True)
 
     order = relationship("Order", back_populates="items")
     product = relationship("Product")
